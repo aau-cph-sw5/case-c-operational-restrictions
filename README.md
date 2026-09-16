@@ -42,7 +42,7 @@ docker compose up --build
 ```
 
 * **Frontend:** Open [http://localhost:5173](http://localhost:5173) in your browser.
-* **Backend API:** Access [http://localhost:5000/api/hello](http://localhost:5000/api/hello) (or via reverse-proxy at [http://localhost:5173/api/hello](http://localhost:5173/api/hello)).
+* **Backend API:** Access [http://localhost:8080/api/hello](http://localhost:8080/api/hello) (or via reverse-proxy at [http://localhost:5173/api/hello](http://localhost:5173/api/hello)).
 
 To stop the containers:
 ```bash
@@ -58,7 +58,7 @@ docker compose down
    cd Backend
    dotnet run
    ```
-   *Runs on [http://localhost:5000](http://localhost:5000).*
+   *Runs on [http://localhost:8080](http://localhost:8080).*
 
 2. **Start the Frontend:**
    ```bash

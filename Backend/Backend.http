@@ -1,4 +1,4 @@
-@Backend_HostAddress = http://localhost:5000
+@Backend_HostAddress = http://localhost:8080
 
 GET {{Backend_HostAddress}}/api/hello
 Accept: application/json
