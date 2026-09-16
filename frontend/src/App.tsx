@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import { ExampleComponent } from './components/ExampleComponent'
 
 interface HelloResponse {
   message: string
@@ -45,6 +46,8 @@ function App() {
           </div>
         )}
       </div>
+
+      <ExampleComponent />
     </div>
   )
 }
