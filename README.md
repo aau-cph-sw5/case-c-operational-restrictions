@@ -32,20 +32,47 @@ Items marked **(blocked)** are in this set because the product is incomplete wit
 
 ## Getting it running
 
-> Replace this section in sprint 1. A new developer must be able to clone this repository
-> and get the system running by following this README alone. Test that by handing it to
-> somebody on another team and watching where they get stuck.
+### Option 1: Running with Docker (Recommended)
+
+**Prerequisites:** Docker and Docker Compose.
 
 ```bash
-# prerequisites
-# install
-# run
-# test
+# Build and start all services (Backend + Frontend)
+docker compose up --build
 ```
+
+* **Frontend:** Open [http://localhost:5173](http://localhost:5173) in your browser.
+* **Backend API:** Access [http://localhost:5000/api/hello](http://localhost:5000/api/hello) (or via reverse-proxy at [http://localhost:5173/api/hello](http://localhost:5173/api/hello)).
+
+To stop the containers:
+```bash
+docker compose down
+```
+
+### Option 2: Running Locally
+
+**Prerequisites:** .NET 10.0 SDK and Node.js 22+ / npm.
+
+1. **Start the Backend:**
+   ```bash
+   cd Backend
+   dotnet run
+   ```
+   *Runs on [http://localhost:5000](http://localhost:5000).*
+
+2. **Start the Frontend:**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   *Runs on [http://localhost:5173](http://localhost:5173).*
 
 ## Layout
 
 ```
+Backend/       .NET 10 Web API (MVCS architecture, EF Core, PostgreSQL provider)
+frontend/      React + Vite SPA with React Router
 contracts/     published interfaces other teams build against, versioned
 docs/adr/      architecture decision records
 fixtures/      synthetic test data. Never anything Metro supplied.
