@@ -1,4 +1,9 @@
+using Backend.Services;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddScoped<IExampleService, ExampleService>();
 
 // Enable CORS with explicit frontend origins for security & cookie/auth header support
 builder.Services.AddCors(options =>
@@ -18,6 +23,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors();
+
+app.MapControllers();
 
 // A simple Hello World endpoint
 app.MapGet("/api/hello", () => new
