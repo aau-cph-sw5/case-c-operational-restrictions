@@ -51,7 +51,7 @@ docker compose down
 
 ### Option 2: Running Locally
 
-**Prerequisites:** .NET 10.0 SDK and Node.js 22+ / npm.
+**Prerequisites:** .NET 10.0 SDK and Node.js 22+ / pnpm.
 
 1. **Start the Backend:**
    ```bash
@@ -63,8 +63,8 @@ docker compose down
 2. **Start the Frontend:**
    ```bash
    cd frontend
-   npm install
-   npm run dev
+   pnpm install
+   pnpm run dev
    ```
    *Runs on [http://localhost:5173](http://localhost:5173).*
 
