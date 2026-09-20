@@ -6,7 +6,7 @@ namespace Backend.Controllers;
 // CONTROLLER (MVCS):
 // Handles incoming HTTP requests, route binding, and HTTP status codes
 [ApiController]
-[Route("api/example")]
+[Route("api/[controller]")]
 public class ExampleController : ControllerBase
 {
     private readonly IExampleService _exampleService;

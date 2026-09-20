@@ -5,9 +5,5 @@ namespace Backend.Services;
 // Registered with Dependency Injection and injected into Controllers
 public interface IExampleService
 {
-    bool HandleExampleRequest()
-    {
-        var helloworld = "heey";
-        return true;
-    }
+    bool HandleExampleRequest();
 }

@@ -5,8 +5,9 @@ namespace Backend.Services;
 // Registered with Dependency Injection and injected into Controllers
 public class ExampleService : IExampleService
 {
-    public void HandleExampleRequest()
+    public bool HandleExampleRequest()
     {
         Console.WriteLine("ExampleService: received request from frontend");
+        return true;
     }
 }
