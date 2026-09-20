@@ -10,8 +10,9 @@ public interface IExampleService
 
 public class ExampleService : IExampleService
 {
-    public void HandleExampleRequest()
+    public bool HandleExampleRequest()
     {
         Console.WriteLine("ExampleService: received request from frontend");
+        return true;
     }
 }

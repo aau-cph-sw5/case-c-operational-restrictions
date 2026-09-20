@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./App.css";
 import { ExampleComponent } from "./components/ExampleComponent";
 
@@ -55,6 +56,8 @@ function App() {
       </div>
 
       <ExampleComponent />
+
+      <p><Link to="/login">Go to login page</Link></p>
     </div>
   );
 }
