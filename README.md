@@ -51,27 +51,42 @@ docker compose down
 
 ### Option 2: Running Locally
 
-**Prerequisites:** .NET 10.0 SDK and Node.js 22+ / npm.
+**Prerequisites:** .NET 10.0 SDK and Node.js 22+ / pnpm.
 
-1. **Start the Backend:**
+ **1. Install Dependencies:**
    ```bash
-   cd Backend
-   dotnet run
+   pnpm install
    ```
-   *Runs on [http://localhost:8080](http://localhost:8080).*
 
-2. **Start the Frontend:**
+ **2. Start Backend & Frontend Concurrently:**
    ```bash
-   cd frontend
-   npm install
-   npm run dev
+   pnpm dev
    ```
-   *Runs on [http://localhost:5173](http://localhost:5173).*
+   
+   (Or run individually in separate terminals: cd Backend && dotnet run and pnpm --filter frontend dev)
+   
+   *Frontend runs on [http://localhost:5173](http://localhost:5173).*
+
+   *Backend runs on [http://localhost:8080](http://localhost:8080).*
+
+ **3. Format & Lint:**
+   ```bash
+   pnpm format    # Formats both backend (.NET) and frontend (Prettier)
+   pnpm lint      # Lints both backend (Roslyn analyzers) and frontend (ESLint)
+   ```
+
+ **4. Run Tests:**
+   ```bash
+   pnpm test           # Runs both backend (.NET) and frontend (Vitest) tests
+   pnpm test:backend   # Backend tests only (dotnet test)
+   pnpm test:frontend  # Frontend tests only (Vitest)
+   ```
 
 ## Layout
 
 ```
 Backend/       .NET 10 Web API (MVCS architecture, EF Core, PostgreSQL provider)
+Backend.Tests/ backend unit and integration test suite (xUnit)
 frontend/      React + Vite SPA with React Router
 contracts/     published interfaces other teams build against, versioned
 docs/adr/      architecture decision records
