@@ -68,6 +68,7 @@ docker compose down
    *Frontend runs on [http://localhost:5173](http://localhost:5173).*
 
    *Backend runs on [http://localhost:8080](http://localhost:8080).*
+   *Swagger UI (API documentation) is available at [http://localhost:8080/swagger](http://localhost:8080/swagger) when running in development.*
 
  **3. Format & Lint:**
    ```bash
