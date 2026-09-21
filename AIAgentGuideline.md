@@ -7,6 +7,7 @@
 - Mistral
 - ChatGPT
 - Claude
+- Copilot
 
 ## Architecture
 
@@ -33,4 +34,6 @@
 ## Boundaries
 
 **Ask First:** Before modifying existing documents in a major way
+**Ask First:** When unsure between approaches, explain both and let me choose
 **Never Do:** Modify code in ´src/´, edit config files, commit secrets
+**Never Do:** Edit the AIAgentGuideline.md
