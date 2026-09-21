@@ -9,6 +9,12 @@
 - Claude
 - Copilot
 
+## Usage Principles
+
+- Use AI as a development assistant, not as a replacement for critical thinking
+- Always review and validate AI-generated code before implementation
+- Maintain human oversight for all automated decisions
+
 ## Architecture
 
 - All backend code must follow the MVCS architecture
