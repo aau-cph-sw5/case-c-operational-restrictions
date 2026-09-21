@@ -45,6 +45,35 @@ public class JwtService
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
         return new MintedToken(accessToken, expiresAt);
     }
+
+    // Same manual validation SimpleForge's JwtService.ValidateInviteToken uses:
+    // run the token through the real signature/issuer/audience/lifetime checks
+    // instead of trusting anything read out of it, and hand back null on any failure.
+    public ClaimsPrincipal? ValidateToken(string token)
+    {
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = _options.Issuer,
+            ValidateAudience = true,
+            ValidAudience = _options.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+        try
+        {
+            return handler.ValidateToken(token, parameters, out _);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 public record MintedToken(string AccessToken, DateTime ExpiresAtUtc);

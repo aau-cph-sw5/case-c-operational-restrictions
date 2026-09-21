@@ -18,7 +18,7 @@ public class AuthController : ApiControllerBase
     }
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       /// <param name="request"></param>
       /// <returns></returns>
@@ -27,9 +27,20 @@ public class AuthController : ApiControllerBase
     public ActionResult<LoginResponseDto> Login(LoginRequestDto request)
     {
         var result = _authService.Login(request);
-        
+
         return result.Succeeded
             ? Ok(result.Response)
             : Unauthorized(new { error = "Invalid email or password." });
+    }
+
+
+    [HttpPost("check-token/{token}")]
+    [AllowAnonymous]
+    public ActionResult<UserDto> CheckValidityOfToken(string token)
+    {
+        var user = _authService.CheckValidityOfToken(token);
+        return user is not null
+            ? Ok(user)
+            : Unauthorized(new { error = "Invalid or expired token." });
     }
 }
