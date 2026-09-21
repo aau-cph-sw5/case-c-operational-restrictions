@@ -4,8 +4,10 @@
   "packageManager": "pnpm@12.4.2",
   "scripts": {
     "dev": "concurrently -n backend,frontend -c blue,green \"pnpm:dev:backend\" \"pnpm:dev:frontend\"",
-    "dev:backend": "dotnet run --project Backend --launch-profile http",
+    "dev:backend": "dotnet watch --project Backend --launch-profile http",
     "dev:frontend": "pnpm --filter frontend dev",
+    "docker:dev": "docker compose up --build",
+    "docker:down": "docker compose down",
     "build": "pnpm --filter frontend build",
     "format": "dotnet format CaseC.slnx && pnpm --filter frontend format",
     "format:check": "dotnet format --verify-no-changes CaseC.slnx && pnpm --filter frontend format:check",
