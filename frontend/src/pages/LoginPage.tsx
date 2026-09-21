@@ -1,6 +1,7 @@
 // PAGE:
 // Route-level screen component rendered by React Router for a specific URL
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 import type { LoginResponse } from '../types/loginResponse';
 
@@ -66,6 +67,7 @@ export function LoginPage() {
           <p><strong>Expires:</strong> {new Date(result.expiresAtUtc).toLocaleString()}</p>
           <p style={{ wordBreak: 'break-all' }}><strong>Token:</strong> {result.accessToken}</p>
           <p>Saved to localStorage under "accessToken".</p>
+          <p><Link to="/home">Continue to the app</Link></p>
         </div>
       )}
     </div>

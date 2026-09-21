@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
 
@@ -30,7 +31,7 @@ public class AuthService
             return LoginResult.Failure();
         }
 
-        
+
         if (!_passwordHasher.Verify(_placeholderUser.PasswordHash, request.Password))
         {
             return LoginResult.Failure();
@@ -46,8 +47,28 @@ public class AuthService
         });
     }
 
-    
-    // Midlertidigt mens vi ikke endnu har fået implementeret automapper
+
+    // Validates the token the same way SimpleForge's AuthService.CheckValidityOfToken
+    // does: run it through JwtService's real validation, then resolve the identity
+    // it names. There's no database yet, so "resolving the identity" just means
+    // checking it points at the one hardcoded placeholder user.
+    public UserDto? CheckValidityOfToken(string token)
+    {
+        var principal = _jwtService.ValidateToken(token);
+        if (principal is null)
+        {
+            return null;
+        }
+
+        var subject = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (!Guid.TryParse(subject, out var userId) || userId != _placeholderUser.Id)
+        {
+            return null;
+        }
+
+        return MapToDto(_placeholderUser);
+    }
+
     private static UserDto MapToDto(User user)
     {
         return new UserDto
