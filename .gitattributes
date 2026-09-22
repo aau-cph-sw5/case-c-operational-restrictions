@@ -1,0 +1,14 @@
+# Set default behavior to automatically normalize all text files to LF line endings on checkout
+* text=auto eol=lf
+
+# Common binary files (prevent Git from modifying line endings)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.dll binary
+*.exe binary
+*.woff binary
+*.woff2 binary
