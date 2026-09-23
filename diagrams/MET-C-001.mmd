@@ -19,7 +19,7 @@ stateDiagram
   PendingCancellation --> CancellationApproved:DOM approves and signs
   CancellationApproved --> OutOfForce:CRS removes Operational Restriction
   OutOfForce --> SignedCancel:Operators sign
-  SignedCancel --> Archived:All originals operators has signed
+  SignedCancel --> Archived:All original operators has signed
   Archived --> [*]
   CancelledRefused --> [*]
   DraftOR:Draft Operation Restriction
