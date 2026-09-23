@@ -42,3 +42,30 @@ jobs:
 
                 echo "Docker and Docker Compose installed successfully!"
 
+      - name: Install and setup Traefik as reverse proxy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+                # Update OS so Docker is accessible
+                sudo apt update && sudo apt upgrade -y
+                reboot
+
+                # Create external network for Traefik
+                docker network create traefik-net
+
+                 # Verify network installation for Traefik
+                echo "=== Checking network installation ==="
+                NETWORK=$(docker network ls | grep traefik-net)
+                if ! echo "$NETWORK" | grep -q "traefik-net"; then
+                echo "ERROR: Traefik network is not installed correctly."
+                exit 1
+                fi
+                echo "Traefik network: $NETWORK"
+
+                echo "Traefik network installed successfully!"
+
+                # Create directory for Traefik
+                mkdir -p /opt/stacks/traefik && cd /opt/stacks/traefik
