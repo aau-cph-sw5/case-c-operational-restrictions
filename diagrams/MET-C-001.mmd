@@ -1,0 +1,35 @@
+---
+config:
+  layout: dagre
+---
+stateDiagram
+  direction TB
+  [*] --> DraftOR
+  DraftOR --> PendingDOMApproval:Originator signs
+  PendingDOMApproval --> CancelledRefused:DOM refuses
+  PendingDOMApproval --> ReturnedForChanges:DOM requests changes
+  ReturnedForChanges --> DraftOR:Operational restriction is <br>returned to the originator
+  PendingDOMApproval --> Approved:DOM signs the operational restriction
+  Approved --> UnsignedImpl:CRS signs and implements <br>operational restriction in control room
+  UnsignedImpl --> SignedImpl:Operator signs
+  UnsignedImpl --> SignatureDeferred
+  SignatureDeferred --> SignedImpl:Operators signs late
+  SignedImpl --> PendingCancellation:Operational Restriction is resolved & tested / Originator signs cancellation
+  PendingCancellation --> SignedImpl:DOM requests changes
+  PendingCancellation --> CancellationApproved:DOM approves and signs
+  CancellationApproved --> OutOfForce:CRS removes Operational Restriction
+  OutOfForce --> SignedCancel:Operators sign
+  SignedCancel --> Archived:All original operators has signed
+  Archived --> [*]
+  CancelledRefused --> [*]
+  DraftOR:Draft Operation Restriction
+  PendingDOMApproval:Pending<br>DOM Approval
+  CancelledRefused:Operational restriction is discarded
+  ReturnedForChanges:Operational Restriction <br>returned for changes
+  UnsignedImpl:Operational restriction <br>lacking approvals from operators
+  SignedImpl:Operational restriction is active
+  SignatureDeferred:Deferred signatures
+  PendingCancellation:Operational Restriction is pending cancellation
+  CancellationApproved:Operational Restriction is approved for removal
+  OutOfForce:Operational Restriction is now out of force
+  SignedCancel:Signed operational restrictions
