@@ -1,0 +1,56 @@
+name: CD - Development
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'docker-compose.yml'
+      - 'Backend/**'
+      - 'frontend/**'
+      - 'traefik/**'
+      - '.github/workflows/cd-dev.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Get the newest code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Copy the necessary files to the server
+      - name: Copy files to server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+          # Files/folders you want to copy
+          source: "docker-compose.yml,Backend/,frontend/,traefik/"
+          
+          # Folder on the server where everything should be placed
+          target: "/home/${{ secrets.SERVER_USER }}/metro-dev"
+          strip_components: 0
+
+      # 3. Build and start the containers on the server
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ secrets.SERVER_USER }}/metro-dev
+
+            echo "Building and starting containers..."
+            docker compose down --remove-orphans || true
+            docker compose build --no-cache
+            docker compose up -d
+
+            echo "Cleaning up old images..."
+            docker image prune -f
+
+            echo "Development deployment finished!" 
