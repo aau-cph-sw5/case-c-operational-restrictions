@@ -3,7 +3,7 @@
 import { Route, Routes } from 'react-router-dom';
 import App from '../App';
 import { LoginPage } from '../pages/LoginPage';
-import { ProtectedRoute } from './ProtectedRoute';
+import { ProtectedRoute } from '../hooks/ProtectedRoute';
 
 export function AppRoutes() {
   return (
