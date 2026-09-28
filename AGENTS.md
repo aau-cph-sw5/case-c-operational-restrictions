@@ -26,7 +26,6 @@ Never Add classes in controllers or sevices unless told to do so.
 
 - All backend code must follow the MVCS architecture
 - Database: Postgres
-- Node.js
 
 ## Backend commands
 
@@ -78,6 +77,5 @@ Never Add classes in controllers or sevices unless told to do so.
 
 **Ask First:** Before modifying existing documents in a major way
 **Ask First:** When unsure between approaches, explain both and let me choose
-**Never Do:** edit config files or commit secrets
-**Never Do:** Edit the AIAgentGuideline.md
+
 
