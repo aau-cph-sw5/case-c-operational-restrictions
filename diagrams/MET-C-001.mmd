@@ -24,7 +24,7 @@ stateDiagram
   AwaitingOperatorSignatures --> AwaitingOperatorSignatures:Operator signs
   AwaitingOperatorSignatures --> OutOfForce:Operational restriction is out of force
   note right of AwaitingOperatorSignatures: n number of operators may need to sign.<br>The loop repeats until the operational restriction is out of force.
-  note right of AwaitingOperatorSignOut: Every operator who originally signed must also sign out.<br>The loop repeats until all original operators have signed out.
+  note right of AwaitingOperatorSignOut: Every operator who originally signed must also sign out.<br>The loop repeats until all original operators have signed out. If a operator have left the organistation, the betriebsleiter can overrule the need of his signature.
   DraftOR:Draft Operation Restriction
   PendingDOMApproval:Pending<br>DOM Approval
   CancelledRefused:Operational restriction is discarded
