@@ -82,6 +82,24 @@ docker compose down
    pnpm test:frontend  # Frontend tests only (Vitest)
    ```
 
+## Server and Autonomous Deployment
+
+Our CD pipeline pushes branch changes to a remote remote environment automatically, but requires a one time sequential setup for new instances.
+
+**1. Create a Linux Server**
+Provision a fresh, blank Linux server to host the application environments.
+
+**2. Set Up GitHub Secrets**
+The GitHub Actions runner requires credentials to access and configure the remote server. Add the following repository secrets:
+
+* `SERVER_HOST`: The IP address of your remote Linux server.
+* `SERVER_USER`: The Linux username used to execute commands on the machine.
+* `SSH_PRIVATE_KEY`: The SSH private key that has authorized access to the server.
+* `DOMAIN`: The base domain or subdomain (e.g., via DuckDNS) that Traefik will use for dynamic web routing.
+
+**3. Run the Server Bootstrap Workflow**
+You **must** run the "Server Bootstrap" GitHub Action (`bootstrap.yml`) *first*, before triggering any autonomous deployment workflows. This bootstrap script is entirely server-agnostic. It logs into the blank server to automatically install Docker, set up Docker Compose, configure the external networks, and deploy the global Traefik reverse proxy needed to route traffic to your future containers.
+
 ## Layout
 
 ```
