@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { useEffect, useState } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { authService } from "../services/authService";
 
 function useIsAuthenticated(): boolean | null {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -13,7 +13,7 @@ function useIsAuthenticated(): boolean | null {
       .then((result) => {
         if (!cancelled) setIsAuthenticated(result);
       })
-      .catch((error) => console.error('Session check failed', error));
+      .catch((error) => console.error("Session check failed", error));
 
     return () => {
       cancelled = true;

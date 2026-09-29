@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
 
@@ -26,7 +27,7 @@ public class AuthService
 
     public LoginResult Login(LoginRequestDto request)
     {
-        if (!string.Equals(request.Email.ToLower(), _placeholderUser.Email.ToLower()))
+        if (!string.Equals(request.Email, _placeholderUser.Email, StringComparison.OrdinalIgnoreCase))
         {
             return LoginResult.Failure();
         }

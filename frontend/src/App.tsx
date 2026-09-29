@@ -57,7 +57,9 @@ function App() {
 
       <ExampleComponent />
 
-      <p><Link to="/login">Go to login page</Link></p>
+      <p>
+        <Link to="/login">Go to login page</Link>
+      </p>
     </div>
   );
 }

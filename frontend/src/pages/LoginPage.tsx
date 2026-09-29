@@ -1,13 +1,13 @@
 // PAGE:
 // Route-level screen component rendered by React Router for a specific URL
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { authService } from '../services/authService';
-import type { LoginResponse } from '../types/loginResponse';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { authService } from "../services/authService";
+import type { LoginResponse } from "../types/loginResponse";
 
 export function LoginPage() {
-  const [email, setEmail] = useState('placeholder@example.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState("placeholder@example.com");
+  const [password, setPassword] = useState("Password123!");
   const [result, setResult] = useState<LoginResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export function LoginPage() {
     try {
       setResult(await authService.login({ email, password }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed.');
+      setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
       setLoading(false);
     }
@@ -32,7 +32,9 @@ export function LoginPage() {
       <h1>Login</h1>
 
       <form onSubmit={handleSubmit} className="backend-card">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+        >
           <label>
             Email
             <input
@@ -54,7 +56,7 @@ export function LoginPage() {
           </label>
 
           <button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Log in'}
+            {loading ? "Logging in..." : "Log in"}
           </button>
         </div>
       </form>
@@ -63,11 +65,21 @@ export function LoginPage() {
 
       {result && (
         <div className="backend-card success">
-          <p><strong>Logged in as:</strong> {result.user.name} ({result.user.email})</p>
-          <p><strong>Expires:</strong> {new Date(result.expiresAtUtc).toLocaleString()}</p>
-          <p style={{ wordBreak: 'break-all' }}><strong>Token:</strong> {result.accessToken}</p>
+          <p>
+            <strong>Logged in as:</strong> {result.user.name} (
+            {result.user.email})
+          </p>
+          <p>
+            <strong>Expires:</strong>{" "}
+            {new Date(result.expiresAtUtc).toLocaleString()}
+          </p>
+          <p style={{ wordBreak: "break-all" }}>
+            <strong>Token:</strong> {result.accessToken}
+          </p>
           <p>Saved to localStorage under "accessToken".</p>
-          <p><Link to="/home">Continue to the app</Link></p>
+          <p>
+            <Link to="/home">Continue to the app</Link>
+          </p>
         </div>
       )}
     </div>

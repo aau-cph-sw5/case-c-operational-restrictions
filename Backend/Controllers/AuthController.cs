@@ -1,5 +1,6 @@
 using Backend.Models.DTOs;
 using Backend.Services.Auth;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,11 +18,11 @@ public class AuthController : ApiControllerBase
         _authService = authService;
     }
 
-      /// <summary>
-      ///
-      /// </summary>
-      /// <param name="request"></param>
-      /// <returns></returns>
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     [HttpPost("login")]
     [AllowAnonymous]
     public ActionResult<LoginResponseDto> Login(LoginRequestDto request)

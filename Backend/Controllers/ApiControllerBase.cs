@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
@@ -13,9 +14,9 @@ public abstract class ApiControllerBase : ControllerBase
         {
             var subject = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             return Guid.TryParse(subject, out var id) ? id : Guid.Empty;
-            
+
         }
     }
 
- 
+
 }

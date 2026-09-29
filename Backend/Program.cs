@@ -1,7 +1,9 @@
 using System.Text;
+
 using Backend.Configuration;
 using Backend.Services;
 using Backend.Services.Auth;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
