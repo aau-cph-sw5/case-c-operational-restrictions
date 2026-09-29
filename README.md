@@ -99,6 +99,14 @@ The GitHub Actions runner requires credentials to access and configure the remot
 
 **3. Run the Server Bootstrap Workflow**
 You **must** run the "Server Bootstrap" GitHub Action (`bootstrap.yml`) *first*, before triggering any autonomous deployment workflows. This bootstrap script is entirely server-agnostic. It logs into the blank server to automatically install Docker, set up Docker Compose, configure the external networks, and deploy the global Traefik reverse proxy needed to route traffic to your future containers.
+**4. Example of autonomous deployment**
+Once the autonomous deployment workflows run, they will push the branch to the subdomain with the branch prefix, below is the current example, which might be deprecated;
+
+*Development branch runs on [http://dev.metro-operational-restrictions.duckdns.org](http://dev.metro-operational-restrictions.duckdns.org).*
+
+*Staging branch runs on  [http://staging.metro-operational-restrictions.duckdns.org](http://staging.metro-operational-restrictions.duckdns.org).*
+
+*Main branch runs on [http://main.metro-operational-restrictions.duckdns.org](http://main.metro-operational-restrictions.duckdns.org).*
 
 ## Layout
 
