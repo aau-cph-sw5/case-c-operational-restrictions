@@ -65,11 +65,25 @@ Never Add classes in controllers or sevices unless told to do so.
 
 - Authentication must use JWT.
 
-## Code Style
+## Backend Code Style
 
-- Use camelCase for variable and function names.
-- Use descriptive variable names and function names.
-- It must follow the standard conventions for the specified languages (c# and typescript)
+- Language: C#
+- Follow standard C#/.NET naming and coding conventions.
+- Use camelCase for local variables and parameters.
+- Use PascalCase for classes, methods, properties, and public members.
+- Use descriptive names for classes, methods, variables, and properties.
+- Follow standard C#/.NET conventions for async methods, exception handling, dependency injection, and nullable reference types.
+
+## Frontend Code Style
+
+- Language: TypeScript
+- Framework: React
+- Follow standard TypeScript/React naming and coding conventions.
+- Use camelCase for variables, functions, hooks, and object properties.
+- Use PascalCase for React components, classes, and types/interfaces where appropriate.
+- Use descriptive names for components, functions, variables, and types.
+- Follow standard React conventions for components, hooks, props, and state management.
+- Use TypeScript types rather than `any` where practical.
 
 ## Model Tone
 
