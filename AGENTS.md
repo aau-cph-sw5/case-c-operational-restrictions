@@ -24,8 +24,10 @@ Never Add classes in controllers or sevices unless told to do so.
 
 ## Backend
 
-- All backend code must follow the MVCS architecture
-- Database: Postgres
+- Database: PostgreSQL
+- Language: C#
+- Framework: ASP.NET Core / .NET
+- Architecture: MVCS
 
 
 ## Backend commands
@@ -36,8 +38,10 @@ Never Add classes in controllers or sevices unless told to do so.
 
 ## Frontend 
 
-- Typescript React 
-- tailwind CSS
+- Typescript
+- React
+- Tailwind CSS
+- Vite
 
 ## Frontend commands
 
