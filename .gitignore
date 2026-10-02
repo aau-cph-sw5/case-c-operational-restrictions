@@ -13,6 +13,7 @@
 # Node.js & Frontend Build Artifacts
 **/node_modules/
 **/dist/
+**/dev-dist/
 **/dist-ssr/
 *.local
 
