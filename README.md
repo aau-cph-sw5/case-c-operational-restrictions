@@ -104,3 +104,45 @@ fixtures/      synthetic test data. Never anything Metro supplied.
 ## Licence
 
 MIT, per Section 7 of the AAU and Metro Service collaboration framework.
+
+# Local database
+
+Postgres 16 runs in Docker. The backend creates the tables (EF Core
+migrations) on startup in Development. Dummy data is inserted with a pnpm script.
+
+## Start and seed
+```bash
+docker compose up -d
+pnpm db:seed
+```
+Wait a few seconds after `up` so the backend can create the tables.
+`pnpm db:seed` can be run repeatedly without creating duplicates.
+
+## Seeded users
+| Email                  | Role      |
+|------------------------|-----------|
+| admin@example.test     | Admin     |
+| clinician@example.test | Clinician |
+| scheduler@example.test | Scheduler |
+
+## Reset
+```bash
+docker compose down -v
+docker compose up -d
+pnpm db:seed
+```
+
+## Connect
+Host: `Host=localhost;Port=5432;Database=metro_dev;Username=metro;Password=metro_local_pw`
+Inspect: `docker compose exec db psql -U metro -d metro_dev`
+
+## Schema changes
+```bash
+cd Backend
+dotnet ef migrations add <Name>
+```
+Commit the files in `Backend/Migrations/`.
+
+## Troubleshooting
+- `relation "Users" does not exist`: the backend hasn't finished migrating. Wait and retry.
+- Port 5432 already allocated: stop the other Postgres, or map `"5433:5432"` in `docker-compose.yml` and use port 5433 on the host.
