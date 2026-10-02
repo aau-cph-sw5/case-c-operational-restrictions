@@ -95,6 +95,7 @@ The GitHub Actions runner requires credentials to access and configure the remot
 * `SERVER_HOST`: The IP address of your remote Linux server.
 * `SERVER_USER`: The Linux username used to execute commands on the machine.
 * `SSH_PRIVATE_KEY`: The SSH private key that has authorized access to the server.
+* `SERVER_FINGERPRINT`: The servers fingerprint identifies a server's public key, needed for secure connection.
 * `DOMAIN`: The base domain or subdomain (e.g., via DuckDNS) that Traefik will use for dynamic web routing.
 
 **3. Run the Server Bootstrap Workflow**
@@ -107,6 +108,25 @@ Once the autonomous deployment workflows run, they will push the branch to the s
 *Staging branch runs on  [http://staging.metro-operational-restrictions.duckdns.org](http://staging.metro-operational-restrictions.duckdns.org).*
 
 *Main branch runs on [http://main.metro-operational-restrictions.duckdns.org](http://main.metro-operational-restrictions.duckdns.org).*
+
+**4. SERVER_FINGERPRINT Debuging**
+
+The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command: 
+```bash 
+ssh-keyscan -p SERVER_IP 2>$null | ssh-keygen -lf -
+```
+Example 
+```bash 
+ssh-keyscan -p 150.230.151.67 2>$null | ssh-keygen -lf -
+```
+The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519). 
+
+You can also isntead do the following:
+1. Go to your repository **Settings** -> **Secrets and variables** -> **Actions**.
+2. Create a new **Variable**.
+3. Name it `ACTIONS_STEP_DEBUG` and set the value to `true`.
+
+With this enabled, the next time your pipeline runs and the SSH handshake fails, the `appleboy` plugin will print the verbose Go SSH logs directly into your GitHub Actions console. Allowing you to see which algorithm it's using.
 
 ## Layout
 

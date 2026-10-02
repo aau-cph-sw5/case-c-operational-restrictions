@@ -1,55 +1,11 @@
 name: Deploy Development
-
 on:
   push:
     branches: ["development"]
-
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-      # 1. Get the newest code from the repository
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. Copy the necessary files to the server 
-      - name: Copy files to server
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-          # Files/folders that we copy
-          source: "."
-
-          # Folder on the server where everything is placed
-          target: "/opt/stacks/dev"
-          
-      # 3. Build and start the containers on the server
-      - name: Deploy on server
-        uses: appleboy/ssh-action@v1.2.0
-        env:
-          DOMAIN: ${{ secrets.DOMAIN }}
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DOMAIN
-          script: |
-            cd /opt/stacks/dev
-
-            # Export environment variables for the Compose files to use
-            export BRANCH_NAME="dev"
-            export DOMAIN=$DOMAIN
-            
-            echo "Building and starting containers..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans || true
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml build
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-            echo "Cleaning up old image layers..."
-            docker image prune -f
-
-            echo "Development deployment finished!"
+  call-deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: dev
+      target_dir: /opt/stacks/dev
+    secrets: inherit

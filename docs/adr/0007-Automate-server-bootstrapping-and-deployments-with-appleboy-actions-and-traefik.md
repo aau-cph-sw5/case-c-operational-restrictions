@@ -18,7 +18,7 @@ We will automate server bootstrapping and continuous deployment pipelines using 
 ## Consequences
 
 **What becomes easier**
-- Deployments are fully hands off and triggered directly by branch pushes or pull requests.
+- Deployments are fully hands off and triggered directly by branch pushes.
 - Traefik automatically detects new Docker containers via the Docker socket and provisions routing dynamically based on environment variables, eliminating the need to update reverse proxy configurations manually.
 - The `appleboy/ssh-action` natively handles SSH socket connections and abstracts away the need to manually configure `~/.ssh/known_hosts`.
 - Explicit GitHub Action parameters for source and target directories prevent us from having to write raw Bash scripts over SSH pipelines, reducing syntax errors.
