@@ -1,0 +1,37 @@
+# .NET / C# Build Artifacts
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.db
+*.db-shm
+*.db-wal
+
+# Node.js & Frontend Build Artifacts
+**/node_modules/
+**/dist/
+**/dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*.local
+!.env.example
+
+# Operating System & IDE Files
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo

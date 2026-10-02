@@ -1,0 +1,23 @@
+{
+  "name": "case-c-operational-restrictions",
+  "private": true,
+  "packageManager": "pnpm@12.4.2",
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"pnpm:dev:backend\" \"pnpm:dev:frontend\"",
+    "dev:backend": "dotnet watch --project Backend --launch-profile http",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "docker:dev": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "build": "pnpm --filter frontend build",
+    "format": "dotnet format CaseC.slnx && pnpm --filter frontend format",
+    "format:check": "dotnet format --verify-no-changes CaseC.slnx && pnpm --filter frontend format:check",
+    "lint": "dotnet format --verify-no-changes CaseC.slnx && dotnet build CaseC.slnx --no-incremental /warnaserror && pnpm --filter frontend lint",
+    "test": "dotnet test && pnpm --filter frontend test:run",
+    "test:backend": "dotnet test",
+    "test:frontend": "pnpm --filter frontend test:run"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^6.0.3"
+  }
+}
