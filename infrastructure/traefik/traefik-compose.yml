@@ -1,0 +1,20 @@
+services:
+  traefik:
+    image: traefik:v3.7.13
+    container_name: global-traefik
+    restart: always
+    command:
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik-net
+
+networks:
+  traefik-net:
+    external: true

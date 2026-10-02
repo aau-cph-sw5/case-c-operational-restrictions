@@ -18,7 +18,7 @@ CMD ["dotnet", "watch", "--project", "/app/Backend.csproj", "run", "--launch-pro
 
 # Stage 2: Build release
 FROM dev AS build
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish Backend.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 3: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime

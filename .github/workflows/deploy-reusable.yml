@@ -1,0 +1,57 @@
+name: Reusable Deployment
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      target_dir:
+        required: true
+        type: string
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4  
+        
+        # 1. Copy the necessary files to the server
+      - uses: actions/checkout@v4
+      - name: Copy files
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
+
+          # Files/folders that we copy
+          source: "."
+
+          # Folder on the server where everything is placed
+          target: ${{ inputs.target_dir }}
+
+      # 2. Build and start the containers on the server
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DOMAIN: ${{ secrets.DOMAIN }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
+          envs: DOMAIN
+          script: |
+            cd ${{ inputs.target_dir }}
+
+            export BRANCH_NAME="${{ inputs.environment }}"
+            export DOMAIN=$DOMAIN
+
+            echo "Building and starting containers for ${{ inputs.environment }}..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans || true
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+            docker image prune -f
+            echo "${{ inputs.environment }} deployment finished!"

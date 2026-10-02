@@ -83,6 +83,53 @@ docker compose down
    pnpm test:frontend  # Frontend tests only (Vitest)
    ```
 
+## Server and Autonomous Deployment
+
+Our CD pipeline pushes branch changes to a remote remote environment automatically, but requires a one time sequential setup for new instances.
+
+**1. Create a Linux Server**
+Provision a fresh, blank Linux server to host the application environments.
+
+**2. Set Up GitHub Secrets**
+The GitHub Actions runner requires credentials to access and configure the remote server. Add the following repository secrets:
+
+* `SERVER_HOST`: The IP address of your remote Linux server.
+* `SERVER_USER`: The Linux username used to execute commands on the machine.
+* `SSH_PRIVATE_KEY`: The SSH private key that has authorized access to the server.
+* `SERVER_FINGERPRINT`: The servers fingerprint identifies a server's public key, needed for secure connection.
+* `DOMAIN`: The base domain or subdomain (e.g., via DuckDNS) that Traefik will use for dynamic web routing.
+
+**3. Run the Server Bootstrap Workflow**
+You **must** run the "Server Bootstrap" GitHub Action (`bootstrap.yml`) *first*, before triggering any autonomous deployment workflows. This bootstrap script is entirely server-agnostic. It logs into the blank server to automatically install Docker, set up Docker Compose, configure the external networks, and deploy the global Traefik reverse proxy needed to route traffic to your future containers.
+**4. Example of autonomous deployment**
+Once the autonomous deployment workflows run, they will push the branch to the subdomain with the branch prefix, below is the current example, which might be deprecated;
+
+*Development branch runs on [http://dev.metro-operational-restrictions.duckdns.org](http://dev.metro-operational-restrictions.duckdns.org).*
+
+*Staging branch runs on  [http://staging.metro-operational-restrictions.duckdns.org](http://staging.metro-operational-restrictions.duckdns.org).*
+
+*Main branch runs on [http://main.metro-operational-restrictions.duckdns.org](http://main.metro-operational-restrictions.duckdns.org).*
+
+**4. SERVER_FINGERPRINT Debuging**
+
+The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD: 
+```bash 
+ssh-keyscan -p 22 SERVER_IP 2>nul | ssh-keygen -lf -
+```
+Example 
+```bash 
+ssh-keyscan -p 22 150.230.151.68 2>nul | ssh-keygen -lf -
+
+```
+The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519). 
+
+You can also isntead do the following:
+1. Go to your repository **Settings** -> **Secrets and variables** -> **Actions**.
+2. Create a new **Variable**.
+3. Name it `ACTIONS_STEP_DEBUG` and set the value to `true`.
+
+With this enabled, the next time your pipeline runs and the SSH handshake fails, the `appleboy` plugin will print the verbose Go SSH logs directly into your GitHub Actions console. Allowing you to see which algorithm it's using.
+
 ## Layout
 
 ```
