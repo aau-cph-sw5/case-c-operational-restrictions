@@ -111,13 +111,14 @@ Once the autonomous deployment workflows run, they will push the branch to the s
 
 **4. SERVER_FINGERPRINT Debuging**
 
-The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command: 
+The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD: 
 ```bash 
-ssh-keyscan -p SERVER_IP 2>$null | ssh-keygen -lf -
+ssh-keyscan -p 22 SERVER_IP 2>nul | ssh-keygen -lf -
 ```
 Example 
 ```bash 
-ssh-keyscan -p 150.230.151.67 2>$null | ssh-keygen -lf -
+ssh-keyscan -p 22 150.230.151.68 2>nul | ssh-keygen -lf -
+
 ```
 The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519). 
 
