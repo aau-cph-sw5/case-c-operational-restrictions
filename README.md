@@ -133,17 +133,24 @@ docker compose up -d
 pnpm db:seed
 ```
 
-## Connect
-Host: `Host=localhost;Port=5432;Database=metro_dev;Username=metro;Password=metro_local_pw`
-Inspect: `docker compose exec db psql -U metro -d metro_dev`
+### Connect
+Connection string (from your host):
+`Host=localhost;Port=5432;Database=metro_dev;Username=metro;Password=metro_local_pw`
 
-## Schema changes
+Inspect the data:
+```bash
+docker compose exec db psql -U metro -d metro_dev
+```
+
+### Schema changes
 ```bash
 cd Backend
-dotnet ef migrations add <Name>
+Jwt__SigningKey=dev-only-key-at-least-32-characters-long dotnet ef migrations add MigrationName
 ```
-Commit the files in `Backend/Migrations/`.
+Replace `MigrationName` with a short description of the change (e.g. `AddOperatingRooms`).
+The signing key is a dummy value, needed because `Program.cs` requires it at startup.
+Commit the generated files in `Backend/Migrations/`.
 
-## Troubleshooting
+### Troubleshooting
 - `relation "Users" does not exist`: the backend hasn't finished migrating. Wait and retry.
 - Port 5432 already allocated: stop the other Postgres, or map `"5433:5432"` in `docker-compose.yml` and use port 5433 on the host.
