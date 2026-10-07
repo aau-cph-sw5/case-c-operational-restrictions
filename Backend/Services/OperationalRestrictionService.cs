@@ -1,8 +1,8 @@
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.DTOs;
-using Backend.Models.Entities;
 using Backend.Models.Enum;
+using Backend.Models.Requests;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -56,10 +56,3 @@ public class OperationalRestrictionService(
   }
 }
 
-public record UpdateByIdRequest(
-  Guid Id,
-  Guid EditedBy,
-  RestrictionState? State,
-  DateTime? StartDate,
-  DateTime? EndDate
-);
