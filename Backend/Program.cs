@@ -1,3 +1,6 @@
+using System.Reflection;
+using Backend.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 using Backend.Configuration;
@@ -13,6 +16,10 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IExampleService, ExampleService>();
+
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<PasswordHasher>();
@@ -87,5 +94,15 @@ app.MapGet("/api/hello", () => new
     message = "Hello from .NET 10 Web API!",
     timestamp = DateTime.UtcNow
 });
+
+
+// Apply EF migrations (Development only, and not while EF tools are running)
+if (app.Environment.IsDevelopment() &&
+    Assembly.GetEntryAssembly()?.GetName().Name != "ef")
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
+
 
 app.Run();

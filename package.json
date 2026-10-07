@@ -8,6 +8,7 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "docker:dev": "docker compose up --build",
     "docker:down": "docker compose down",
+    "db:seed": "docker compose exec -T db psql -U metro -d metro_dev -v ON_ERROR_STOP=1 < db/seed.sql",
     "build": "pnpm --filter frontend build",
     "format": "dotnet format CaseC.slnx && pnpm --filter frontend format",
     "format:check": "dotnet format --verify-no-changes CaseC.slnx && pnpm --filter frontend format:check",

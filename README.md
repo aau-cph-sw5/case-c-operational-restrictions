@@ -149,6 +149,62 @@ fixtures/      synthetic test data. Never anything Metro supplied.
 
 > Record here which assistants this team used and for what, per [the semester policy](https://github.com/aau-cph-sw5/semester-docs/blob/main/docs/11-ai-use.md). Two lines is enough.
 
+
+## Local database
+
+Postgres 16 runs in Docker. The backend creates the tables (EF Core
+migrations) on startup in Development. Dummy data is inserted with a pnpm script.
+
+### Start and seed
+```bash
+docker compose up -d
+pnpm db:seed
+```
+Wait a few seconds after `up` so the backend can create the tables.
+`pnpm db:seed` can be run repeatedly without creating duplicates.
+
+### Seeded users
+
+| Name              | Email                    | Role       |
+|-------------------|--------------------------|------------|
+| Olivia Originator | originator@example.test  | Originator |
+| Dan Dom           | dom@example.test         | Dom        |
+| Oscar Operator    | operator@example.test    | Operator   |
+
+
+Seed users use a placeholder password hash and cannot log in yet.
+
+### Reset
+```bash
+docker compose down -v
+docker compose up -d
+pnpm db:seed
+```
+
+### Connect
+`Host=localhost;Port=5432;Database=metro_dev;Username=metro;Password=metro_local_pw`
+
+Inspect the data:
+```bash
+docker compose exec db psql -U metro -d metro_dev
+```
+
+### Schema changes
+```bash
+cd Backend
+Jwt__SigningKey=dev-only-key-at-least-32-characters-long dotnet ef migrations add MigrationName
+```
+Replace `MigrationName` with a short description of the change.
+The signing key is a dummy value needed because `Program.cs` requires it at startup.
+Commit the generated files in `Backend/Migrations/`.
+
+### Troubleshooting
+- `relation "Users" does not exist`: the backend hasn't finished migrating. Wait and retry.
+- Port 5432 already allocated: stop the other Postgres, or map `"5433:5432"` in `docker-compose.yml` and use port 5433 on the host.
+
+
 ## Licence
 
 MIT, per Section 7 of the AAU and Metro Service collaboration framework.
+
+
