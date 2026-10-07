@@ -1,0 +1,40 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.backend-card {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  max-width: 400px;
+  width: 100%;
+}
+
+.backend-card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.success {
+  color: #15803d;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error {
+  color: #b91c1c;
+}
