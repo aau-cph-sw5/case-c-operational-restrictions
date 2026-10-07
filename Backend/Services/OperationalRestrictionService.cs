@@ -8,8 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
-
-
 public class OperationalRestrictionService(
   AppDbContext appDbContext
 ) : IOperationalRestrictionService
@@ -35,19 +33,19 @@ public class OperationalRestrictionService(
     
     if (request.State != null)
     {
-      originalRestriction.State = (RestrictionState)request.State;
+      originalRestriction.State = request.State.Value;
     }
     if (request.StartDate != null)
     {
-      originalRestriction.StartDate = (DateTime)request.StartDate;
+      originalRestriction.StartDate = request.StartDate.Value;
     }
     if (request.EndDate != null)
     {
-      originalRestriction.EndDate = (DateTime)request.EndDate;
+      originalRestriction.EndDate = request.EndDate.Value;
     }
 
     originalRestriction.Id = Guid.NewGuid();
-    originalRestriction.CreatedBy = (Guid)request.EditedBy;
+    originalRestriction.CreatedBy = request.EditedBy;
 
     _appDbContext.Add(originalRestriction);
     await _appDbContext.SaveChangesAsync();
