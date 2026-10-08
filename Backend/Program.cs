@@ -1,15 +1,22 @@
 using System.Text;
 
 using Backend.Configuration;
+using Backend.Data;
 using Backend.Services;
 using Backend.Services.Auth;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    ));
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IExampleService, ExampleService>();

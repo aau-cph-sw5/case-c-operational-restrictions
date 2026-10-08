@@ -36,17 +36,19 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           DOMAIN: ${{ secrets.DOMAIN }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
-          envs: DOMAIN
+          envs: DOMAIN,POSTGRES_PASSWORD
           script: |
             cd ${{ inputs.target_dir }}
 
             export BRANCH_NAME="${{ inputs.environment }}"
             export DOMAIN=$DOMAIN
+            export POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 
             echo "Building and starting containers for ${{ inputs.environment }}..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans || true
