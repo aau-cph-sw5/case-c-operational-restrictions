@@ -98,6 +98,8 @@ The GitHub Actions runner requires credentials to access and configure the remot
 * `SSH_PRIVATE_KEY`: The SSH private key that has authorized access to the server.
 * `SERVER_FINGERPRINT`: The servers fingerprint identifies a server's public key, needed for secure connection.
 * `DOMAIN`: The base domain or subdomain (e.g., via DuckDNS) that Traefik will use for dynamic web routing.
+* `ACME_EMAIL`: The email address used for Let's Encrypt ACME registration and SSL/TLS certificate renewal notifications.
+* `JWT_SIGNING_KEY`: A secure random string (minimum 32 characters) used by the ASP.NET Core backend to sign and validate JWT authentication tokens.
 
 **3. Run the Server Bootstrap Workflow**
 You **must** run the "Server Bootstrap" GitHub Action (`bootstrap.yml`) *first*, before triggering any autonomous deployment workflows. This bootstrap script is entirely server-agnostic. It logs into the blank server to automatically install Docker, set up Docker Compose, configure the external networks, and deploy the global Traefik reverse proxy needed to route traffic to your future containers.

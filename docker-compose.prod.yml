@@ -7,9 +7,12 @@ services:
     volumes: !reset [] # Removes local source code mounts from base file
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - Jwt__SigningKey=${JWT_SIGNING_KEY}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend-${BRANCH_NAME:-dev}.rule=Host(`api-${BRANCH_NAME:-dev}.${DOMAIN}`)"
+      - "traefik.http.routers.backend-${BRANCH_NAME:-dev}.entrypoints=websecure"
+      - "traefik.http.routers.backend-${BRANCH_NAME:-dev}.tls.certresolver=myresolver"
       # Routes internal traffic directly to the container's 8080 port
       - "traefik.http.services.backend-${BRANCH_NAME:-dev}.loadbalancer.server.port=8080"
     networks:
@@ -24,6 +27,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.rule=Host(`${BRANCH_NAME:-dev}.${DOMAIN}`)"
+      - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.entrypoints=websecure"
+      - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.tls.certresolver=myresolver"
       # Routes internal traffic to the Nginx port
       - "traefik.http.services.frontend-${BRANCH_NAME:-dev}.loadbalancer.server.port=80"
     networks:

@@ -70,10 +70,14 @@ jobs:
                 fi
                 echo "Traefik network: $NETWORK"
 
-                echo "Traefik network installed successfully!"
-
-                # Create directory with corrct premissions 
+                # Create directory with correct permissions 
                 sudo mkdir -p /opt/stacks/traefik
+                
+                # Create acme.json and set strict Let's Encrypt permissions
+                sudo touch /opt/stacks/traefik/acme.json
+                sudo chmod 600 /opt/stacks/traefik/acme.json
+                
+                # Ensure correct ownership
                 sudo chown -R $USER:$USER /opt/stacks
                 
       - name: Deploy Traefik Compose File
@@ -89,12 +93,19 @@ jobs:
 
       - name: Start Traefik reverse proxy
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          ACME_EMAIL_SECRET: ${{ secrets.ACME_EMAIL }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
+          envs: ACME_EMAIL_SECRET
           script: |
             cd /opt/stacks/traefik
+            
+            # Write the email secret to a .env file for docker compose to consume
+            echo "ACME_EMAIL=$ACME_EMAIL_SECRET" > .env
+            
             docker compose -f traefik-compose.yml up -d
-            echo "Traefik proxy is now running!"  
+            echo "Traefik proxy is now running!"
