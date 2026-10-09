@@ -6,4 +6,7 @@ namespace Backend.Services;
 public interface IOperationalRestrictionService
 {
   Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request);
+
+  Task<OperationalRestrictionDto> GetByIdAsync(Guid id);
+  Task<List<OperationalRestrictionDto>> GetAllAsync();
 }

@@ -42,6 +42,35 @@ public class OperationalRestrictionService(
     return OperationalRestrictionDto.FromDalEntity(restriction);
   }
 
+/// <summary>
+/// Retrieves an operational restriction by its ID. Throws an exception if not found.
+/// </summary>
+  public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id)
+  {
+    var restriction = await _appDbContext.OperationalRestrictions
+      .AsNoTracking()
+      .FirstOrDefaultAsync(x => x.Id == id);
+
+    if (restriction == null)
+      throw new OperationalRestrictionNotFoundException(id);
+    
+    return OperationalRestrictionDto.FromDalEntity(restriction);
+  }
+
+/// <summary>
+/// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
+/// </summary>
+  public async Task<List<OperationalRestrictionDto>> GetAllAsync()
+  {
+    var restrictions = await _appDbContext.OperationalRestrictions
+      .AsNoTracking()
+      .ToListAsync();
+
+    return restrictions
+      .Select(OperationalRestrictionDto.FromDalEntity)
+      .ToList();
+  }
+
   /// <summary>
   /// Makes a clone of a previous operational restriction with the fields from the request.
   /// </summary>
