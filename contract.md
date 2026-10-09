@@ -73,6 +73,23 @@ Information that concerns multiple groups is communicated through a shared chann
 
 All meetings and Scrum events are agreed upon jointly and are expected to be attended. In case of absence, notice should be given as early as possible to the relevant group. If an absence affects a deadline or another group's work, this must be communicated immediately.
 
+### Meeting Conduct
+
+- Phones are put away during meetings; they may only be used for tasks relevant to the meeting.
+- Everyone arrives on time and prepared, having read relevant material (e.g., the backlog item, review comments, or agenda) beforehand.
+- Everyone participates actively: questions are asked when something is unclear, and relevant input is shared.
+- Laptops are only used for tasks relevant to the meeting (e.g., taking notes, demonstrating work, or looking up backlog items).
+- Discussions stay on topic; longer side discussions are taken offline.
+
+### Meeting Roles
+
+For each meeting, the following roles are planned in advance where relevant:
+
+- **Scrum Master:** One person plans and facilitates the meeting, keeps it on track and on time, and makes sure the agenda is covered.
+- **Note taker:** One person takes notes of decisions, agreements, and action items, and shares them with the relevant group(s) afterwards.
+
+The roles rotate between group members. Other roles (e.g., timekeeper or presenter) can be appointed as needed.
+
 ## Conflict Resolution
 
 Problems should be addressed as early as possible, initially with the people involved. If the problem cannot be resolved, the relevant group members are involved, followed by the relevant members across the groups.
