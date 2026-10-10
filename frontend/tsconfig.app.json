@@ -5,7 +5,9 @@
     "lib": ["ES2023", "DOM"],
     "module": "esnext",
     "types": [
+      "node",
       "vite/client",
+      "vite-plugin-pwa/client",
       "vitest/globals",
       "@testing-library/jest-dom/vitest"
     ],
