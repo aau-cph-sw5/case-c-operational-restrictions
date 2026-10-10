@@ -1,3 +1,5 @@
+using Backend.Models.Enum;
+
 namespace Backend.Models.Entities;
 
 // MODEL - ENTITY (MVCS):
@@ -11,4 +13,10 @@ public class User
     public string Email { get; set; } = string.Empty;
 
     public string PasswordHash { get; set; } = string.Empty;
+
+    public UserRole Role { get; set; }
+
+    public UserWorkingStatus  WorkingStatus { get; set; }
+
+    public bool InCharge { get; set; }
 }
