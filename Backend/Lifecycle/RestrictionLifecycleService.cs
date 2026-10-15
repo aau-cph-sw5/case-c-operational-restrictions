@@ -35,4 +35,27 @@ public sealed class RestrictionLifecycleService
             }
         }
     }
+
+    public void EnsureCanTransition(CreateRestrictionDto data)
+    {
+        var transition =
+            RestrictionLifecycle.Transitions[
+                RestrictionAction.CreateDraft];
+
+        foreach (var guardName in transition.Guards)
+        {
+            if (!_guards.TryGetValue(guardName, out var guard))
+            {
+                throw new InvalidOperationException(
+                    $"Lifecycle guard '{guardName}' is not registered.");
+            }
+
+            if (!guard.IsSatisfied(data))
+            {
+                throw new InvalidOperationException(
+                    $"Transition '{transition.Action}' refused: " +
+                    $"guard '{guardName}' failed.");
+            }
+        }
+    }
 }

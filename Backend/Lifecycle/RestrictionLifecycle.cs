@@ -4,7 +4,11 @@ namespace Backend.Lifecycle;
 
 public enum RestrictionAction
 {
-    CreateDraft
+    CreateDraft,
+    OriginatorStartCancellation,
+    DOMApproveCancellation,
+    ControlRoomCancellation,
+    OperatorsArchive
 }
 
 public sealed record RestrictionTransition(
@@ -27,6 +31,44 @@ public static class RestrictionLifecycle
                 Guards: new[]
                 {
                     "CreationDataIsValid"
-                })
+                }),
+            
+            // missing transitions from draft to active
+
+            [RestrictionAction.OriginatorStartCancellation] = new(
+                RestrictionAction.OriginatorStartCancellation,
+                From: State.Active,
+                To:   State.PendingCancellation,
+                Guards: new[]
+                {
+                    "OriginatorSignatureFound"
+                }),
+            
+            [RestrictionAction.DOMApproveCancellation] = new(
+                RestrictionAction.DOMApproveCancellation,
+                From: State.PendingCancellation,
+                To:   State.OutOfForce,
+                Guards: new[]
+                {
+                    "DOMSignatureFound"
+                }),
+
+            [RestrictionAction.ControlRoomCancellation] = new(
+                RestrictionAction.ControlRoomCancellation,
+                From: State.OutOfForce,
+                To:   State.AwaitingOperatorSignOut,
+                Guards: new[]
+                {
+                    "ControlRoomSignatureFound"
+                }),
+            
+            [RestrictionAction.OperatorsArchive] = new(
+                RestrictionAction.OperatorsArchive,
+                From: State.AwaitingOperatorSignOut,
+                To:   State.Archived,
+                Guards: new[]
+                {
+                    "OperatorSignoutsFound"
+                }),
         };
 }
