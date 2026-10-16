@@ -16,7 +16,7 @@ public sealed class RestrictionLifecycleService
         _guards = guards.ToDictionary(g => g.Name);
     }
 
-    public void EnsureCanCreate(CreateRestrictionDto data)
+    public void EnsureCanCreate(OperationalRestriction data)
     {
         var transition =
             RestrictionLifecycle.Transitions[
@@ -39,30 +39,25 @@ public sealed class RestrictionLifecycleService
         }
     }
 
-    public void EnsureCanTransition(CreateRestrictionDto data)
+    public void EnsureCanTransition(OperationalRestriction data)
     {
-        var transition =
-            RestrictionLifecycle.Transitions[
-                RestrictionAction.CreateDraft];
-
-        /*
-        var transition = data.RestrictionState switch
+        var transition = data.State switch
         {
-            State.Active => RestrictionLifecycle.Transitions[
+            RestrictionState.Active => RestrictionLifecycle.Transitions[
                 RestrictionAction.OriginatorStartCancellation],
 
-            State.PendingCancellation => RestrictionLifecycle.Transitions[
+            RestrictionState.PendingCancellation => RestrictionLifecycle.Transitions[
                 RestrictionAction.DOMApproveCancellation],
 
-            State.OutOfForce => RestrictionLifecycle.Transitions[
+            RestrictionState.OutOfForce => RestrictionLifecycle.Transitions[
                 RestrictionAction.ControlRoomCancellation],
 
-            State.AwaitingOperatorSignOut => RestrictionLifecycle.Transitions[
+            RestrictionState.AwaitingOperatorSignOut => RestrictionLifecycle.Transitions[
                 RestrictionAction.OperatorsArchive],
 
             _ => throw new InvalidOperationException(
-                $"No matching transition found for state: {data.RestrictionState}")
-        }; */
+                $"No matching transition found for state: {data.State}")
+        };
 
 
         foreach (var guardName in transition.Guards)
