@@ -1,4 +1,7 @@
 using Backend.Models.DTOs;
+using Backend.Models.Entities;
+using Backend.Models.Enums;
+
 using System.Linq;
 
 namespace Backend.Lifecycle;
@@ -41,6 +44,26 @@ public sealed class RestrictionLifecycleService
         var transition =
             RestrictionLifecycle.Transitions[
                 RestrictionAction.CreateDraft];
+
+        /*
+        var transition = data.RestrictionState switch
+        {
+            State.Active => RestrictionLifecycle.Transitions[
+                RestrictionAction.OriginatorStartCancellation],
+
+            State.PendingCancellation => RestrictionLifecycle.Transitions[
+                RestrictionAction.DOMApproveCancellation],
+
+            State.OutOfForce => RestrictionLifecycle.Transitions[
+                RestrictionAction.ControlRoomCancellation],
+
+            State.AwaitingOperatorSignOut => RestrictionLifecycle.Transitions[
+                RestrictionAction.OperatorsArchive],
+
+            _ => throw new InvalidOperationException(
+                $"No matching transition found for state: {data.RestrictionState}")
+        }; */
+
 
         foreach (var guardName in transition.Guards)
         {
