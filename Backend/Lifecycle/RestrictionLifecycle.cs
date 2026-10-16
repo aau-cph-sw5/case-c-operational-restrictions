@@ -37,8 +37,8 @@ public static class RestrictionLifecycle
 
             [RestrictionAction.OriginatorStartCancellation] = new(
                 RestrictionAction.OriginatorStartCancellation,
-                From: State.Active,
-                To:   State.PendingCancellation,
+                From: RestrictionState.Active,
+                To:   RestrictionState.PendingCancellation,
                 Guards: new[]
                 {
                     "OriginatorSignatureFound"
@@ -46,8 +46,8 @@ public static class RestrictionLifecycle
             
             [RestrictionAction.DOMApproveCancellation] = new(
                 RestrictionAction.DOMApproveCancellation,
-                From: State.PendingCancellation,
-                To:   State.OutOfForce,
+                From: RestrictionState.PendingCancellation,
+                To:   RestrictionState.OutOfForce,
                 Guards: new[]
                 {
                     "DOMSignatureFound"
@@ -55,8 +55,8 @@ public static class RestrictionLifecycle
 
             [RestrictionAction.ControlRoomCancellation] = new(
                 RestrictionAction.ControlRoomCancellation,
-                From: State.OutOfForce,
-                To:   State.AwaitingOperatorSignOut,
+                From: RestrictionState.OutOfForce,
+                To:   RestrictionState.AwaitingOperatorSignOut,
                 Guards: new[]
                 {
                     "ControlRoomSignatureFound"
@@ -64,8 +64,8 @@ public static class RestrictionLifecycle
             
             [RestrictionAction.OperatorsArchive] = new(
                 RestrictionAction.OperatorsArchive,
-                From: State.AwaitingOperatorSignOut,
-                To:   State.Archived,
+                From: RestrictionState.AwaitingOperatorSignOut,
+                To:   RestrictionState.Archived,
                 Guards: new[]
                 {
                     "OperatorSignoutsFound"
