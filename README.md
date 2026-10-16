@@ -188,7 +188,7 @@ pnpm db:seed
 
 Inspect the data:
 ```bash
-docker compose exec postgress psql -U metro -d metro
+docker compose exec postgres psql -U metro -d metro
 ``` 
 
 ### Schema changes
