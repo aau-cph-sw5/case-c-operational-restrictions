@@ -11,5 +11,11 @@ public class OperationalRestrictionDto
 
     public RestrictionState State { get; set; } = RestrictionState.Empty;
 
-    public String RestrionDescription { get; set; } = string.Empty;
+    public String RestrictionDescription { get; set; } = string.Empty;
+
+    public Guid OriginatorUserId { get; set; }
+  
+    public DateTime StartDate { get; set; } = DateTime.Now;
+    
+    public DateTime? EndDate { get; set; } = DateTime.Now;
 }

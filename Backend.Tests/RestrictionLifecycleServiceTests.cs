@@ -13,7 +13,13 @@ public class RestrictionLifecycleServiceTests
         _sut = new RestrictionLifecycleService(
             new IRestrictionGuard[]
             {
-                new CreationDataIsValidGuard()
+                new StartDateIsFoundGuard(),
+                new OperationalRestictionIdIsFound(),
+                new DescriptionTextIsFound(),
+                new OriginatorSignatureIsFound(),
+                new DomSignatureIsFound(),
+                new CRSignatureIsFound(),
+                new OperatorsAreAssigned()
             });
     }
 
@@ -21,7 +27,7 @@ public class RestrictionLifecycleServiceTests
     public void EnsureCanCreateWithValidDataDoesNotThrow()
     {
         // Arrange
-        var data = new CreateRestrictionDto
+        var data = new OperationalRestrictionDto
         {
             OriginatorUserId = Guid.NewGuid(),
             RestrictionDescription = "Maintenance work"
@@ -35,7 +41,7 @@ public class RestrictionLifecycleServiceTests
     public void EnsureCanCreateWithInvalidDataIdentifiesFailedGuard()
     {
         // Arrange
-        var data = new CreateRestrictionDto
+        var data = new OperationalRestrictionDto
         {
             OriginatorUserId = Guid.NewGuid(),
             RestrictionDescription = ""

@@ -9,11 +9,11 @@ namespace Backend.Services;
 //TODO: This interface should be seperated from the class
 public interface IOperationalRestrictionService
 {
-    OperationalRestriction CreateRestriction(CreateRestrictionDto data);
+    OperationalRestriction CreateRestriction(OperationalRestrictionDto data);
 
     OperationalRestriction EditRestriction(
         Guid id,
-        CreateRestrictionDto updateRestrictionDto);
+        OperationalRestrictionDto updateRestrictionDto);
 
     OperationalRestriction ApproveRestriction(
         Guid id,
@@ -50,7 +50,7 @@ public class OperationalRestrictionService
     }
 
     public OperationalRestriction CreateRestriction(
-        CreateRestrictionDto data)
+        OperationalRestrictionDto data)
     {
         _lifecycleService.EnsureCanCreate(data);
 
@@ -73,7 +73,7 @@ public class OperationalRestrictionService
 
     public OperationalRestriction EditRestriction(
         Guid id,
-        CreateRestrictionDto updateRestrictionDto)
+        OperationalRestrictionDto updateRestrictionDto)
     {
         var restriction = GetRestrictionOrThrow(id);
 
