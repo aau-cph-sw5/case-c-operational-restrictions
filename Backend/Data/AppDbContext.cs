@@ -12,4 +12,6 @@ public class AppDbContext : DbContext
     {
     }
     public DbSet<OperationalRestriction> OperationalRestrictions => Set<OperationalRestriction>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
 }
