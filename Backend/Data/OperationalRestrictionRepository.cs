@@ -1,6 +1,6 @@
 using Backend.Models.Entities;
-using Backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Backend.Data;
 
@@ -13,30 +13,34 @@ public class OperationalRestrictionRepository : IOperationalRestrictionRepositor
         _context = context;
     }
 
-    public void Add(OperationalRestriction restriction)
+    public async Task AddAsync(OperationalRestriction restriction)
     {
-        _context.OperationalRestrictions.Add(restriction);
-        _context.SaveChanges();
+        await _context.OperationalRestrictions.AddAsync(restriction);
+        await _context.SaveChangesAsync();
     }
 
-    public void Update(OperationalRestriction restriction)
+    public async Task UpdateAsync(OperationalRestriction restriction)
     {
         _context.OperationalRestrictions.Update(restriction);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    public OperationalRestriction? GetById(Guid id)
+    public async Task<OperationalRestriction?> GetByIdAsync(Guid id)
     {
-        return _context.OperationalRestrictions.FirstOrDefault(r => r.RestrictionId == id);
+        return await _context.OperationalRestrictions
+            .FirstOrDefaultAsync(r => r.RestrictionId == id);
     }
 
-    public List<OperationalRestriction> GetAll(Func<OperationalRestriction, bool> predicate)
+    public async Task<List<OperationalRestriction>> GetAllAsync(
+        Expression<Func<OperationalRestriction, bool>> predicate)
     {
-        return _context.OperationalRestrictions.Where(predicate).ToList();
+        return await _context.OperationalRestrictions
+            .Where(predicate)
+            .ToListAsync();
     }
 
-    public List<OperationalRestriction> GetAll()
+    public async Task<List<OperationalRestriction>> GetAllAsync()
     {
-        return _context.OperationalRestrictions.ToList();
+        return await _context.OperationalRestrictions.ToListAsync();
     }
 }

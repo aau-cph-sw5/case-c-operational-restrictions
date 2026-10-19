@@ -1,13 +1,14 @@
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+using System.Linq.Expressions;
 
 namespace Backend.Data;
 
 public interface IOperationalRestrictionRepository
 {
-    void Add(OperationalRestriction restriction);
-    void Update(OperationalRestriction restriction);
-    OperationalRestriction? GetById(Guid id);
-    List<OperationalRestriction> GetAll(Func<OperationalRestriction, bool> predicate);
-    List<OperationalRestriction> GetAll();
+    Task AddAsync(OperationalRestriction restriction);
+    Task UpdateAsync(OperationalRestriction restriction);
+    Task<OperationalRestriction?> GetByIdAsync(Guid id);
+    Task<List<OperationalRestriction>> GetAllAsync(Expression<Func<OperationalRestriction, bool>> predicate);
+    Task<List<OperationalRestriction>> GetAllAsync();
 }

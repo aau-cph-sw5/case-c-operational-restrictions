@@ -9,30 +9,31 @@ namespace Backend.Services;
 //TODO: This interface should be seperated from the class
 public interface IOperationalRestrictionService
 {
-    OperationalRestriction CreateRestriction(OperationalRestrictionDto data);
+    Task<OperationalRestriction> CreateRestrictionAsync(
+        OperationalRestrictionDto data);
 
-    OperationalRestriction EditRestriction(
+    Task<OperationalRestriction> EditRestrictionAsync(
         Guid id,
         OperationalRestrictionDto updateRestrictionDto);
 
-    OperationalRestriction ApproveRestriction(
+    Task<OperationalRestriction> ApproveRestrictionAsync(
         Guid id,
         Guid approverId);
 
-    OperationalRestriction DenyRestriction(
+    Task<OperationalRestriction> DenyRestrictionAsync(
         Guid id,
         Guid approverId,
         string reason);
 
-    OperationalRestriction ArchiveRestriction(Guid id);
+    Task<OperationalRestriction> ArchiveRestrictionAsync(Guid id);
 
-    OperationalRestriction AssignOperator(
+    Task<OperationalRestriction> AssignOperatorAsync(
         Guid id,
         Guid operatorId);
 
-    OperationalRestriction? GetRestrictionById(Guid id);
+    Task<OperationalRestriction?> GetRestrictionByIdAsync(Guid id);
 
-    List<OperationalRestriction> GetActiveRestrictions();
+    Task<List<OperationalRestriction>> GetActiveRestrictionsAsync();
 }
 
 public class OperationalRestrictionService
@@ -49,7 +50,7 @@ public class OperationalRestrictionService
         _repository = repository;
     }
 
-    public OperationalRestriction CreateRestriction(
+    public async Task<OperationalRestriction> CreateRestrictionAsync(
         OperationalRestrictionDto data)
     {
         _lifecycleService.EnsureCanCreate(data);
@@ -66,96 +67,100 @@ public class OperationalRestrictionService
             UpdatedAt = now
         };
 
-        _repository.Add(restriction);
+        await _repository.AddAsync(restriction);
 
         return restriction;
     }
 
-    public OperationalRestriction EditRestriction(
+    public async Task<OperationalRestriction> EditRestrictionAsync(
         Guid id,
         OperationalRestrictionDto updateRestrictionDto)
     {
-        var restriction = GetRestrictionOrThrow(id);
+        var restriction = await GetRestrictionOrThrowAsync(id);
 
         // TODO: Validate that editing is allowed in the current state.
         restriction.RestrictionDescription =
             updateRestrictionDto.RestrictionDescription;
 
-        return SaveUpdate(restriction);
+        return await SaveUpdateAsync(restriction);
     }
 
-    public OperationalRestriction ApproveRestriction(
+    public async Task<OperationalRestriction> ApproveRestrictionAsync(
         Guid id,
         Guid approverId)
     {
-        var restriction = GetRestrictionOrThrow(id);
+        var restriction = await GetRestrictionOrThrowAsync(id);
 
         // TODO: Validate the approval transition and approver authorization.
         restriction.State = RestrictionState.Approved;
 
-        return SaveUpdate(restriction);
+        return await SaveUpdateAsync(restriction);
     }
 
-    public OperationalRestriction DenyRestriction(
+    public async Task<OperationalRestriction> DenyRestrictionAsync(
         Guid id,
         Guid approverId,
         string reason)
     {
-        var restriction = GetRestrictionOrThrow(id);
+        var restriction = await GetRestrictionOrThrowAsync(id);
 
         // TODO: Validate the denial transition and record the reason.
         restriction.State = RestrictionState.CancelledRefused;
 
-        return SaveUpdate(restriction);
+        return await SaveUpdateAsync(restriction);
     }
 
-    public OperationalRestriction ArchiveRestriction(Guid id)
+    public async Task<OperationalRestriction> ArchiveRestrictionAsync(
+        Guid id)
     {
-        var restriction = GetRestrictionOrThrow(id);
+        var restriction = await GetRestrictionOrThrowAsync(id);
 
         // TODO: Validate that archiving is allowed in the current state.
         restriction.State = RestrictionState.Archived;
         restriction.ArchivedAt = DateTime.UtcNow;
 
-        return SaveUpdate(restriction);
+        return await SaveUpdateAsync(restriction);
     }
 
-    public OperationalRestriction AssignOperator(
+    public async Task<OperationalRestriction> AssignOperatorAsync(
         Guid id,
         Guid operatorId)
     {
-        var restriction = GetRestrictionOrThrow(id);
+        var restriction = await GetRestrictionOrThrowAsync(id);
 
         // TODO: Validate operator assignment rules.
         restriction.AssignedOperatorsIds.Add(operatorId);
 
-        return SaveUpdate(restriction);
+        return await SaveUpdateAsync(restriction);
     }
 
-    public OperationalRestriction? GetRestrictionById(Guid id)
+    public async Task<OperationalRestriction?> GetRestrictionByIdAsync(
+        Guid id)
     {
-        return _repository.GetById(id);
+        return await _repository.GetByIdAsync(id);
     }
 
-    public List<OperationalRestriction> GetActiveRestrictions()
+    public async Task<List<OperationalRestriction>>
+        GetActiveRestrictionsAsync()
     {
-        return _repository.GetAll(
+        return await _repository.GetAllAsync(
             r => r.State == RestrictionState.Active);
     }
 
-    private OperationalRestriction GetRestrictionOrThrow(Guid id)
+    private async Task<OperationalRestriction> GetRestrictionOrThrowAsync(
+        Guid id)
     {
-        return _repository.GetById(id)
+        return await _repository.GetByIdAsync(id)
             ?? throw new InvalidOperationException(
                 $"Restriction with ID '{id}' was not found.");
     }
 
-    private OperationalRestriction SaveUpdate(
+    private async Task<OperationalRestriction> SaveUpdateAsync(
         OperationalRestriction restriction)
     {
         restriction.UpdatedAt = DateTime.UtcNow;
 
-        _repository.Update(restriction);
+        await _repository.UpdateAsync(restriction);
 
         return restriction;
     }
