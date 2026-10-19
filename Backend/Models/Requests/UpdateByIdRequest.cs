@@ -5,7 +5,7 @@ namespace Backend.Models.Requests;
 public record UpdateByIdRequest(
   Guid Id,
   Guid EditedBy,
-  RestrictionState? State,
+  RestrictionStatus? Status,
   DateTime? StartDate,
   DateTime? EndDate
 );
