@@ -1,20 +1,7 @@
 using Backend.Models.DTOs;
+using Backend.Models.Enums;
 
 namespace Backend.Lifecycle;
-
-
-/*
-"StartDateIsFound", (done)             
-"OperationalRestictionIdIsFound" (done)
-"DescriptionTextIsFound", (done)
-"OriginatorSignatureIsFound", (done)
-"RequestedChangesByDom" (done)
-"DomRefusesRestriction" (done)
-"DomSignatureIsFound", (done)
-"OriginatorSignatureIsFound" (done)
-"CRSignatureIsFound", (done)
-"OperatorsAreAssigned" 
-*/
 
 public interface IRestrictionGuard
 {
@@ -56,6 +43,52 @@ public sealed class DescriptionTextIsFound : IRestrictionGuard
     }
 }
 
+//To do after Signatures are added
+public sealed class OriginatorSignatureIsFound : IRestrictionGuard
+{
+    public string Name => "OriginatorSignatureIsFound";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        return data.OriginatorUserId != Guid.Empty;
+    }
+}
+
+public sealed class ReturnedForChanges : IRestrictionGuard
+{
+    public string Name => "ReturnedForChanges";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        data.State = RestrictionState.PendingDutyOperationsManagerApproval;
+        return true;
+    }   
+}
+
+public sealed class CancelledRefused : IRestrictionGuard
+{
+    public string Name => "CancelledRefused";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        data.State = RestrictionState.PendingDutyOperationsManagerApproval;
+        return true; 
+    }
+}
+/*
+//To do after Signatures are added
+public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard
+{
+    public string Name => "DutyOperationsManagerSignatureIsFound";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        return !string.IsNullOrEmpty(data.DutyOperationsManagerSignature); //to add in dto
+    }
+}
+
+
+//To do after Signatures are added
 public sealed class OriginatorSignatureIsFound : IRestrictionGuard
 {
     public string Name => "OriginatorSignatureIsFound";
@@ -66,54 +99,14 @@ public sealed class OriginatorSignatureIsFound : IRestrictionGuard
     }
 }
 
-public sealed class RequestedChangesByDom : IRestrictionGuard
+//To do after Signatures are added
+public sealed class ControlRoomSupervisorSignatureIsFound : IRestrictionGuard
 {
-    public string Name => "RequestedChangesByDom";
+    public string Name => "ControlRoomSupervisorignatureIsFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        return !string.IsNullOrEmpty(data.RequestedChangesByDom); //to add in dto
-        //
-    }
-}
-
-public sealed class DomRefusesRestriction : IRestrictionGuard
-{
-    public string Name => "DomRefusesRestriction        ";
-
-    public bool IsSatisfied(OperationalRestrictionDto data)
-    {
-        return !string.IsNullOrEmpty(data.RefusedRestrictionByDom); //to add in dto
-    }
-}
-
-public sealed class DomSignatureIsFound : IRestrictionGuard
-{
-    public string Name => "DomSignatureIsFound";
-
-    public bool IsSatisfied(OperationalRestrictionDto data)
-    {
-        return !string.IsNullOrEmpty(data.DomSignature); //to add in dto
-    }
-}
-
-public sealed class OriginatorSignatureIsFound : IRestrictionGuard
-{
-    public string Name => "OriginatorSignatureIsFound";
-
-    public bool IsSatisfied(OperationalRestrictionDto data)
-    {
-        return !string.IsNullOrEmpty(data.OriginatorSignature); //to add in dto
-    }
-}
-
-public sealed class CRSignatureIsFound : IRestrictionGuard
-{
-    public string Name => "CRSignatureIsFound";
-
-    public bool IsSatisfied(OperationalRestrictionDto data)
-    {
-        return !string.IsNullOrEmpty(data.CRSignature); //to add in dto
+        return !string.IsNullOrEmpty(data.ControlRoomSupervisorSignature); //to add in dto
     }
 }
 
@@ -125,4 +118,4 @@ public sealed class OperatorsAreAssigned : IRestrictionGuard
     {
         return !string.IsNullOrEmpty(data.OperatorsAreAssigned); //to add in dto
     }
-}
+} */

@@ -6,9 +6,14 @@ public enum RestrictionAction
 {
     CreateDraft,
     OriginatorStartCancellation,
-    DOMApproveCancellation,
+    DutyOperationsManagerApproveCancellation,
+    ReturnedForChanges,
     ControlRoomCancellation,
-    OperatorsArchive
+    PendingDutyOperationsManagerApproval,
+    CancelledRefused,
+    OperatorsArchive,
+    Approved,
+    Active
 }
 
 public sealed record RestrictionTransition(
@@ -38,11 +43,11 @@ public static class RestrictionLifecycle
                     "OperationalRestictionIdIsFound"
                 }),
 
-            // From Draft State to PendingDomApproval State
-            [RestrictionAction.PendingDomApproval] = new(
-                RestrictionAction.PendingDomApproval,
+            // From Draft State to PendingDutyOperationsManagerApproval State
+            [RestrictionAction.PendingDutyOperationsManagerApproval] = new(
+                RestrictionAction.PendingDutyOperationsManagerApproval,
                 From: RestrictionState.Draft,
-                To: RestrictionState.PendingDomApproval,
+                To: RestrictionState.PendingDutyOperationsManagerApproval,
                 Guards: new[]
                 {
                     "StartDateIsFound",
@@ -51,34 +56,34 @@ public static class RestrictionLifecycle
                     "OperationalRestictionIdIsFound"
                 }),
 
-            // From PendingDomApproval State to ReturnedForChanges State
-            [RestrictionAction.ReturnForChanges] = new(
-                RestrictionAction.ReturnForChanges,
-                From: RestrictionState.PendingDomApproval,
-                To: RestrictionState.ReturnForChanges,
+            // From PendingDutyOperationsManagerApproval State to ReturnedForChanges State
+            [RestrictionAction.ReturnedForChanges] = new(
+                RestrictionAction.ReturnedForChanges,
+                From: RestrictionState.PendingDutyOperationsManagerApproval,
+                To: RestrictionState.ReturnedForChanges,
                 Guards: new[]
                 {
-                    "RequestedChangesByDom"
+                    "RequestedChangesByDutyOperationsManager"
                 }),
 
-            // From PendingDomApproval State to CancelledRefused State
+            // From PendingDutyOperationsManagerApproval State to CancelledRefused State
             [RestrictionAction.CancelledRefused] = new(
                 RestrictionAction.CancelledRefused,
-                From: RestrictionState.PendingDomApproval,
+                From: RestrictionState.PendingDutyOperationsManagerApproval,
                 To: RestrictionState.CancelledRefused,
                 Guards: new[]
                 {
-                    "DomRefusesRestriction"
+                    "DutyOperationsManagerRefusesRestriction"
                 }),
 
-            // From PendingDomApproval State to Approved State
+            // From PendingDutyOperationsManagerApproval State to Approved State
             [RestrictionAction.Approved] = new(
                 RestrictionAction.Approved,
-                From: RestrictionState.PendingDomApproval,
+                From: RestrictionState.PendingDutyOperationsManagerApproval,
                 To: RestrictionState.Approved,
                 Guards: new[]
                 {
-                    "DomSignatureIsFound",
+                    "DutyOperationsManagerSignatureIsFound",
                     "OriginatorSignatureIsFound"
                 }),
             
@@ -90,8 +95,8 @@ public static class RestrictionLifecycle
                 Guards: new[]
                 {
                     "OriginatorSignatureIsFound",
-                    "DomSignatureIsFound",
-                    "CRSignatureIsFound",
+                    "DutyOperationsManagerSignatureIsFound",
+                    "ControlRoomSupervisorSignatureIsFound",
                     "OperatorsAreAssigned"
                 }),
             
@@ -114,13 +119,13 @@ public static class RestrictionLifecycle
                     "OriginatorSignatureFound"
                 }),
             
-            [RestrictionAction.DOMApproveCancellation] = new(
-                RestrictionAction.DOMApproveCancellation,
+            [RestrictionAction.DutyOperationsManagerApproveCancellation] = new(
+                RestrictionAction.DutyOperationsManagerApproveCancellation,
                 From: RestrictionState.PendingCancellation,
                 To:   RestrictionState.OutOfForce,
                 Guards: new[]
                 {
-                    "DOMSignatureFound"
+                    "DutyOperationsManagerSignatureFound"
                 }),
 
             [RestrictionAction.ControlRoomCancellation] = new(
