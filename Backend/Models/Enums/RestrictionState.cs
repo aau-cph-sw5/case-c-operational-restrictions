@@ -3,7 +3,7 @@ namespace Backend.Models.Enums;
 public enum RestrictionState
 {
     Draft,
-    PendingDutyOperationsManagerApproval,
+    PendingDomApproval,
     ReturnedForChanges,
     CancelledRefused,
     Approved,
