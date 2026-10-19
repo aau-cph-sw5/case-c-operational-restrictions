@@ -15,7 +15,7 @@ public class SignatureServiceTests
     private readonly SignatureService _service = new(null!);
 
     [Fact]
-    public void Signature_HasNoPublicSetters()
+    public void SignatureHasNoPublicSetters()
     {
         var mutableProperties = typeof(Signature)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -30,7 +30,7 @@ public class SignatureServiceTests
     }
 
     [Fact]
-    public void Sign_RecordsSignerRoleVersionAndServerTimestamp()
+    public void SignRecordsSignerRoleVersionAndServerTimestamp()
     {
         var restrictionVersionId = Guid.NewGuid();
         var required = _service.CreateRequiredSignatures(restrictionVersionId).First();
@@ -45,7 +45,7 @@ public class SignatureServiceTests
     }
 
     [Fact]
-    public void Sign_ByAnotherUser_Throws()
+    public void SignByAnotherUserThrows()
     {
         var required = _service.CreateRequiredSignatures(Guid.NewGuid()).First();
 
@@ -53,7 +53,7 @@ public class SignatureServiceTests
     }
 
     [Fact]
-    public void Sign_Twice_Throws()
+    public void SignTwiceThrows()
     {
         var required = _service.CreateRequiredSignatures(Guid.NewGuid()).First();
         _service.Sign(required.Id, required.SigneeId);
@@ -62,7 +62,7 @@ public class SignatureServiceTests
     }
 
     [Fact]
-    public void InvalidateRequiredSignatures_InvalidatesSignedAndBlocksFurtherSigning()
+    public void InvalidateRequiredSignaturesInvalidatesSignedAndBlocksFurtherSigning()
     {
         var restrictionVersionId = Guid.NewGuid();
         var requiredSignatures = _service.CreateRequiredSignatures(restrictionVersionId);
@@ -77,7 +77,7 @@ public class SignatureServiceTests
     }
 
     [Fact]
-    public void CreateRequiredSignatures_SkipsUsersOnHolidayAndStartsUnsigned()
+    public void CreateRequiredSignaturesSkipsUsersOnHolidayAndStartsUnsigned()
     {
 
         var required = _service.CreateRequiredSignatures(Guid.NewGuid());
