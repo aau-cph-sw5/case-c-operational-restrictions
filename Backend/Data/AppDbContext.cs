@@ -1,6 +1,7 @@
 using Backend.Models.Entities;
 
 using Microsoft.EntityFrameworkCore;
+
 namespace Backend.Data;
 
 // DATA LAYER (EF Core):
@@ -12,4 +13,6 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
+    
+    public DbSet<OperationalRestriction> OperationalRestrictions => Set<OperationalRestriction>();
 }
