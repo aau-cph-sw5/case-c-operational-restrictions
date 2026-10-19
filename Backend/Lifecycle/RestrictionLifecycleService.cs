@@ -1,5 +1,4 @@
 using Backend.Models.DTOs;
-using Backend.Models.Entities;
 using Backend.Models.Enums;
 
 using System.Linq;
@@ -16,7 +15,7 @@ public sealed class RestrictionLifecycleService
         _guards = guards.ToDictionary(g => g.Name);
     }
 
-    public void EnsureCanCreate(OperationalRestriction data)
+    public void EnsureCanCreate(OperationalRestrictionDto data)
     {
         var transition =
             RestrictionLifecycle.Transitions[
@@ -39,26 +38,23 @@ public sealed class RestrictionLifecycleService
         }
     }
 
-    public void EnsureCanTransition(OperationalRestriction data)
+    public void EnsureCanTransition(
+        RestrictionState currentState,
+        RestrictionAction action,
+        OperationalRestrictionDto data)
     {
-        var transition = data.State switch
+        if (!RestrictionLifecycle.Transitions.TryGetValue(action, out var transition))
         {
-            RestrictionState.Active => RestrictionLifecycle.Transitions[
-                RestrictionAction.OriginatorStartCancellation],
+            throw new InvalidOperationException(
+                $"No transition found for action: {action}");
+        }
 
-            RestrictionState.PendingCancellation => RestrictionLifecycle.Transitions[
-                RestrictionAction.DOMApproveCancellation],
-
-            RestrictionState.OutOfForce => RestrictionLifecycle.Transitions[
-                RestrictionAction.ControlRoomCancellation],
-
-            RestrictionState.AwaitingOperatorSignOut => RestrictionLifecycle.Transitions[
-                RestrictionAction.OperatorsArchive],
-
-            _ => throw new InvalidOperationException(
-                $"No matching transition found for state: {data.State}")
-        };
-
+        if (transition.From != currentState)
+        {
+            throw new InvalidOperationException(
+                $"Cannot transition from {currentState} using action {action}. " +
+                $"Expected from state: {transition.From}");
+        }
 
         foreach (var guardName in transition.Guards)
         {
@@ -75,5 +71,25 @@ public sealed class RestrictionLifecycleService
                     $"guard '{guardName}' failed.");
             }
         }
+    }
+
+    public RestrictionState GetNextState(
+        RestrictionState currentState,
+        RestrictionAction action)
+    {
+        if (!RestrictionLifecycle.Transitions.TryGetValue(action, out var transition))
+        {
+            throw new InvalidOperationException(
+                $"No transition found for action: {action}");
+        }
+
+        if (transition.From != currentState)
+        {
+            throw new InvalidOperationException(
+                $"Cannot transition from {currentState} using action {action}. " +
+                $"Expected from state: {transition.From}");
+        }
+
+        return transition.To;
     }
 }

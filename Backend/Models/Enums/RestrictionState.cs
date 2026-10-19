@@ -7,6 +7,7 @@ public enum RestrictionState
     ReturnedForChanges,
     CancelledRefused,
     Approved,
+    PendingControlRoomSupervisorApproval,
     Active,
     Empty,
     PendingCancellation,

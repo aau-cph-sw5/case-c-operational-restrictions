@@ -8,11 +8,13 @@ public enum RestrictionAction
     OriginatorStartCancellation,
     DutyOperationsManagerApproveCancellation,
     ReturnedForChanges,
+    Resubmit,
     ControlRoomCancellation,
     PendingDutyOperationsManagerApproval,
     CancelledRefused,
     OperatorsArchive,
     Approved,
+    PendingControlRoomSupervisorApproval,
     Active
 }
 
@@ -63,7 +65,17 @@ public static class RestrictionLifecycle
                 To: RestrictionState.ReturnedForChanges,
                 Guards: new[]
                 {
-                    "RequestedChangesByDutyOperationsManager"
+                    "ReturnedForChanges"
+                }),
+
+            // From ReturnedForChanges State back to Draft State
+            [RestrictionAction.Resubmit] = new(
+                RestrictionAction.Resubmit,
+                From: RestrictionState.ReturnedForChanges,
+                To: RestrictionState.Draft,
+                Guards: new[]
+                {
+                    "OperationalRestictionIdIsFound"
                 }),
 
             // From PendingDutyOperationsManagerApproval State to CancelledRefused State
@@ -73,7 +85,7 @@ public static class RestrictionLifecycle
                 To: RestrictionState.CancelledRefused,
                 Guards: new[]
                 {
-                    "DutyOperationsManagerRefusesRestriction"
+                    "CancelledRefused"
                 }),
 
             // From PendingDutyOperationsManagerApproval State to Approved State
@@ -86,11 +98,22 @@ public static class RestrictionLifecycle
                     "DutyOperationsManagerSignatureIsFound",
                     "OriginatorSignatureIsFound"
                 }),
-            
-            // From Approved State to Active State
+
+            // From Approved State to PendingControlRoomSupervisorApproval State
+            [RestrictionAction.PendingControlRoomSupervisorApproval] = new(
+                RestrictionAction.PendingControlRoomSupervisorApproval,
+                From: RestrictionState.Approved,
+                To: RestrictionState.PendingControlRoomSupervisorApproval,
+                Guards: new[]
+                {
+                    "DutyOperationsManagerSignatureIsFound",
+                    "OriginatorSignatureIsFound"
+                }),
+
+            // From PendingControlRoomSupervisorApproval State to Active State
             [RestrictionAction.Active] = new(
                 RestrictionAction.Active,
-                From: RestrictionState.Approved,
+                From: RestrictionState.PendingControlRoomSupervisorApproval,
                 To: RestrictionState.Active,
                 Guards: new[]
                 {
@@ -98,54 +121,6 @@ public static class RestrictionLifecycle
                     "DutyOperationsManagerSignatureIsFound",
                     "ControlRoomSupervisorSignatureIsFound",
                     "OperatorsAreAssigned"
-                }),
-            
-            /*// missing transitions from draft to active ACTIVE
-            [RestrictionAction.Active] = new(
-                RestrictionAction.Active,
-                From: RestrictionState.Draft,
-                To:   RestrictionState.Active,
-                Guards: new[]
-                {
-                    "OriginatorSignatureFound"
-                }),
-
-            [RestrictionAction.OriginatorStartCancellation] = new(
-                RestrictionAction.OriginatorStartCancellation,
-                From: RestrictionState.Active,
-                To:   RestrictionState.PendingCancellation,
-                Guards: new[]
-                {
-                    "OriginatorSignatureFound"
-                }),
-            
-            [RestrictionAction.DutyOperationsManagerApproveCancellation] = new(
-                RestrictionAction.DutyOperationsManagerApproveCancellation,
-                From: RestrictionState.PendingCancellation,
-                To:   RestrictionState.OutOfForce,
-                Guards: new[]
-                {
-                    "DutyOperationsManagerSignatureFound"
-                }),
-
-            [RestrictionAction.ControlRoomCancellation] = new(
-                RestrictionAction.ControlRoomCancellation,
-                From: RestrictionState.OutOfForce,
-                To:   RestrictionState.AwaitingOperatorSignOut,
-                Guards: new[]
-                {
-                    "ControlRoomSignatureFound"
-                }),
-            
-            /*
-            [RestrictionAction.OperatorsArchive] = new(
-                RestrictionAction.OperatorsArchive,
-                From: RestrictionState.AwaitingOperatorSignOut,
-                To:   RestrictionState.Archived,
-                Guards: new[]
-                {
-                    "OperatorSignoutsFound"
-                }),
-            */
+                })
         };
 }

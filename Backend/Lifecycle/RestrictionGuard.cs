@@ -75,38 +75,26 @@ public sealed class CancelledRefused : IRestrictionGuard
         return true; 
     }
 }
-/*
-//To do after Signatures are added
+//To do after Signatures are added to DTO
 public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard
 {
     public string Name => "DutyOperationsManagerSignatureIsFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        return !string.IsNullOrEmpty(data.DutyOperationsManagerSignature); //to add in dto
+        // TODO: Check data.DutyOperationsManagerSignature when added to DTO
+        return true;
     }
 }
 
-
-//To do after Signatures are added
-public sealed class OriginatorSignatureIsFound : IRestrictionGuard
-{
-    public string Name => "OriginatorSignatureIsFound";
-
-    public bool IsSatisfied(OperationalRestrictionDto data)
-    {
-        return !string.IsNullOrEmpty(data.OriginatorSignature); //to add in dto
-    }
-}
-
-//To do after Signatures are added
 public sealed class ControlRoomSupervisorSignatureIsFound : IRestrictionGuard
 {
-    public string Name => "ControlRoomSupervisorignatureIsFound";
+    public string Name => "ControlRoomSupervisorSignatureIsFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        return !string.IsNullOrEmpty(data.ControlRoomSupervisorSignature); //to add in dto
+        // TODO: Check data.ControlRoomSupervisorSignature when added to DTO
+        return true;
     }
 }
 
@@ -116,6 +104,7 @@ public sealed class OperatorsAreAssigned : IRestrictionGuard
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        return !string.IsNullOrEmpty(data.OperatorsAreAssigned); //to add in dto
+        // TODO: Check data.AssignedOperatorsIds when added to DTO
+        return true;
     }
-} */
+}

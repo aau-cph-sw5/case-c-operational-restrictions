@@ -16,20 +16,43 @@ public interface IOperationalRestrictionService
         Guid id,
         OperationalRestrictionDto updateRestrictionDto);
 
+    Task<OperationalRestriction> SubmitForApprovalAsync(
+        Guid id,
+        OperationalRestrictionDto data);
+
     Task<OperationalRestriction> ApproveRestrictionAsync(
         Guid id,
-        Guid approverId);
+        Guid approverId,
+        OperationalRestrictionDto data);
+
+    Task<OperationalRestriction> SubmitForControlRoomSupervisorApprovalAsync(
+        Guid id,
+        OperationalRestrictionDto data);
+
+    Task<OperationalRestriction> ActivateRestrictionAsync(
+        Guid id,
+        Guid approverId,
+        OperationalRestrictionDto data);
 
     Task<OperationalRestriction> DenyRestrictionAsync(
         Guid id,
         Guid approverId,
-        string reason);
+        string reason,
+        OperationalRestrictionDto data);
 
     Task<OperationalRestriction> ArchiveRestrictionAsync(Guid id);
 
     Task<OperationalRestriction> AssignOperatorAsync(
         Guid id,
         Guid operatorId);
+
+    Task<OperationalRestriction> ReturnForChangesAsync(
+        Guid id,
+        OperationalRestrictionDto data);
+
+    Task<OperationalRestriction> ResubmitRestrictionAsync(
+        Guid id,
+        OperationalRestrictionDto data);
 
     Task<OperationalRestriction?> GetRestrictionByIdAsync(Guid id);
 
@@ -72,6 +95,22 @@ public class OperationalRestrictionService
         return restriction;
     }
 
+    public async Task<OperationalRestriction> SubmitForApprovalAsync(
+        Guid id,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.PendingDutyOperationsManagerApproval,
+            data);
+
+        restriction.State = RestrictionState.PendingDutyOperationsManagerApproval;
+
+        return await SaveUpdateAsync(restriction);
+    }
+
     public async Task<OperationalRestriction> EditRestrictionAsync(
         Guid id,
         OperationalRestrictionDto updateRestrictionDto)
@@ -87,12 +126,50 @@ public class OperationalRestrictionService
 
     public async Task<OperationalRestriction> ApproveRestrictionAsync(
         Guid id,
-        Guid approverId)
+        Guid approverId,
+        OperationalRestrictionDto data)
     {
         var restriction = await GetRestrictionOrThrowAsync(id);
 
-        // TODO: Validate the approval transition and approver authorization.
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.Approved,
+            data);
+
         restriction.State = RestrictionState.Approved;
+
+        return await SaveUpdateAsync(restriction);
+    }
+
+    public async Task<OperationalRestriction> SubmitForControlRoomSupervisorApprovalAsync(
+        Guid id,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.PendingControlRoomSupervisorApproval,
+            data);
+
+        restriction.State = RestrictionState.PendingControlRoomSupervisorApproval;
+
+        return await SaveUpdateAsync(restriction);
+    }
+
+    public async Task<OperationalRestriction> ActivateRestrictionAsync(
+        Guid id,
+        Guid approverId,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.Active,
+            data);
+
+        restriction.State = RestrictionState.Active;
 
         return await SaveUpdateAsync(restriction);
     }
@@ -100,11 +177,16 @@ public class OperationalRestrictionService
     public async Task<OperationalRestriction> DenyRestrictionAsync(
         Guid id,
         Guid approverId,
-        string reason)
+        string reason,
+        OperationalRestrictionDto data)
     {
         var restriction = await GetRestrictionOrThrowAsync(id);
 
-        // TODO: Validate the denial transition and record the reason.
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.CancelledRefused,
+            data);
+
         restriction.State = RestrictionState.CancelledRefused;
 
         return await SaveUpdateAsync(restriction);
@@ -130,6 +212,38 @@ public class OperationalRestrictionService
 
         // TODO: Validate operator assignment rules.
         restriction.AssignedOperatorsIds.Add(operatorId);
+
+        return await SaveUpdateAsync(restriction);
+    }
+
+    public async Task<OperationalRestriction> ReturnForChangesAsync(
+        Guid id,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.ReturnedForChanges,
+            data);
+
+        restriction.State = RestrictionState.ReturnedForChanges;
+
+        return await SaveUpdateAsync(restriction);
+    }
+
+    public async Task<OperationalRestriction> ResubmitRestrictionAsync(
+        Guid id,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.Resubmit,
+            data);
+
+        restriction.State = RestrictionState.Draft;
 
         return await SaveUpdateAsync(restriction);
     }

@@ -22,7 +22,15 @@ builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictio
 builder.Services.AddScoped<IOperationalRestrictionRepository, OperationalRestrictionRepository>();
 
 // Register Guards
-builder.Services.AddSingleton<IRestrictionGuard, CreationDataIsValidGuard>();
+builder.Services.AddSingleton<IRestrictionGuard, StartDateIsFoundGuard>();
+builder.Services.AddSingleton<IRestrictionGuard, OperationalRestictionIdIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, DescriptionTextIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, OriginatorSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, DutyOperationsManagerSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, ControlRoomSupervisorSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, OperatorsAreAssigned>();
+builder.Services.AddSingleton<IRestrictionGuard, ReturnedForChanges>();
+builder.Services.AddSingleton<IRestrictionGuard, CancelledRefused>();
 
 // Register User Service
 builder.Services.AddScoped<IUserService, UserService>();
