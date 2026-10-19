@@ -6,15 +6,13 @@
 
 **Deciders:** Group 4, Artem Shevchenko and Joakim Uldal Boldt  
 
-**References:** "restriction-form-and-notification-vertical-slice.png", "restriction-form-screen.png", "notification-screen.png", "[Preview](https://www.figma.com/proto/ZWMLi7qSY9twx3yPhS6osY/Restriciton-Form-Vertical-Slice?node-id=15-122&p=f&t=CmTKHKzFbqn69ISR-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=15%3A122
-)", "[Design file](https://www.figma.com/design/ZWMLi7qSY9twx3yPhS6osY/Restriciton-Form-Vertical-Slice?node-id=0-1&t=Wti9VgUMuykHcE5s-1)"
+**References:** "restriction-form-and-notification-vertical-slice.png", "restriction-form-screen.png", "notification-screen.png", "[Streamlined OR  and notification design file](https://www.figma.com/design/ZWMLi7qSY9twx3yPhS6osY/Restriciton-Form-Vertical-Slice?node-id=576-354&t=76nGCc6FUxMuJ4W5-1)","[Streamlined OR and notification preview](https://www.figma.com/design/ZWMLi7qSY9twx3yPhS6osY/Restriciton-Form-Vertical-Slice?node-id=576-354&t=76nGCc6FUxMuJ4W5-1)"
 
 ## Context
 
 We are designing the restriction form and notification screens for an internal Metro application. The interface must align with the provided Metro documentation for form fields.
 
 The notification screen must clearly and concisly communicate pending actions, so that the users are informed of any missed processes that need to be handeld. 
-
 
 
 To back design decision, we use the [10 Usability Heuristics for User Interface Design](`https://www.nngroup.com/articles/ten-usability-heuristics/`) from Nielsen Norman Group.
@@ -43,3 +41,5 @@ To back design decision, we use the [10 Usability Heuristics for User Interface 
 ## Decision
 
 We will implement the restriction form and notification views using a monochromatic color palette, structured with standardized mobile UI components, category icons, and segmented filtering tabs to prioritize and highlight important items.
+
+Furthermore based on the pull request feedback, we will implement a more streamlined version of the restriction form, with better fields explanations.     
