@@ -1,5 +1,3 @@
-using Backend.Models.Entities;
-
 using Microsoft.EntityFrameworkCore;
 using Backend.Models.Entities;
 
@@ -12,5 +10,6 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
-    public DbSet<OperationalRestriction> OperationalRestrictions => Set<OperationalRestriction>();
+
+    public DbSet<OperationalRestriction> OperationalRestrictions { get; set; }
 }

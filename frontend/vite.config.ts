@@ -1,13 +1,10 @@
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    tailwindcss(),
     react(),
     VitePWA({
       registerType: "autoUpdate",
@@ -69,11 +66,6 @@ export default defineConfig({
         target: process.env.BACKEND_URL || "http://localhost:8080",
         changeOrigin: true,
       },
-    },
-  },
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
 });
