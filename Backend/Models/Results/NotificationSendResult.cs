@@ -2,11 +2,11 @@ using Backend.Models.Enum;
 
 namespace Backend.Models.Results;
 
-public record NotificationSendResult(SendOutcome Outcome, string? Error = null)
+public record NotificationSendResult(DeliveryStatus Status, string? Error = null)
 {
-  public static NotificationSendResult Accepted() => new(SendOutcome.Accepted);
+  public static NotificationSendResult Accepted() => new(DeliveryStatus.Accepted);
 
-  public static NotificationSendResult TransientFailure(string error) => new(SendOutcome.TransientFailure, error);
+  public static NotificationSendResult Failed(string error) => new(DeliveryStatus.Failed, error);
 
-  public static NotificationSendResult PermanentFailure(string error) => new(SendOutcome.PermanentFailure, error);
+  public static NotificationSendResult Undeliverable(string error) => new(DeliveryStatus.Undeliverable, error);
 }

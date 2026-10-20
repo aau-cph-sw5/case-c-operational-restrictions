@@ -56,7 +56,7 @@ public class NotificationDeliveryProcessor(
   private async Task<NotificationSendResult> SendAsync(NotificationDelivery delivery, CancellationToken cancellationToken)
   {
     if (!_senders.TryGetValue(delivery.Channel, out var sender))
-      return NotificationSendResult.PermanentFailure($"No sender is configured for {delivery.Channel}.");
+      return NotificationSendResult.Undeliverable($"No sender is configured for {delivery.Channel}.");
 
     try
     {
@@ -66,7 +66,7 @@ public class NotificationDeliveryProcessor(
     {
       // An unexpected error is retried rather than lost.
       _logger.LogWarning(exception, "Sending notification delivery {DeliveryId} threw", delivery.Id);
-      return NotificationSendResult.TransientFailure(exception.Message);
+      return NotificationSendResult.Failed(exception.Message);
     }
   }
 
@@ -74,7 +74,7 @@ public class NotificationDeliveryProcessor(
   {
     delivery.AttemptCount++;
 
-    if (result.Outcome == SendOutcome.Accepted)
+    if (result.Status == DeliveryStatus.Accepted)
     {
       delivery.Status = DeliveryStatus.Sent;
       delivery.SentAt = now;
@@ -85,7 +85,7 @@ public class NotificationDeliveryProcessor(
 
     delivery.LastError = result.Error;
 
-    if (result.Outcome == SendOutcome.TransientFailure && delivery.AttemptCount < _options.MaxAttempts)
+    if (result.Status== DeliveryStatus.Failed && delivery.AttemptCount < _options.MaxAttempts)
     {
       delivery.Status = DeliveryStatus.Failed;
       delivery.NextAttemptAt = now + GetRetryDelay(delivery.AttemptCount);
