@@ -25,6 +25,10 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.Configure<NotificationDeliveryOptions>(builder.Configuration.GetSection(NotificationDeliveryOptions.SectionName));
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<INotificationDeliveryProcessor, NotificationDeliveryProcessor>();
+builder.Services.AddHostedService<NotificationDeliveryWorker>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
