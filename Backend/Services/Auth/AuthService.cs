@@ -3,6 +3,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
 
+using Nelibur.ObjectMapper;
+
 namespace Backend.Services.Auth;
 
 public class AuthService
@@ -67,7 +69,7 @@ public class AuthService
             return null;
         }
 
-        return MapToDto(_placeholderUser);
+        return TinyMapper.Map<UserDto>(_placeholderUser);
     }
 
     private static UserDto MapToDto(User user)
