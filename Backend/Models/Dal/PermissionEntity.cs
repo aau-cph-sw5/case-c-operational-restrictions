@@ -2,10 +2,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Models.Entities;
 
-[Index(nameof(Name), IsUnique = true)]
+[PrimaryKey(nameof(Name))]
 public class PermissionEntity
 {
-    public Guid Id { get; set; }
-
     public string Name { get; set; } = string.Empty;
 }
