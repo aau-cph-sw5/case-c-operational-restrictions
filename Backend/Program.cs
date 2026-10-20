@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 
 using Backend.Configuration;
@@ -16,6 +17,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IExampleService, ExampleService>();
 
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -64,8 +66,8 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins(
-                  "http://localhost:5173",
-                  "http://127.0.0.1:5173"
+                "http://localhost:5173",
+                "http://127.0.0.1:5173"
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -98,5 +100,13 @@ app.MapGet("/api/hello", () => new
     message = "Hello from .NET 10 Web API!",
     timestamp = DateTime.UtcNow
 });
+
+// Apply EF migrations (Development only, and not while EF tools are running)
+if (app.Environment.IsDevelopment() &&
+    Assembly.GetEntryAssembly()?.GetName().Name != "ef")
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
 
 app.Run();
