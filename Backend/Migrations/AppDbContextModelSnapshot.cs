@@ -59,78 +59,57 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Entities.PermissionEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasKey("Name");
 
                     b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("Backend.Models.Entities.PermissionHasRole", b =>
                 {
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("RoleName")
+                        .HasColumnType("text");
 
-                    b.Property<Guid>("PermissionId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("PermissionName")
+                        .HasColumnType("text");
 
-                    b.HasKey("RoleId", "PermissionId");
+                    b.HasKey("RoleName", "PermissionName");
 
-                    b.HasIndex("PermissionId");
+                    b.HasIndex("PermissionName");
 
                     b.ToTable("PermissionHasRoles");
                 });
 
             modelBuilder.Entity("Backend.Models.Entities.RoleEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasKey("Name");
 
                     b.ToTable("Roles");
 
                     b.HasData(
                         new
                         {
-                            Id = new Guid("b1f23318-ff7d-4189-a8df-14f8e630593c"),
                             Name = "Originator"
                         },
                         new
                         {
-                            Id = new Guid("6bf92b9d-043f-44d7-ba08-4b56bb4b6f2b"),
                             Name = "DutyOperationsManager"
                         },
                         new
                         {
-                            Id = new Guid("63800ced-af15-4b34-bf2f-d0058e7334d5"),
                             Name = "Operator"
                         },
                         new
                         {
-                            Id = new Guid("2e81b0cf-5d64-443b-9573-062207393023"),
                             Name = "ControlRoomSupervisor"
                         },
                         new
                         {
-                            Id = new Guid("01dc6955-be5c-456f-ad3e-6ca68331f235"),
                             Name = "Betriebsleiter"
                         });
                 });
@@ -168,13 +147,13 @@ namespace Backend.Migrations
                 {
                     b.HasOne("Backend.Models.Entities.PermissionEntity", "Permission")
                         .WithMany()
-                        .HasForeignKey("PermissionId")
+                        .HasForeignKey("PermissionName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Backend.Models.Entities.RoleEntity", "Role")
                         .WithMany()
-                        .HasForeignKey("RoleId")
+                        .HasForeignKey("RoleName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
