@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Backend.Models.Entities;
 
 // Links a permission to a role. Each row means the role has that permission.
-[PrimaryKey(nameof(RoleId), nameof(PermissionId))]
+[PrimaryKey(nameof(RoleName), nameof(PermissionName))]
 public class PermissionHasRole
 {
-    public Guid RoleId { get; set; }
+    public string RoleName { get; set; } = string.Empty;
 
     public RoleEntity Role { get; set; } = null!;
 
-    public Guid PermissionId { get; set; }
+    public string PermissionName { get; set; } = string.Empty;
 
     public PermissionEntity Permission { get; set; } = null!;
 }
