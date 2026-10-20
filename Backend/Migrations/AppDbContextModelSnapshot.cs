@@ -57,6 +57,84 @@ namespace Backend.Migrations
                     b.ToTable("OperationalRestrictions");
                 });
 
+            modelBuilder.Entity("Backend.Models.Entities.PermissionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.PermissionHasRole", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("PermissionHasRoles");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.RoleEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b1f23318-ff7d-4189-a8df-14f8e630593c"),
+                            Name = "Originator"
+                        },
+                        new
+                        {
+                            Id = new Guid("6bf92b9d-043f-44d7-ba08-4b56bb4b6f2b"),
+                            Name = "DutyOperationsManager"
+                        },
+                        new
+                        {
+                            Id = new Guid("63800ced-af15-4b34-bf2f-d0058e7334d5"),
+                            Name = "Operator"
+                        },
+                        new
+                        {
+                            Id = new Guid("2e81b0cf-5d64-443b-9573-062207393023"),
+                            Name = "ControlRoomSupervisor"
+                        },
+                        new
+                        {
+                            Id = new Guid("01dc6955-be5c-456f-ad3e-6ca68331f235"),
+                            Name = "Betriebsleiter"
+                        });
+                });
+
             modelBuilder.Entity("Backend.Models.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -84,6 +162,25 @@ namespace Backend.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.PermissionHasRole", b =>
+                {
+                    b.HasOne("Backend.Models.Entities.PermissionEntity", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Entities.RoleEntity", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
                 });
 #pragma warning restore 612, 618
         }
