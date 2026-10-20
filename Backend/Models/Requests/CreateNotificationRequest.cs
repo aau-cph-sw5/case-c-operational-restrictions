@@ -7,7 +7,6 @@ public record CreateNotificationRequest(
   NotificationType Type,
   bool RequiresAction,
   Guid? OperationalRestrictionId = null,
-  Guid? TriggeredByUserId = null,
   string? Title = null,
   string? Message = null
 );

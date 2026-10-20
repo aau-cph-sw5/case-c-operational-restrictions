@@ -18,8 +18,7 @@ public class NotificationService(
   private readonly AppDbContext _appDbContext = appDbContext;
 
   /// <summary>
-  /// Adds a notification with a pending Web Push delivery. The caller must call SaveChangesAsync.
-  /// Email deliveries are added later, only as a fallback when push fails permanently.
+  /// Adds a notification with a pending push delivery. The caller must call SaveChangesAsync.
   /// </summary>
   public Guid AddNotification(CreateNotificationRequest request)
   {
@@ -41,7 +40,6 @@ public class NotificationService(
       Id = Guid.NewGuid(),
       RecipientUserId = request.RecipientUserId,
       OperationalRestrictionId = request.OperationalRestrictionId,
-      TriggeredByUserId = request.TriggeredByUserId,
       Type = request.Type,
       Title = request.Title,
       Message = request.Message,
@@ -52,7 +50,6 @@ public class NotificationService(
         new NotificationDelivery
         {
           Id = Guid.NewGuid(),
-          Channel = NotificationChannel.WebPush,
           Status = DeliveryStatus.Pending,
           AttemptCount = 0,
           NextAttemptAt = now

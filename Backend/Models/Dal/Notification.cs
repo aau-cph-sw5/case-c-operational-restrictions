@@ -12,9 +12,6 @@ public class Notification
   public Guid? OperationalRestrictionId { get; set; }
   public OperationalRestriction? OperationalRestriction { get; set; }
 
-  // The user whose action caused the notification, shown on the inbox card; null for SystemInfo.
-  public Guid? TriggeredByUserId { get; set; }
-
   public NotificationType Type { get; set; }
 
   // Free text for SystemInfo only. Other types build their text from the type and the restriction.

@@ -20,8 +20,7 @@ public class NotificationDeliveryProcessor(
 ) : INotificationDeliveryProcessor
 {
   private readonly AppDbContext _appDbContext = appDbContext;
-  private readonly Dictionary<NotificationChannel, INotificationSender> _senders =
-    notificationSenders.ToDictionary(x => x.Channel);
+  private readonly INotificationSender? _sender = notificationSenders.SingleOrDefault();
   private readonly NotificationDeliveryOptions _options = options.Value;
   private readonly TimeProvider _timeProvider = timeProvider;
   private readonly ILogger<NotificationDeliveryProcessor> _logger = logger;
@@ -55,12 +54,12 @@ public class NotificationDeliveryProcessor(
 
   private async Task<NotificationSendResult> SendAsync(NotificationDelivery delivery, CancellationToken cancellationToken)
   {
-    if (!_senders.TryGetValue(delivery.Channel, out var sender))
-      return NotificationSendResult.Undeliverable($"No sender is configured for {delivery.Channel}.");
+    if (_sender == null)
+      return NotificationSendResult.Undeliverable("No notification sender is configured.");
 
     try
     {
-      return await sender.SendAsync(delivery.Notification, cancellationToken);
+      return await _sender.SendAsync(delivery.Notification, cancellationToken);
     }
     catch (Exception exception) when (exception is not OperationCanceledException)
     {
@@ -95,32 +94,13 @@ public class NotificationDeliveryProcessor(
     delivery.Status = DeliveryStatus.Undeliverable;
     delivery.NextAttemptAt = null;
     _logger.LogWarning(
-      "Notification delivery {DeliveryId} on {Channel} is undeliverable after {AttemptCount} attempts: {Error}",
-      delivery.Id, delivery.Channel, delivery.AttemptCount, delivery.LastError);
-
-    AddEmailFallback(delivery, now);
+      "Notification delivery {DeliveryId} is undeliverable after {AttemptCount} attempts: {Error}",
+      delivery.Id, delivery.AttemptCount, delivery.LastError);
   }
 
   private TimeSpan GetRetryDelay(int attemptCount)
   {
     var delaySeconds = _options.BaseRetryDelaySeconds * Math.Pow(2, attemptCount - 1);
     return TimeSpan.FromSeconds(Math.Min(delaySeconds, _options.MaxRetryDelaySeconds));
-  }
-
-  // Email is only a fallback for push, and only when an email sender is registered.
-  private void AddEmailFallback(NotificationDelivery failedDelivery, DateTime now)
-  {
-    if (failedDelivery.Channel != NotificationChannel.WebPush || !_senders.ContainsKey(NotificationChannel.Email))
-      return;
-
-    _appDbContext.Add(new NotificationDelivery
-    {
-      Id = Guid.NewGuid(),
-      NotificationId = failedDelivery.NotificationId,
-      Channel = NotificationChannel.Email,
-      Status = DeliveryStatus.Pending,
-      AttemptCount = 0,
-      NextAttemptAt = now
-    });
   }
 }
