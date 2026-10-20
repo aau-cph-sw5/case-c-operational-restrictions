@@ -24,6 +24,12 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Role)
+            .WithMany()
+            .HasForeignKey(u => u.RoleName)
+            .OnDelete(DeleteBehavior.Restrict);
+        
         // Roles from the class diagram (MET-C-041).
         // Permissions are not seeded yet, since the permission matrix is still waiting on Metro (MET-C-022).
         modelBuilder.Entity<Role>().HasData(
