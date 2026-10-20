@@ -10,6 +10,10 @@ namespace Backend.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(
+                name: "Role",
+                table: "Users");
+
             migrationBuilder.CreateTable(
                 name: "Permissions",
                 columns: table => new
@@ -85,6 +89,13 @@ namespace Backend.Migrations
 
             migrationBuilder.DropTable(
                 name: "Roles");
+
+            migrationBuilder.AddColumn<int>(
+                name: "Role",
+                table: "Users",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
         }
     }
 }

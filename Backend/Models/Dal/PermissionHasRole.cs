@@ -8,7 +8,7 @@ public class PermissionHasRole
 {
     public string RoleName { get; set; } = string.Empty;
 
-    public RoleEntity Role { get; set; } = null!;
+    public Role Role { get; set; } = null!;
 
     public string PermissionName { get; set; } = string.Empty;
 
