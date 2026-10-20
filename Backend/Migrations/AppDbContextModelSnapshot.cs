@@ -82,7 +82,7 @@ namespace Backend.Migrations
                     b.ToTable("PermissionHasRoles");
                 });
 
-            modelBuilder.Entity("Backend.Models.Entities.RoleEntity", b =>
+            modelBuilder.Entity("Backend.Models.Entities.Role", b =>
                 {
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -132,9 +132,6 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -151,7 +148,7 @@ namespace Backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend.Models.Entities.RoleEntity", "Role")
+                    b.HasOne("Backend.Models.Entities.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleName")
                         .OnDelete(DeleteBehavior.Cascade)
