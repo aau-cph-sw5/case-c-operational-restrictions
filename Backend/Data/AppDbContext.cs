@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+
 using Backend.Models.Entities;
 
 namespace Backend.Data;
@@ -12,4 +13,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<OperationalRestriction> OperationalRestrictions { get; set; }
+    public DbSet<User> Users => Set<User>();
+
+
 }
