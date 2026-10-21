@@ -1,9 +1,10 @@
-using Backend.Models.Enum;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Models.Entities;
 
-// MODEL - ENTITY (MVCS):
-// Represents database tables managed and mapped by EF Core to PostgreSQL
+public enum Role { Originator, Dom, Operator }
+
+[Index(nameof(Email), IsUnique = true)]
 public class User
 {
     public Guid Id { get; set; }
@@ -14,9 +15,5 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
-
-    public UserWorkingStatus  WorkingStatus { get; set; }
-
-    public bool InCharge { get; set; }
+    public Role Role { get; set; }
 }
