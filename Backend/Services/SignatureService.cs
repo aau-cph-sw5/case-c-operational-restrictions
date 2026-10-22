@@ -1,72 +1,60 @@
-using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enum;
 
 namespace Backend.Services;
 
-public class SignatureService(
-    AppDbContext appDbContext
-)
+public class SignatureService
 {
-    private readonly AppDbContext _appDbContext = appDbContext;
-    //Temporary before db
-    private static readonly List<User> _users =
+    private sealed record SignatureUser(
+        Guid Id,
+        string Name,
+        string Email,
+        string PasswordHash,
+        UserRole Role,
+        UserWorkingStatus WorkingStatus);
+
+    private static readonly List<SignatureUser> _users =
     [
-        new User
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Name = "Anna Jensen",
-            Email = "anna.jensen@example.com",
-            PasswordHash = "seed-password-hash-1",
-            Role = UserRole.DutyOperationsManager,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Name = "Lars Nielsen",
-            Email = "lars.nielsen@example.com",
-            PasswordHash = "seed-password-hash-2",
-            Role = UserRole.Operator,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Name = "Sofie Hansen",
-            Email = "sofie.hansen@example.com",
-            PasswordHash = "seed-password-hash-3",
-            Role = UserRole.Operator,
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            Name = "Mikkel Pedersen",
-            Email = "mikkel.pedersen@example.com",
-            PasswordHash = "seed-password-hash-4",
-            Role = UserRole.ControlroomSupervisor,
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            Name = "Camilla Andersen",
-            Email = "camilla.andersen@example.com",
-            PasswordHash = "seed-password-hash-5",
-            Role = UserRole.Betriebsleiter,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
-        }
+        new SignatureUser(
+            Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            "Anna Jensen",
+            "anna.jensen@example.com",
+            "seed-password-hash-1",
+            UserRole.DutyOperationsManager,
+            UserWorkingStatus.AtWork),
+        new SignatureUser(
+            Guid.Parse("22222222-2222-2222-2222-222222222222"),
+            "Lars Nielsen",
+            "lars.nielsen@example.com",
+            "seed-password-hash-2",
+            UserRole.Operator,
+            UserWorkingStatus.AtWork),
+        new SignatureUser(
+            Guid.Parse("33333333-3333-3333-3333-333333333333"),
+            "Sofie Hansen",
+            "sofie.hansen@example.com",
+            "seed-password-hash-3",
+            UserRole.Operator,
+            UserWorkingStatus.OffWork),
+        new SignatureUser(
+            Guid.Parse("44444444-4444-4444-4444-444444444444"),
+            "Mikkel Pedersen",
+            "mikkel.pedersen@example.com",
+            "seed-password-hash-4",
+            UserRole.ControlroomSupervisor,
+            UserWorkingStatus.OnHoliday),
+        new SignatureUser(
+            Guid.Parse("55555555-5555-5555-5555-555555555555"),
+            "Camilla Andersen",
+            "camilla.andersen@example.com",
+            "seed-password-hash-5",
+            UserRole.Betriebsleiter,
+            UserWorkingStatus.AtWork)
     ];
 
     //Midlertidigt mens der ikke er database
-    private static List<RequiresSignature> _requiredSignatures = [];
+    private static readonly List<RequiresSignature> _requiredSignatures = [];
     //Midlertidigt mens der ikke er database
     private static readonly List<Signature> _signatures = [];
 

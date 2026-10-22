@@ -12,7 +12,7 @@ public class SignatureServiceTests
 {
     // The service keeps its data in static lists, so every test uses its own restriction id.
     // xUnit creates a new test class instance per test, so each test gets a fresh service.
-    private readonly SignatureService _service = new(null!);
+    private readonly SignatureService _service = new();
 
     [Fact]
     public void SignatureHasNoPublicSetters()

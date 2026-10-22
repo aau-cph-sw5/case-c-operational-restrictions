@@ -4,91 +4,17 @@ using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Models.Enum;
 using Backend.Models.Requests;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
-public class OperationalRestrictionService :IOperationalRestrictionService
+public class OperationalRestrictionService : IOperationalRestrictionService
 {
     private readonly AppDbContext _appDbContext;
     private readonly SignatureService _signatureService;
 
     public OperationalRestrictionService(AppDbContext appDbContext, SignatureService signatureService)
     {
-      Id = Guid.NewGuid(),
-      Originator = request.CreatedBy,
-      CreatedBy = request.CreatedBy,
-      Status = RestrictionStatus.Draft,
-      StartDate = request.StartDate,
-      EndDate = request.EndDate,
-      CreatedAt = DateTime.UtcNow,
-      OriginalOperationalRestrictionId = null
-    };
-
-    _appDbContext.Add(restriction);
-    await _appDbContext.SaveChangesAsync();
-
-    return OperationalRestrictionDto.FromDalEntity(restriction);
-  }
-
-/// <summary>
-/// Retrieves an operational restriction by its ID. Throws an exception if not found.
-/// </summary>
-  public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id)
-  {
-    var restriction = await _appDbContext.OperationalRestrictions
-      .AsNoTracking()
-      .FirstOrDefaultAsync(x => x.Id == id);
-
-    if (restriction == null)
-      throw new OperationalRestrictionNotFoundException(id);
-    
-    return OperationalRestrictionDto.FromDalEntity(restriction);
-  }
-
-/// <summary>
-/// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
-/// </summary>
-  public async Task<List<OperationalRestrictionDto>> GetAllAsync()
-  {
-    var restrictions = await _appDbContext.OperationalRestrictions
-      .AsNoTracking()
-      .ToListAsync();
-
-    return restrictions
-      .Select(OperationalRestrictionDto.FromDalEntity)
-      .ToList();
-  }
-
-  /// <summary>
-  /// Makes a clone of a previous operational restriction with the fields from the request.
-  /// </summary>
-  private async Task<OperationalRestrictionDto> UpdateByIdAsync(UpdateByIdRequest request)
-  {
-    var originalRestriction = await _appDbContext.OperationalRestrictions
-      .AsNoTracking()
-      .FirstOrDefaultAsync(x => x.Id == request.Id);
-
-    if (originalRestriction == null)
-      throw new OperationalRestrictionNotFoundException(request.Id);
-
-    if (originalRestriction.OriginalOperationalRestrictionId == null)
-    {
-      originalRestriction.OriginalOperationalRestrictionId = request.Id;
-    }
-    
-    if (request.Status != null)
-    {
-      originalRestriction.Status = request.Status.Value;
-    }
-    if (request.StartDate != null)
-    {
-      originalRestriction.StartDate = request.StartDate.Value;
-    }
-    if (request.EndDate != null)
-    {
-      originalRestriction.EndDate = request.EndDate.Value;
         _appDbContext = appDbContext;
         _signatureService = signatureService;
     }
@@ -103,8 +29,7 @@ public class OperationalRestrictionService :IOperationalRestrictionService
             Name = "Anna Jensen",
             Email = "anna.jensen@example.com",
             PasswordHash = "seed-password-hash-1",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
+
         },
         new User
         {
@@ -112,8 +37,7 @@ public class OperationalRestrictionService :IOperationalRestrictionService
             Name = "Lars Nielsen",
             Email = "lars.nielsen@example.com",
             PasswordHash = "seed-password-hash-2",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
+
         },
         new User
         {
@@ -121,8 +45,7 @@ public class OperationalRestrictionService :IOperationalRestrictionService
             Name = "Sofie Hansen",
             Email = "sofie.hansen@example.com",
             PasswordHash = "seed-password-hash-3",
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
+
         },
         new User
         {
@@ -130,8 +53,7 @@ public class OperationalRestrictionService :IOperationalRestrictionService
             Name = "Mikkel Pedersen",
             Email = "mikkel.pedersen@example.com",
             PasswordHash = "seed-password-hash-4",
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
+
         },
         new User
         {
@@ -139,8 +61,7 @@ public class OperationalRestrictionService :IOperationalRestrictionService
             Name = "Camilla Andersen",
             Email = "camilla.andersen@example.com",
             PasswordHash = "seed-password-hash-5",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
+
         }
     ];
 
@@ -156,7 +77,7 @@ public class OperationalRestrictionService :IOperationalRestrictionService
         var restriction = new OperationalRestriction
         {
             Id = Guid.NewGuid(),
-            OriginatorUserId = request.CreatedBy,
+            Originator = request.CreatedBy,
             CreatedBy = request.CreatedBy,
             Status = RestrictionStatus.Draft,
             StartDate = request.StartDate,
@@ -187,7 +108,8 @@ public class OperationalRestrictionService :IOperationalRestrictionService
     }
 
     /// <summary>
-    /// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
+    /// Retrieves all operational restrictions from the database.
+    /// Returns an empty list if none are found.
     /// </summary>
     public async Task<List<OperationalRestrictionDto>> GetAllAsync()
     {
@@ -213,24 +135,21 @@ public class OperationalRestrictionService :IOperationalRestrictionService
             throw new OperationalRestrictionNotFoundException(request.Id);
 
         if (originalRestriction.OriginalOperationalRestrictionId == null)
-        {
             originalRestriction.OriginalOperationalRestrictionId = request.Id;
-        }
 
         if (request.Status != null)
-        {
             originalRestriction.Status = request.Status.Value;
-        }
 
         if (request.StartDate != null)
-        {
             originalRestriction.StartDate = request.StartDate.Value;
-        }
 
         if (request.EndDate != null)
-        {
             originalRestriction.EndDate = request.EndDate.Value;
-        }
+
+        if (originalRestriction.EndDate <= originalRestriction.StartDate)
+            throw new InvalidRestrictionPeriodException(
+                originalRestriction.StartDate,
+                originalRestriction.EndDate);
 
         originalRestriction.Id = Guid.NewGuid();
         originalRestriction.CreatedBy = request.EditedBy;
