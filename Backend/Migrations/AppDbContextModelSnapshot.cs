@@ -44,12 +44,14 @@ namespace Backend.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("Originator")
+                    b.Property<Guid>("OriginatorUserId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
+                    b.Property<int>("State")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");

@@ -1,3 +1,5 @@
+using Backend.Models.Entities;
+
 using Microsoft.EntityFrameworkCore;
 
 using Backend.Models.Entities;
