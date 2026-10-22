@@ -2,6 +2,7 @@
 using Backend.Lifecycle;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
+using Backend.Models.Requests;
 
 namespace Backend.Tests;
 
@@ -30,38 +31,37 @@ public class RestrictionLifecycleServiceTests
     public void EnsureCanCreateWithValidDataDoesNotThrow()
     {
         // Arrange
-        var data = new OperationalRestrictionDto
-        {
-            RestrictionId = Guid.NewGuid(),
-            OriginatorUserId = Guid.NewGuid(),
-            RestrictionDescription = "Maintenance work",
-            StartDate = DateTime.Now
-        };
+        var data = new CreateRestrictionRequest
+        (
+            Guid.NewGuid(),
+            "Maintenance work",
+            DateTime.Now,
+            DateTime.Now
+        );
 
         // Act & Assert
         _sut.EnsureCanCreate(data);
     }
 
     [Fact]
-    public void EnsureCanCreateWithInvalidDataIdentifiesFailedGuard()
-    {
-        // Arrange - missing RestrictionId
-        var data = new OperationalRestrictionDto
-        {
-            OriginatorUserId = Guid.NewGuid(),
-            RestrictionDescription = "Maintenance work",
-            StartDate = DateTime.Now
-        };
+public void EnsureCanCreateWithInvalidDataIdentifiesFailedGuard()
+{
+    // Arrange - StartDate missing (default)
+    var data = new CreateRestrictionRequest
+    (
+        Guid.NewGuid(),
+        "Maintenance work",
+        default,
+        DateTime.Now
+    );
 
-        // Act
-        var exception = Assert.Throws<InvalidOperationException>(
-            () => _sut.EnsureCanCreate(data));
+    // Act
+    var exception = Assert.Throws<InvalidOperationException>(
+        () => _sut.EnsureCanCreate(data));
 
-        // Assert - should fail on OperationalRestictionIdIsFound since RestrictionId is Guid.Empty
-        Assert.Contains(
-            "OperationalRestictionIdIsFound",
-            exception.Message);
-    }
+    // Assert - should fail on StartDateIsFound
+    Assert.Contains("StartDateIsFound", exception.Message);
+}
 
     // Helper method to create a valid DTO for testing
     private static OperationalRestrictionDto CreateValidDto(

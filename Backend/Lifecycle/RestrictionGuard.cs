@@ -26,14 +26,18 @@ public interface IRestrictionGuard<T> : IRestrictionGuard
 
 
 // Guards for the operational restriction lifecycle
-public sealed class StartDateIsFoundGuard : IRestrictionGuard<CreateRestrictionRequest>
+public sealed class StartDateIsFoundGuard : IRestrictionGuard
 {
     public string Name => "StartDateIsFound";
 
-    public bool IsSatisfied(CreateRestrictionRequest data)
+    public bool IsSatisfied(object data)
     {
-        return data is not null
-            && data.StartDate != default;
+        return data switch
+        {
+            CreateRestrictionRequest r => r.StartDate != default,
+            OperationalRestrictionDto d => d.StartDate != default,
+            _ => false
+        };
     }
 }
 
