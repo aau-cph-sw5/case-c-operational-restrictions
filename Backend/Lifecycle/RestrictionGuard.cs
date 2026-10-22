@@ -108,3 +108,50 @@ public sealed class OperatorsAreAssigned : IRestrictionGuard
         return true;
     }
 }
+
+// Cancellation guards - group 1:
+
+public sealed class OriginatorCancellationSignatureIsFoundGuard : IRestrictionGuard
+{
+    public string Name => "OriginatorCancellationSignatureIsFoundGuard";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        // TODO: check data.SignatureSheet.OriginatorCancellationSignature when Dto and SignatureType is added
+        return true;
+    
+    }
+}
+
+public sealed class DOMCancellationSignatureIsFoundGuard : IRestrictionGuard
+{
+    public string Name => "DOMCancellationSignatureIsFoundGuard";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        // TODO: check data.SignatureSheet.DOMCancellationSignature when Dto and SignatureType is added
+        return true;
+    }
+}
+
+public sealed class ControlRoomCancellationSignatureIsFoundGuard : IRestrictionGuard
+{
+    public string Name => "ControlRoomCancellationSignatureIsFoundGuard";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        // TODO: check data.SignatureSheet.ControlRoomCancellationSignature when Dto and SignatureType is added
+        return true;
+    }
+}
+
+public sealed class OperatorCancellationSignaturesAreFoundGuard : IRestrictionGuard
+{
+    public string Name => "OperatorCancellationSignaturesAreFoundGuard";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        // TODO: check data.SignatureSheet for all OperatorCancellationSignature when Dto and SignatureType is added
+        return true;
+    }
+}
