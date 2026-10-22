@@ -1,4 +1,5 @@
 using Backend.Models.Enums;
+using Backend.Models.Entities;
 namespace Backend.Models.DTOs;
 
 
@@ -20,6 +21,27 @@ public class OperationalRestrictionDto
   public DateTime? EndDate { get; set; } = DateTime.Now;
 
   public Guid CreatedBy { get; set; }
+  
+  public DateTime CreatedAt { get; set; }
+  
+  public DateTime? ArchivedAt { get; set; }
+  
+  public Guid? OriginalOperationalRestrictionId { get; set; }
+
+  public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction) =>
+    new()
+    {
+      RestrictionId = operationalRestriction.RestrictionId,
+      OriginatorUserId = operationalRestriction.OriginatorUserId,
+      RestrictionDescription = operationalRestriction.RestrictionDescription,
+      CreatedBy = operationalRestriction.CreatedBy,
+      State = operationalRestriction.State,
+      StartDate = operationalRestriction.StartDate,
+      EndDate = operationalRestriction.EndDate,
+      CreatedAt = operationalRestriction.CreatedAt,
+      ArchivedAt = operationalRestriction.ArchivedAt,
+      OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId
+    };
 }
 /*
 using Backend.Models.Entities;
@@ -29,12 +51,12 @@ namespace Backend.Models.DTOs;
 
 public class OperationalRestrictionDto
 {
-  public Guid Id { get; set; }
-  public Guid OriginatorUserId { get; set; }
-  public Guid CreatedBy { get; set; }
-  public RestrictionStatus Status { get; set; }
-  public DateTime StartDate { get; set; }
-  public DateTime EndDate { get; set; }
+  public Guid Id { get; set; }*
+  public Guid OriginatorUserId { get; set; }*
+  public Guid CreatedBy { get; set; }*
+  public RestrictionStatus Status { get; set; }*
+  public DateTime StartDate { get; set; }*
+  public DateTime EndDate { get; set; }*
   public DateTime CreatedAt { get; set; }
   public DateTime ArchivedAt { get; set; }
   public Guid? OriginalOperationalRestrictionId { get; set; }

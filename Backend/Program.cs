@@ -21,7 +21,7 @@ builder.Services.AddScoped<IExampleService, ExampleService>();
 
 // Register Lifecycle services
 builder.Services.AddScoped<RestrictionLifecycleService>();
-builder.Services.AddScoped<IOperationalRestrictionServices, OperationalRestrictionService>();
+builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
 builder.Services.AddScoped<IOperationalRestrictionRepository, OperationalRestrictionRepository>();
 
 // Register Guards
@@ -37,12 +37,9 @@ builder.Services.AddSingleton<IRestrictionGuard, CancelledRefused>();
 
 // Register User Service
 builder.Services.AddScoped<IUserService, UserService>();
-// Database
-builder.Services.AddSingleton<IRestrictionGuard, CreationDataIsValidGuard>();
 
 
 // Register User Service
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -50,7 +47,6 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))

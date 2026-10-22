@@ -9,6 +9,8 @@ public class OperationalRestriction
 
     public Guid OriginatorUserId { get; set; }
 
+    public Guid CreatedBy { get; set; }
+
     public List<Signature> SignatureSheet { get; set; } = new List<Signature>();
 
     public RestrictionState State { get; set; } = RestrictionState.Empty;
@@ -38,6 +40,8 @@ public class OperationalRestriction
     public List<Guid> AssignedOperatorsIds { get; set; } = new List<Guid>();
 
     public DateTime? UpdatedAt { get; set; } = DateTime.MinValue;
+
+    public Guid? OriginalOperationalRestrictionId { get; set; }
 
 }
 

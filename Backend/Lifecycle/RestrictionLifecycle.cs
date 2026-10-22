@@ -42,7 +42,6 @@ public static class RestrictionLifecycle
                 Guards: new[]
                 {
                     "StartDateIsFound",
-                    "OperationalRestictionIdIsFound"
                 }),
 
             // From Draft State to PendingDutyOperationsManagerApproval State

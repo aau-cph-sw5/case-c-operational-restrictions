@@ -1,8 +1,10 @@
+using Backend.Exceptions;
 using Backend.Data;
 using Backend.Lifecycle;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+using Backend.Models.Requests;
 
 namespace Backend.Services;
 
@@ -10,7 +12,7 @@ namespace Backend.Services;
 //TODO: This interface should be seperated from the class
 
 public class OperationalRestrictionService
-    : IOperationalRestrictionServices
+    : IOperationalRestrictionService
 {
     private readonly RestrictionLifecycleService _lifecycleService;
     private readonly IOperationalRestrictionRepository _repository;
@@ -23,9 +25,12 @@ public class OperationalRestrictionService
         _repository = repository;
     }
 
-    public async Task<OperationalRestriction> CreateRestrictionAsync(
-        OperationalRestrictionDto data)
+    public async Task<OperationalRestrictionDto> CreateRestrictionAsync(
+        CreateRestrictionRequest data)
     {
+        if (data.EndDate <= data.StartDate)
+            throw new InvalidRestrictionPeriodException(data.StartDate, data.EndDate);
+
         _lifecycleService.EnsureCanCreate(data);
 
         var now = DateTime.UtcNow;
@@ -33,16 +38,20 @@ public class OperationalRestrictionService
         var restriction = new OperationalRestriction
         {
             RestrictionId = Guid.NewGuid(),
-            OriginatorUserId = data.OriginatorUserId,
+            OriginatorUserId = data.CreatedBy,
+            CreatedBy = data.CreatedBy,
+            StartDate = data.StartDate,
+            EndDate = data.EndDate,
             RestrictionDescription = data.RestrictionDescription,
             State = RestrictionState.Draft,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
+            OriginalOperationalRestrictionId = null
         };
 
         await _repository.AddAsync(restriction);
 
-        return restriction;
+        return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
     }
 
     public async Task<OperationalRestriction> SubmitForApprovalAsync(
@@ -198,11 +207,22 @@ public class OperationalRestrictionService
         return await SaveUpdateAsync(restriction);
     }
 
-    public async Task<OperationalRestriction?> GetRestrictionByIdAsync(
-        Guid id)
-    {
-        return await _repository.GetByIdAsync(id);
-    }
+    public async Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id)
+{
+    var restriction = await _repository.GetByIdAsync(id)
+        ?? throw new OperationalRestrictionNotFoundException(id);
+
+    return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
+}
+
+public async Task<List<OperationalRestrictionDto>> GetAllAsync()
+{
+    var restrictions = await _repository.GetAllAsync();
+    return restrictions
+        .Select(OperationalRestrictionDto.FromOperationalRestrictionToDto)
+        .ToList();
+}
+
 
     public async Task<List<OperationalRestriction>>
         GetActiveRestrictionsAsync()
@@ -228,6 +248,7 @@ public class OperationalRestrictionService
 
         return restriction;
     }
+
 }
 
 /*

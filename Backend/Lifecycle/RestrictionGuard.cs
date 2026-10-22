@@ -1,29 +1,43 @@
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
-
+using Backend.Models.Requests;
 namespace Backend.Lifecycle;
 
 public interface IRestrictionGuard
 {
     string Name { get; }
 
-    bool IsSatisfied(OperationalRestrictionDto data);
+    bool IsSatisfied(object data);
+}
+
+public interface IRestrictionGuard<T> : IRestrictionGuard
+{
+    bool IsSatisfied(T data);
+
+    bool IRestrictionGuard.IsSatisfied(object data)
+    {
+        if (data is T specificData)
+        {
+            return IsSatisfied(specificData);
+        }
+        return false;
+    }
 }
 
 
 // Guards for the operational restriction lifecycle
-public sealed class StartDateIsFoundGuard : IRestrictionGuard
+public sealed class StartDateIsFoundGuard : IRestrictionGuard<CreateRestrictionRequest>
 {
     public string Name => "StartDateIsFound";
 
-    public bool IsSatisfied(OperationalRestrictionDto data)
+    public bool IsSatisfied(CreateRestrictionRequest data)
     {
         return data is not null
             && data.StartDate != default;
     }
 }
 
-public sealed class OperationalRestictionIdIsFound : IRestrictionGuard
+public sealed class OperationalRestictionIdIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "OperationalRestictionIdIsFound";
 
@@ -33,7 +47,7 @@ public sealed class OperationalRestictionIdIsFound : IRestrictionGuard
     }
 }
 
-public sealed class DescriptionTextIsFound : IRestrictionGuard
+public sealed class DescriptionTextIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "DescriptionTextIsFound";
 
@@ -44,7 +58,7 @@ public sealed class DescriptionTextIsFound : IRestrictionGuard
 }
 
 //To do after Signatures are added
-public sealed class OriginatorSignatureIsFound : IRestrictionGuard
+public sealed class OriginatorSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "OriginatorSignatureIsFound";
 
@@ -54,7 +68,7 @@ public sealed class OriginatorSignatureIsFound : IRestrictionGuard
     }
 }
 
-public sealed class ReturnedForChanges : IRestrictionGuard
+public sealed class ReturnedForChanges : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "ReturnedForChanges";
 
@@ -65,7 +79,7 @@ public sealed class ReturnedForChanges : IRestrictionGuard
     }   
 }
 
-public sealed class CancelledRefused : IRestrictionGuard
+public sealed class CancelledRefused : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "CancelledRefused";
 
@@ -76,7 +90,7 @@ public sealed class CancelledRefused : IRestrictionGuard
     }
 }
 //To do after Signatures are added to DTO
-public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard
+public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "DutyOperationsManagerSignatureIsFound";
 
@@ -87,7 +101,7 @@ public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard
     }
 }
 
-public sealed class ControlRoomSupervisorSignatureIsFound : IRestrictionGuard
+public sealed class ControlRoomSupervisorSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "ControlRoomSupervisorSignatureIsFound";
 
@@ -98,7 +112,7 @@ public sealed class ControlRoomSupervisorSignatureIsFound : IRestrictionGuard
     }
 }
 
-public sealed class OperatorsAreAssigned : IRestrictionGuard
+public sealed class OperatorsAreAssigned : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "OperatorsAreAssigned";
 

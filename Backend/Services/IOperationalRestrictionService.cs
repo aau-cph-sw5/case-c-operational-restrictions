@@ -4,17 +4,11 @@ using Backend.Models.Entities;
 
 namespace Backend.Services;
 
-public interface IOperationalRestrictionService
-{
-  Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request);
+public interface IOperationalRestrictionService{
 
-  Task<OperationalRestrictionDto> GetByIdAsync(Guid id);
+  Task<OperationalRestrictionDto> CreateRestrictionAsync(
+        CreateRestrictionRequest data);
   Task<List<OperationalRestrictionDto>> GetAllAsync();
-}
-public interface IOperationalRestrictionServices{
-
-  Task<OperationalRestriction> CreateRestrictionAsync(
-        OperationalRestrictionDto data);
 
   Task<OperationalRestriction> EditRestrictionAsync(
         Guid id,
@@ -57,7 +51,7 @@ public interface IOperationalRestrictionServices{
         Guid id,
         OperationalRestrictionDto data);
 
-  Task<OperationalRestriction?> GetRestrictionByIdAsync(Guid id);
+  Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id);
 
   Task<List<OperationalRestriction>> GetActiveRestrictionsAsync();
 
