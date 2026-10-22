@@ -4,7 +4,6 @@ using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
@@ -30,8 +29,7 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             Name = "Anna Jensen",
             Email = "anna.jensen@example.com",
             PasswordHash = "seed-password-hash-1",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
+
         },
         new User
         {
@@ -39,8 +37,7 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             Name = "Lars Nielsen",
             Email = "lars.nielsen@example.com",
             PasswordHash = "seed-password-hash-2",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
+
         },
         new User
         {
@@ -48,8 +45,7 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             Name = "Sofie Hansen",
             Email = "sofie.hansen@example.com",
             PasswordHash = "seed-password-hash-3",
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
+
         },
         new User
         {
@@ -57,8 +53,7 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             Name = "Mikkel Pedersen",
             Email = "mikkel.pedersen@example.com",
             PasswordHash = "seed-password-hash-4",
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
+
         },
         new User
         {
@@ -66,8 +61,7 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             Name = "Camilla Andersen",
             Email = "camilla.andersen@example.com",
             PasswordHash = "seed-password-hash-5",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
+
         }
     ];
 
@@ -114,7 +108,8 @@ public class OperationalRestrictionService : IOperationalRestrictionService
     }
 
     /// <summary>
-    /// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
+    /// Retrieves all operational restrictions from the database.
+    /// Returns an empty list if none are found.
     /// </summary>
     public async Task<List<OperationalRestrictionDto>> GetAllAsync()
     {
@@ -140,24 +135,21 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             throw new OperationalRestrictionNotFoundException(request.Id);
 
         if (originalRestriction.OriginalOperationalRestrictionId == null)
-        {
             originalRestriction.OriginalOperationalRestrictionId = request.Id;
-        }
 
         if (request.Status != null)
-        {
             originalRestriction.Status = request.Status.Value;
-        }
 
         if (request.StartDate != null)
-        {
             originalRestriction.StartDate = request.StartDate.Value;
-        }
 
         if (request.EndDate != null)
-        {
             originalRestriction.EndDate = request.EndDate.Value;
-        }
+
+        if (originalRestriction.EndDate <= originalRestriction.StartDate)
+            throw new InvalidRestrictionPeriodException(
+                originalRestriction.StartDate,
+                originalRestriction.EndDate);
 
         originalRestriction.Id = Guid.NewGuid();
         originalRestriction.CreatedBy = request.EditedBy;
