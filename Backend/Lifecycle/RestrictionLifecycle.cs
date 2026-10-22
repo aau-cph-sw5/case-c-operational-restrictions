@@ -5,17 +5,17 @@ namespace Backend.Lifecycle;
 public enum RestrictionAction
 {
     CreateDraft,
-    OriginatorStartCancellation,
-    DutyOperationsManagerApproveCancellation,
     ReturnedForChanges,
     Resubmit,
-    ControlRoomCancellation,
     PendingDutyOperationsManagerApproval,
     CancelledRefused,
-    OperatorsArchive,
     Approved,
     PendingControlRoomSupervisorApproval,
-    Active
+    Active,
+    OriginatorStartCancellation,
+    DutyOperationsManagerApproveCancellation,
+    ControlRoomCancellation,
+    OperatorsArchive
 }
 
 public sealed record RestrictionTransition(
@@ -121,6 +121,50 @@ public static class RestrictionLifecycle
                     "DutyOperationsManagerSignatureIsFound",
                     "ControlRoomSupervisorSignatureIsFound",
                     "OperatorsAreAssigned"
-                })
+                }),
+
+            // Cancellation Transitions - Group 1:
+
+            [RestrictionAction.OriginatorStartCancellation] = new(
+                RestrictionAction.OriginatorStartCancellation,
+                From: RestrictionState.Active,
+                To:   RestrictionState.PendingCancellation,
+                Guards: new[]
+                {
+                    "OriginatorCancellationSignatureIsFound"
+                }),
+            
+            [RestrictionAction.DutyOperationsManagerApproveCancellation] = new(
+                RestrictionAction.DutyOperationsManagerApproveCancellation,
+                From: RestrictionState.PendingCancellation,
+                To:   RestrictionState.OutOfForce,
+                Guards: new[]
+                {   
+                    "OriginatorCancellationSignatureIsFound",
+                    "DutyOperationsManagerCancellationSignatureIsFound"
+                }),
+
+            [RestrictionAction.ControlRoomCancellation] = new(
+                RestrictionAction.ControlRoomCancellation,
+                From: RestrictionState.OutOfForce,
+                To:   RestrictionState.AwaitingOperatorSignOut,
+                Guards: new[]
+                {
+                    "OriginatorCancellationSignatureIsFound",
+                    "DutyOperationsManagerCancellationSignatureIsFound",
+                    "ControlRoomCancellationSignatureIsFound"
+                }),
+            
+            [RestrictionAction.OperatorsArchive] = new(
+                RestrictionAction.OperatorsArchive,
+                From: RestrictionState.AwaitingOperatorSignOut,
+                To:   RestrictionState.Archived,
+                Guards: new[]
+                {
+                    "OriginatorCancellationSignatureIsFound",
+                    "DutyOperationsManagerCancellationSignatureIsFound",
+                    "ControlRoomCancellationSignatureIsFound",
+                    "OperatorCancellationSignaturesAreFound"
+                }),
         };
 }

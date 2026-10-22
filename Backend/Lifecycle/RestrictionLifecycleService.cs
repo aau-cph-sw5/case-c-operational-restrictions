@@ -39,10 +39,11 @@ public sealed class RestrictionLifecycleService
     }
 
     public void EnsureCanTransition(
-        RestrictionState currentState,
         RestrictionAction action,
         OperationalRestrictionDto data)
     {
+        RestrictionState currentState = data.State;
+
         if (!RestrictionLifecycle.Transitions.TryGetValue(action, out var transition))
         {
             throw new InvalidOperationException(

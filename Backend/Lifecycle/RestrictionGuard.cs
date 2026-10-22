@@ -111,9 +111,9 @@ public sealed class OperatorsAreAssigned : IRestrictionGuard
 
 // Cancellation guards - group 1:
 
-public sealed class OriginatorCancellationSignatureIsFoundGuard : IRestrictionGuard
+public sealed class OriginatorCancellationSignatureIsFound : IRestrictionGuard
 {
-    public string Name => "OriginatorCancellationSignatureIsFoundGuard";
+    public string Name => "OriginatorCancellationSignatureIsFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
@@ -123,20 +123,20 @@ public sealed class OriginatorCancellationSignatureIsFoundGuard : IRestrictionGu
     }
 }
 
-public sealed class DOMCancellationSignatureIsFoundGuard : IRestrictionGuard
+public sealed class DutyOperationsManagerCancellationSignatureIsFound : IRestrictionGuard
 {
-    public string Name => "DOMCancellationSignatureIsFoundGuard";
+    public string Name => "DutyOperationsManagerCancellationSignatureIsFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        // TODO: check data.SignatureSheet.DOMCancellationSignature when Dto and SignatureType is added
+        // TODO: check data.SignatureSheet.DutyOperationsManagerCancellationSignature when Dto and SignatureType is added
         return true;
     }
 }
 
-public sealed class ControlRoomCancellationSignatureIsFoundGuard : IRestrictionGuard
+public sealed class ControlRoomCancellationSignatureIsFound : IRestrictionGuard
 {
-    public string Name => "ControlRoomCancellationSignatureIsFoundGuard";
+    public string Name => "ControlRoomCancellationSignatureIsFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
@@ -145,9 +145,9 @@ public sealed class ControlRoomCancellationSignatureIsFoundGuard : IRestrictionG
     }
 }
 
-public sealed class OperatorCancellationSignaturesAreFoundGuard : IRestrictionGuard
+public sealed class OperatorCancellationSignaturesAreFound : IRestrictionGuard
 {
-    public string Name => "OperatorCancellationSignaturesAreFoundGuard";
+    public string Name => "OperatorCancellationSignaturesAreFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
