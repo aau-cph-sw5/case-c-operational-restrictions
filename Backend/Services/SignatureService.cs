@@ -137,6 +137,62 @@ public class SignatureService
         return signature;
     }
 
+    public Signature SignOriginator(Guid operationalRestrictionId, Guid signerUserId)
+    {
+        var existingSignature = _signatures.FirstOrDefault(signature =>
+            signature.OperationalRestrictionId == operationalRestrictionId
+            && signature.SigneeId == signerUserId
+            && signature.SigneeRole == UserRole.Originator);
+
+        if (existingSignature != null)
+        {
+            throw new RequiresSignatureNotSignableException(
+                existingSignature.RequiresSignatureId,
+                RequiresSignatureStatus.Signed.ToString());
+        }
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.Unsigned
+        };
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = UserRole.Originator,
+            SignedAt = DateTime.UtcNow
+        };
+        _signatures.Add(signature);
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.Signed;
+
+        return signature;
+    }
+
+    public Signature? GetOriginatorSignature(Guid operationalRestrictionId)
+    {
+        return _signatures.FirstOrDefault(signature =>
+            signature.OperationalRestrictionId == operationalRestrictionId
+            && signature.SigneeRole == UserRole.Originator);
+    }
+
+    internal void DiscardUnpersistedOriginatorSignature(Signature signature)
+    {
+        var requiredSignature = GetRequiresSignatureById(signature.RequiresSignatureId);
+
+        if (!_signatures.Remove(signature) || !_requiredSignatures.Remove(requiredSignature))
+        {
+            throw new InvalidOperationException(
+                $"Could not discard unpersisted signature {signature.Id}.");
+        }
+    }
+
 
 
     public void InvalidateRequiredSignatures(Guid operationalRestrictionId)

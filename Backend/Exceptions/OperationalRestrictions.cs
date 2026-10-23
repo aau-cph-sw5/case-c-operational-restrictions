@@ -2,8 +2,16 @@ namespace Backend.Exceptions;
 
 public class OperationalRestrictionNotFoundException : Exception
 {
-    public OperationalRestrictionNotFoundException(Guid id) 
+    public OperationalRestrictionNotFoundException(Guid id)
         : base($"Operational restriction was not found {id}")
+    {
+    }
+}
+
+public class OperationalRestrictionNotSignableException : Exception
+{
+    public OperationalRestrictionNotSignableException(Guid id, string status)
+        : base($"Operational restriction {id} cannot be signed because it is {status}")
     {
     }
 }

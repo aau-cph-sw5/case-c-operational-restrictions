@@ -2,10 +2,10 @@ namespace Backend.Models.Enum;
 
 public enum RestrictionStatus
 {
-  Draft,
-  PendingApproval,
-  Approved,
-  Active,
-  Archived,
-  Cancelled
+    Draft,
+    PendingApproval,
+    Approved,
+    Active,
+    Archived,
+    Cancelled
 }

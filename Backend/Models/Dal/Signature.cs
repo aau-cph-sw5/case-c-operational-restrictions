@@ -7,7 +7,7 @@ public sealed class Signature
 {
     public required Guid Id { get; init; }
     public required Guid RequiresSignatureId { get; init; }
-    public  required Guid OperationalRestrictionId { get; init; }
+    public required Guid OperationalRestrictionId { get; init; }
     public required Guid SigneeId { get; init; }
     // The signee's role at the time of signing, so later role changes do not rewrite history.
     public required UserRole SigneeRole { get; init; }

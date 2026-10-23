@@ -45,6 +45,40 @@ public class SignatureServiceTests
     }
 
     [Fact]
+    public void SignOriginatorCreatesImmutableSignatureForRestriction()
+    {
+        var restrictionId = Guid.NewGuid();
+        var originatorId = Guid.NewGuid();
+        var before = DateTime.UtcNow;
+
+        var signature = _service.SignOriginator(restrictionId, originatorId);
+
+        Assert.Equal(originatorId, signature.SigneeId);
+        Assert.Equal(UserRole.Originator, signature.SigneeRole);
+        Assert.Equal(restrictionId, signature.OperationalRestrictionId);
+        Assert.True(signature.SignedAt >= before);
+        Assert.True(_service.IsSignatureValid(signature.Id));
+        Assert.Same(signature, _service.GetOriginatorSignature(restrictionId));
+    }
+
+    [Fact]
+    public void GetOriginatorSignatureReturnsNullBeforeSigning()
+    {
+        Assert.Null(_service.GetOriginatorSignature(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void SignOriginatorTwiceThrows()
+    {
+        var restrictionId = Guid.NewGuid();
+        var originatorId = Guid.NewGuid();
+        _service.SignOriginator(restrictionId, originatorId);
+
+        Assert.Throws<RequiresSignatureNotSignableException>(
+            () => _service.SignOriginator(restrictionId, originatorId));
+    }
+
+    [Fact]
     public void SignByAnotherUserThrows()
     {
         var required = _service.CreateRequiredSignatures(Guid.NewGuid()).First();
