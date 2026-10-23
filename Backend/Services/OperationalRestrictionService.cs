@@ -70,18 +70,45 @@ public class OperationalRestrictionService
         return await SaveUpdateAsync(restriction);
     }
 
+// Versioned audit trail per MET-C-021: edits insert a new version row
+// instead of updating in place.
     public async Task<OperationalRestriction> EditRestrictionAsync(
-        Guid id,
-        OperationalRestrictionDto updateRestrictionDto)
+    Guid id,
+    OperationalRestrictionDto updateRestrictionDto)
+{
+    var original = await GetRestrictionOrThrowAsync(id);
+
+    // TODO : restrict editing to Draft/ReturnedForChanges states.
+    var now = DateTime.UtcNow;
+
+    var editedVersion = new OperationalRestriction
     {
-        var restriction = await GetRestrictionOrThrowAsync(id);
+        RestrictionId = Guid.NewGuid(),
+        OriginatorUserId = original.OriginatorUserId,
+        CreatedBy = updateRestrictionDto.CreatedBy,
+        SignatureSheet = new List<Signature>(original.SignatureSheet),
+        State = original.State,
+        StartDate = original.StartDate,
+        EndDate = original.EndDate,
+        CreatedAt = now,
+        ArchivedAt = original.ArchivedAt,
+        RetentionUntil = original.RetentionUntil,
+        RestrictionDescription = updateRestrictionDto.RestrictionDescription,
+        Files = new List<Backend.Models.Entities.File>(original.Files),
+        Version = original.Version + 1,
+        ReviewerId = original.ReviewerId,
+        ApprovedForSigning = original.ApprovedForSigning,
+        ReviewDescription = original.ReviewDescription,
+        AssignedOperatorsIds = new List<Guid>(original.AssignedOperatorsIds),
+        UpdatedAt = now,
+        OriginalOperationalRestrictionId =
+            original.OriginalOperationalRestrictionId ?? original.RestrictionId
+    };
 
-        // TODO: Validate that editing is allowed in the current state.
-        restriction.RestrictionDescription =
-            updateRestrictionDto.RestrictionDescription;
+    await _repository.AddAsync(editedVersion);
 
-        return await SaveUpdateAsync(restriction);
-    }
+    return editedVersion;
+}
 
     public async Task<OperationalRestriction> ApproveRestrictionAsync(
         Guid id,
