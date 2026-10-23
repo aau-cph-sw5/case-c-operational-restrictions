@@ -46,7 +46,9 @@ export async function createRestriction(
   });
 
   if (response.status === 400) {
-    throw new RestrictionValidationError(await readValidationMessages(response));
+    throw new RestrictionValidationError(
+      await readValidationMessages(response),
+    );
   }
 
   if (!response.ok) {

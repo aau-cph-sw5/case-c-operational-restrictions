@@ -36,7 +36,10 @@ describe("validateRestrictionForm", () => {
   });
 
   it("rejects an end date equal to the start date", () => {
-    const errors = validateRestrictionForm({ ...valid, endDate: valid.startDate });
+    const errors = validateRestrictionForm({
+      ...valid,
+      endDate: valid.startDate,
+    });
     expect(errors.endDate).toMatch(/after start date/i);
   });
 

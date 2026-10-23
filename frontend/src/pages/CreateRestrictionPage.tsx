@@ -3,6 +3,19 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
 import { authService } from "../services/authService";
 import {
   RestrictionValidationError,
@@ -24,6 +37,11 @@ const STEPS: { title: string; fields: RestrictionField[] }[] = [
   { title: "Period", fields: ["startDate", "endDate"] },
   { title: "Location", fields: ["location", "notes"] },
 ];
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-sm text-destructive">{message}</p>;
+}
 
 export function CreateRestrictionPage() {
   const navigate = useNavigate();
@@ -104,128 +122,145 @@ export function CreateRestrictionPage() {
     }
   }
 
-  const fieldStyle = {
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: "0.75rem",
-  };
-
   return (
-    <div className="container">
-      <h1>New Operational Restriction</h1>
-      <p>
-        Step {step + 1} of {STEPS.length}: {STEPS[step].title}
-      </p>
-
+    <div className="mx-auto flex max-w-xl flex-col gap-4 p-4">
       {serverErrors.length > 0 && (
-        <div role="alert" className="error">
-          <ul>
-            {serverErrors.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-        </div>
+        <Alert variant="destructive" role="alert">
+          <AlertTitle>Could not create the restriction</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc pl-4">
+              {serverErrors.map((message) => (
+                <li key={message}>{message}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit} noValidate className="backend-card">
-        <div style={fieldStyle}>
-          {step === 0 && (
-            <>
-              <label htmlFor="title">
-                Title *
-                <input
-                  id="title"
-                  value={values.title}
-                  onChange={handleChange("title")}
-                />
-              </label>
-              {errors.title && <p className="error">{errors.title}</p>}
+      <Card>
+        <CardHeader>
+          <CardTitle>New Operational Restriction</CardTitle>
+          <CardDescription>
+            Step {step + 1} of {STEPS.length}: {STEPS[step].title}
+          </CardDescription>
+          <div className="flex gap-2 pt-2" aria-hidden="true">
+            {STEPS.map((s, index) => (
+              <div
+                key={s.title}
+                className={`h-1.5 flex-1 rounded-full ${
+                  index <= step ? "bg-primary" : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+        </CardHeader>
 
-              <label htmlFor="description">
-                Description *
-                <textarea
-                  id="description"
-                  value={values.description}
-                  onChange={handleChange("description")}
-                />
-              </label>
-              {errors.description && (
-                <p className="error">{errors.description}</p>
-              )}
-            </>
-          )}
+        <form onSubmit={handleSubmit} noValidate>
+          <CardContent className="flex flex-col gap-4">
+            {step === 0 && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    value={values.title}
+                    onChange={handleChange("title")}
+                    aria-invalid={!!errors.title}
+                  />
+                  <FieldError message={errors.title} />
+                </div>
 
-          {step === 1 && (
-            <>
-              <label htmlFor="startDate">
-                Start date *
-                <input
-                  id="startDate"
-                  type="date"
-                  value={values.startDate}
-                  onChange={handleChange("startDate")}
-                />
-              </label>
-              {errors.startDate && <p className="error">{errors.startDate}</p>}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    value={values.description}
+                    onChange={handleChange("description")}
+                    aria-invalid={!!errors.description}
+                  />
+                  <FieldError message={errors.description} />
+                </div>
+              </>
+            )}
 
-              <label htmlFor="endDate">
-                End date *
-                <input
-                  id="endDate"
-                  type="date"
-                  value={values.endDate}
-                  onChange={handleChange("endDate")}
-                />
-              </label>
-              {errors.endDate && <p className="error">{errors.endDate}</p>}
-            </>
-          )}
+            {step === 1 && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="startDate">Start date *</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={values.startDate}
+                    onChange={handleChange("startDate")}
+                    aria-invalid={!!errors.startDate}
+                  />
+                  <FieldError message={errors.startDate} />
+                </div>
 
-          {step === 2 && (
-            <>
-              <label htmlFor="location">
-                Location *
-                <input
-                  id="location"
-                  value={values.location}
-                  onChange={handleChange("location")}
-                />
-              </label>
-              {errors.location && <p className="error">{errors.location}</p>}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="endDate">End date *</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={values.endDate}
+                    onChange={handleChange("endDate")}
+                    aria-invalid={!!errors.endDate}
+                  />
+                  <FieldError message={errors.endDate} />
+                </div>
+              </>
+            )}
 
-              <label htmlFor="notes">
-                Notes
-                <textarea
-                  id="notes"
-                  value={values.notes}
-                  onChange={handleChange("notes")}
-                />
-              </label>
-            </>
-          )}
+            {step === 2 && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="location">Location *</Label>
+                  <Input
+                    id="location"
+                    value={values.location}
+                    onChange={handleChange("location")}
+                    aria-invalid={!!errors.location}
+                  />
+                  <FieldError message={errors.location} />
+                </div>
 
-          <div style={{ display: "flex", gap: "0.75rem" }}>
-            {step > 0 && (
-              <button
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={values.notes}
+                    onChange={handleChange("notes")}
+                  />
+                </div>
+              </>
+            )}
+          </CardContent>
+
+          <CardFooter className="justify-between pt-6">
+            {step > 0 ? (
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setStep(step - 1)}
                 disabled={loading}
               >
                 Back
-              </button>
+              </Button>
+            ) : (
+              <span />
             )}
             {isLastStep ? (
-              <button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading}>
                 {loading ? "Creating..." : "Create draft"}
-              </button>
+              </Button>
             ) : (
-              <button type="button" onClick={handleNext}>
+              <Button type="button" onClick={handleNext}>
                 Next
-              </button>
+              </Button>
             )}
-          </div>
-        </div>
-      </form>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }
