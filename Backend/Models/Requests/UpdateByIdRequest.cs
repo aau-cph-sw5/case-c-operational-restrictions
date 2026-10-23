@@ -1,11 +1,11 @@
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 
 namespace Backend.Models.Requests;
 
 public record UpdateByIdRequest(
   Guid Id,
   Guid EditedBy,
-  RestrictionStatus? Status,
+  RestrictionState? Status,
   DateTime? StartDate,
   DateTime? EndDate
 );

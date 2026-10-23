@@ -18,7 +18,7 @@ public class AuthService
         //Laver en placeholder user mens der ikke er en databse
         _placeholderUser = new User
         {
-            Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            UserId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
             Name = "Placeholder User",
             Email = "placeholder@example.com",
             PasswordHash = _passwordHasher.Hash("Password123!")
@@ -62,7 +62,7 @@ public class AuthService
         }
 
         var subject = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (!Guid.TryParse(subject, out var userId) || userId != _placeholderUser.Id)
+        if (!Guid.TryParse(subject, out var userId) || userId != _placeholderUser.UserId)
         {
             return null;
         }
@@ -74,7 +74,7 @@ public class AuthService
     {
         return new UserDto
         {
-            Id = user.Id,
+            Id = user.UserId,
             Name = user.Name,
             Email = user.Email
         };
