@@ -4,6 +4,7 @@ using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
@@ -83,6 +84,7 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             CreatedAt = DateTime.UtcNow,
+            RestrictionDescription = request.RestrictionDescription,
             OriginalOperationalRestrictionId = null
         };
 
@@ -104,7 +106,53 @@ public class OperationalRestrictionService : IOperationalRestrictionService
         if (restriction == null)
             throw new OperationalRestrictionNotFoundException(id);
 
-        return OperationalRestrictionDto.FromDalEntity(restriction);
+        var restrictionDto = OperationalRestrictionDto.FromDalEntity(restriction);
+        var originatorSignature = _signatureService.GetOriginatorSignature(id);
+        if (originatorSignature != null)
+            restrictionDto.OriginatorSignature = SignatureDto.FromDalEntity(originatorSignature);
+
+        return restrictionDto;
+    }
+
+    public async Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId)
+    {
+        var restriction = await _appDbContext.OperationalRestrictions
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (restriction == null)
+            throw new OperationalRestrictionNotFoundException(id);
+
+        if (restriction.Status != RestrictionStatus.Draft)
+            throw new OperationalRestrictionNotSignableException(id, restriction.Status.ToString());
+
+        await using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+        Signature? signature = null;
+        try
+        {
+            signature = _signatureService.SignOriginator(id, signerId);
+            restriction.Status = RestrictionStatus.PendingApproval;
+            await _appDbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return signature;
+        }
+        catch
+        {
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            finally
+            {
+                restriction.Status = RestrictionStatus.Draft;
+                _appDbContext.Entry(restriction).State = EntityState.Unchanged;
+
+                if (signature != null)
+                    _signatureService.DiscardUnpersistedOriginatorSignature(signature);
+            }
+
+            throw;
+        }
     }
 
     /// <summary>
