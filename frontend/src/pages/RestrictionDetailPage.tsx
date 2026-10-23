@@ -51,8 +51,7 @@ function signErrorMessage(error: unknown): string {
   return t.signFailed;
 }
 
-// Important-notification style from the design guide: Beeswax background,
-// Gold Drop text, octagon alert symbol.
+// Important-notification style from the design guide
 function ErrorAlert({ children }: { children: ReactNode }) {
   return (
     <div
@@ -66,7 +65,6 @@ function ErrorAlert({ children }: { children: ReactNode }) {
 }
 
 // TEMPORARY: stands in for the app header's back chevron until the shared
-// header/navigation exists.
 function TemporaryBackButton() {
   const navigate = useNavigate();
   return (
@@ -130,14 +128,12 @@ export function RestrictionDetailPage() {
     setSignError(null);
 
     try {
-      // The response may or may not carry the updated restriction; if not,
-      // re-fetch this one restriction so the signature block is shown.
+      // The response may or may not carry the updated restriction; if not,re-fetch this one restriction so the signature block is shown.
       const updated =
         (await signRestriction(restriction.id)) ??
         (await getRestrictionById(restriction.id));
       setRestriction(updated);
     } catch (error) {
-      // State stays Draft; the restriction in memory is left untouched.
       setSignError(signErrorMessage(error));
     } finally {
       setSigning(false);

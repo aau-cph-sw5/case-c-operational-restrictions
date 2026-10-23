@@ -12,8 +12,7 @@ export const statusLabels: Record<RestrictionStatus, string> = {
   Unknown: "Ukendt",
 };
 
-// Colours from the design guide: Pattens Blue / Mirror Blue, Beeswax / Gold
-// Drop (needs attention), Cool Green / Royal Aquamarine (positive), Anvil Grey.
+// Colours from the design guide:
 const blue = "bg-[#E0F3FF] text-[#2563EB] border-[#2563EB]";
 const amber = "bg-[#FEF3C7] text-[#EF7D00] border-[#EF7D00]";
 const green = "bg-[#DAFBEA] text-[#37AB87] border-[#37AB87]";
@@ -31,8 +30,7 @@ export const statusClasses: Record<RestrictionStatus, string> = {
   Unknown: grey,
 };
 
-// Backend RestrictionStatus enum order. ASP.NET serialises enums as numbers
-// unless a JsonStringEnumConverter is registered, so accept both forms.
+
 const numericStatuses: RestrictionStatus[] = [
   "Draft",
   "PendingApproval",

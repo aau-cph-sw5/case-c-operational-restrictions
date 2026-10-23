@@ -1,7 +1,6 @@
 // API:
 // Raw HTTP calls to the .NET backend's restriction endpoints.
-// Attaches the stored JWT and turns non-2xx responses into errors that carry
-// the HTTP status, so the UI can show a message per status code.
+// Attaches the stored JWT and turns non-2xx responses into errors that carry the HTTP status, so the UI can show a message per status code.
 import { normalizeStatus } from "../lib/restrictionStatus";
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import type { RestrictionDto, SignatureDto } from "../types/restrictionDto";
@@ -66,8 +65,7 @@ export async function getRestrictionById(id: string): Promise<RestrictionDto> {
 }
 
 // POST /api/restrictions/{id}/sign
-// Resolves with the updated restriction when the response body contains one,
-// otherwise null (the caller then re-fetches the restriction).
+// Resolves with the updated restriction when the response body contains one, otherwise null (the caller then re-fetches the restriction).
 export async function signRestriction(
   id: string,
 ): Promise<RestrictionDto | null> {

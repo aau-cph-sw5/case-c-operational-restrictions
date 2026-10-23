@@ -20,7 +20,7 @@ export function formatUtc(value: string): string {
   );
 }
 
-// Browser-local time, e.g. "2026-10-22 14:30:00 GMT+2"
+// Browser-local time"
 export function formatLocal(value: string): string {
   const date = parseApiDate(value);
   if (Number.isNaN(date.getTime())) return "Invalid date";
