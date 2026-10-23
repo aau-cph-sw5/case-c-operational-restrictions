@@ -55,20 +55,19 @@ public class OperationalRestrictionService
     }
 
     public async Task<OperationalRestriction> SubmitForApprovalAsync(
-        Guid id,
-        OperationalRestrictionDto data)
-    {
-        var restriction = await GetRestrictionOrThrowAsync(id);
+    Guid id,
+    OperationalRestrictionDto data)
+{
+    var restriction = await GetRestrictionOrThrowAsync(id);
 
-        _lifecycleService.EnsureCanTransition(
-            restriction.State,
-            RestrictionAction.PendingDutyOperationsManagerApproval,
-            data);
+    _lifecycleService.EnsureCanTransition(
+        restriction.State,
+        RestrictionAction.PendingDutyOperationsManagerApproval,
+        data);
 
-        restriction.State = RestrictionState.PendingDutyOperationsManagerApproval;
-
-        return await SaveUpdateAsync(restriction);
-    }
+    return await SaveAsNewVersionAsync(restriction, v =>
+        v.State = RestrictionState.PendingDutyOperationsManagerApproval);
+}
 
 // Versioned audit trail per MET-C-021: edits insert a new version row
 // instead of updating in place.
@@ -79,38 +78,14 @@ public class OperationalRestrictionService
     var original = await GetRestrictionOrThrowAsync(id);
 
     // TODO : restrict editing to Draft/ReturnedForChanges states.
-    var now = DateTime.UtcNow;
-
-    var editedVersion = new OperationalRestriction
+    return await SaveAsNewVersionAsync(original, v =>
     {
-        RestrictionId = Guid.NewGuid(),
-        OriginatorUserId = original.OriginatorUserId,
-        CreatedBy = updateRestrictionDto.CreatedBy,
-        SignatureSheet = new List<Signature>(original.SignatureSheet),
-        State = original.State,
-        StartDate = original.StartDate,
-        EndDate = original.EndDate,
-        CreatedAt = now,
-        ArchivedAt = original.ArchivedAt,
-        RetentionUntil = original.RetentionUntil,
-        RestrictionDescription = updateRestrictionDto.RestrictionDescription,
-        Files = new List<Backend.Models.Entities.File>(original.Files),
-        Version = original.Version + 1,
-        ReviewerId = original.ReviewerId,
-        ApprovedForSigning = original.ApprovedForSigning,
-        ReviewDescription = original.ReviewDescription,
-        AssignedOperatorsIds = new List<Guid>(original.AssignedOperatorsIds),
-        UpdatedAt = now,
-        OriginalOperationalRestrictionId =
-            original.OriginalOperationalRestrictionId ?? original.RestrictionId
-    };
-
-    await _repository.AddAsync(editedVersion);
-
-    return editedVersion;
+        v.RestrictionDescription = updateRestrictionDto.RestrictionDescription;
+        v.CreatedBy = updateRestrictionDto.CreatedBy;
+    });
 }
 
-    public async Task<OperationalRestriction> ApproveRestrictionAsync(
+        public async Task<OperationalRestriction> ApproveRestrictionAsync(
         Guid id,
         Guid approverId,
         OperationalRestrictionDto data)
@@ -122,12 +97,11 @@ public class OperationalRestrictionService
             RestrictionAction.Approved,
             data);
 
-        restriction.State = RestrictionState.Approved;
-
-        return await SaveUpdateAsync(restriction);
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.Approved);
     }
 
-    public async Task<OperationalRestriction> SubmitForControlRoomSupervisorApprovalAsync(
+        public async Task<OperationalRestriction> SubmitForControlRoomSupervisorApprovalAsync(
         Guid id,
         OperationalRestrictionDto data)
     {
@@ -138,12 +112,11 @@ public class OperationalRestrictionService
             RestrictionAction.PendingControlRoomSupervisorApproval,
             data);
 
-        restriction.State = RestrictionState.PendingControlRoomSupervisorApproval;
-
-        return await SaveUpdateAsync(restriction);
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.PendingControlRoomSupervisorApproval);
     }
 
-    public async Task<OperationalRestriction> ActivateRestrictionAsync(
+        public async Task<OperationalRestriction> ActivateRestrictionAsync(
         Guid id,
         Guid approverId,
         OperationalRestrictionDto data)
@@ -155,54 +128,55 @@ public class OperationalRestrictionService
             RestrictionAction.Active,
             data);
 
-        restriction.State = RestrictionState.Active;
-
-        return await SaveUpdateAsync(restriction);
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.Active);
     }
 
     public async Task<OperationalRestriction> DenyRestrictionAsync(
-        Guid id,
-        Guid approverId,
-        string reason,
-        OperationalRestrictionDto data)
+    Guid id,
+    Guid approverId,
+    string reason,
+    OperationalRestrictionDto data)
+{
+    var restriction = await GetRestrictionOrThrowAsync(id);
+
+    _lifecycleService.EnsureCanTransition(
+        restriction.State,
+        RestrictionAction.CancelledRefused,
+        data);
+
+    return await SaveAsNewVersionAsync(restriction, v =>
     {
-        var restriction = await GetRestrictionOrThrowAsync(id);
+        v.State = RestrictionState.CancelledRefused;
+        v.ReviewDescription = reason;   // deny reason finally gets stored
+    });
+}
 
-        _lifecycleService.EnsureCanTransition(
-            restriction.State,
-            RestrictionAction.CancelledRefused,
-            data);
-
-        restriction.State = RestrictionState.CancelledRefused;
-
-        return await SaveUpdateAsync(restriction);
-    }
-
-    public async Task<OperationalRestriction> ArchiveRestrictionAsync(
+        public async Task<OperationalRestriction> ArchiveRestrictionAsync(
         Guid id)
     {
         var restriction = await GetRestrictionOrThrowAsync(id);
 
         // TODO: Validate that archiving is allowed in the current state.
-        restriction.State = RestrictionState.Archived;
-        restriction.ArchivedAt = DateTime.UtcNow;
-
-        return await SaveUpdateAsync(restriction);
+        return await SaveAsNewVersionAsync(restriction, v =>
+        {
+            v.State = RestrictionState.Archived;
+            v.ArchivedAt = DateTime.UtcNow;
+        });
     }
 
-    public async Task<OperationalRestriction> AssignOperatorAsync(
+        public async Task<OperationalRestriction> AssignOperatorAsync(
         Guid id,
         Guid operatorId)
     {
         var restriction = await GetRestrictionOrThrowAsync(id);
 
         // TODO: Validate operator assignment rules.
-        restriction.AssignedOperatorsIds.Add(operatorId);
-
-        return await SaveUpdateAsync(restriction);
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.AssignedOperatorsIds.Add(operatorId));
     }
 
-    public async Task<OperationalRestriction> ReturnForChangesAsync(
+        public async Task<OperationalRestriction> ReturnForChangesAsync(
         Guid id,
         OperationalRestrictionDto data)
     {
@@ -213,12 +187,11 @@ public class OperationalRestrictionService
             RestrictionAction.ReturnedForChanges,
             data);
 
-        restriction.State = RestrictionState.ReturnedForChanges;
-
-        return await SaveUpdateAsync(restriction);
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.ReturnedForChanges);
     }
 
-    public async Task<OperationalRestriction> ResubmitRestrictionAsync(
+        public async Task<OperationalRestriction> ResubmitRestrictionAsync(
         Guid id,
         OperationalRestrictionDto data)
     {
@@ -229,9 +202,8 @@ public class OperationalRestrictionService
             RestrictionAction.Resubmit,
             data);
 
-        restriction.State = RestrictionState.Draft;
-
-        return await SaveUpdateAsync(restriction);
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.Draft);
     }
 
     public async Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id)
@@ -266,15 +238,46 @@ public async Task<List<OperationalRestrictionDto>> GetAllAsync()
                 $"Restriction with ID '{id}' was not found.");
     }
 
-    private async Task<OperationalRestriction> SaveUpdateAsync(
-        OperationalRestriction restriction)
+
+
+    // Versioned audit trail per MET-C-021: writes insert a new version row
+// instead of updating in place.
+private async Task<OperationalRestriction> SaveAsNewVersionAsync(
+    OperationalRestriction original,
+    Action<OperationalRestriction> applyChanges)
+{
+    var now = DateTime.UtcNow;
+
+    var newVersion = new OperationalRestriction
     {
-        restriction.UpdatedAt = DateTime.UtcNow;
+        RestrictionId = Guid.NewGuid(),
+        OriginatorUserId = original.OriginatorUserId,
+        CreatedBy = original.CreatedBy,
+        SignatureSheet = new List<Signature>(original.SignatureSheet),
+        State = original.State,
+        StartDate = original.StartDate,
+        EndDate = original.EndDate,
+        CreatedAt = now,
+        ArchivedAt = original.ArchivedAt,
+        RetentionUntil = original.RetentionUntil,
+        RestrictionDescription = original.RestrictionDescription,
+        Files = new List<Backend.Models.Entities.File>(original.Files),
+        Version = original.Version + 1,
+        ReviewerId = original.ReviewerId,
+        ApprovedForSigning = original.ApprovedForSigning,
+        ReviewDescription = original.ReviewDescription,
+        AssignedOperatorsIds = new List<Guid>(original.AssignedOperatorsIds),
+        UpdatedAt = now,
+        OriginalOperationalRestrictionId =
+            original.OriginalOperationalRestrictionId ?? original.RestrictionId
+    };
 
-        await _repository.UpdateAsync(restriction);
+    applyChanges(newVersion);
 
-        return restriction;
-    }
+    await _repository.AddAsync(newVersion);
+
+    return newVersion;
+}
 
 }
 
