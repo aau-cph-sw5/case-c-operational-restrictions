@@ -1,0 +1,36 @@
+// All user-facing text for the restriction detail view (Danish, per the design).
+// Kept in one place so wording changes don't require touching the components.
+export const restrictionTexts = {
+  back: "Tilbage",
+  screenLabel: "DRIFTSRESTRIKTION",
+  idLabel: "Restriktions-ID",
+  statusLabel: "Status",
+  startDate: "Startdato",
+  endDate: "Slutdato",
+  description: "Om driftsrestriktionen",
+  noDescription: "Ingen beskrivelse angivet.",
+  utc: "UTC",
+  local: "Lokal tid",
+  signaturesHeading: "Underskrifter",
+  unsignedDraft: "Ikke underskrevet kladde",
+  notSignedYet: "Denne restriktion er endnu ikke underskrevet.",
+  signedBy: "Underskrevet af",
+  role: "Rolle",
+  signedAt: "Tidspunkt",
+  sign: "Underskriv",
+  signing: "Underskriver...",
+  edit: "Rediger",
+  editComingSoon: "Redigering er ikke implementeret endnu",
+  loading: "Henter restriktion...",
+  backToHome: "Tilbage til forsiden",
+  loadFailed: "Restriktionen kunne ikke hentes. Prøv igen.",
+  notFound: "Restriktionen blev ikke fundet.",
+  forbiddenView: "Du har ikke adgang til at se denne restriktion.",
+  sessionExpired: "Din session er udløbet. Log ind igen.",
+  signBadRequest:
+    "Restriktionen er ikke komplet. Startdato, slutdato og beskrivelse skal udfyldes, før den kan underskrives.",
+  signForbidden: "Kun restriktionens originator kan underskrive den.",
+  signConflict:
+    "Restriktionen er ikke længere en kladde og kan ikke underskrives.",
+  signFailed: "Underskrivningen mislykkedes. Prøv igen.",
+} as const;
