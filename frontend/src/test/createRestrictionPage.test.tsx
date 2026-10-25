@@ -21,7 +21,7 @@ function DetailStub() {
     ?.notification;
   return (
     <div>
-      Detail page
+      Detaljeside
       {note && <p>{note}</p>}
     </div>
   );
@@ -46,14 +46,14 @@ function click(name: RegExp) {
   fireEvent.click(screen.getByRole("button", { name }));
 }
 
-function fillToLastStep() {
-  type(/^title/i, "Speed restriction");
-  type(/^description/i, "Reduced speed");
-  click(/next/i);
-  type(/^start date/i, "2026-11-01");
-  type(/^end date/i, "2026-11-02");
-  click(/next/i);
-  type(/^location/i, "Nørreport");
+function fillToLastStep({ withEndDate = true } = {}) {
+  type(/^titel/i, "Hastigheds Begrænsning");
+  type(/^beskrivelse/i, "Nedsat hastighed");
+  click(/næste/i);
+  type(/^startdato/i, "2026-11-01");
+  if (withEndDate) type(/^slutdato/i, "2026-11-02");
+  click(/næste/i);
+  type(/^sted/i, "Nørreport");
 }
 
 describe("CreateRestrictionPage", () => {
@@ -69,64 +69,89 @@ describe("CreateRestrictionPage", () => {
 
   it("updates inputs as the user types", () => {
     renderPage();
-    type(/^title/i, "Speed restriction");
-    expect(screen.getByLabelText(/^title/i)).toHaveValue("Speed restriction");
+    type(/^titel/i, "Hastigheds Begrænsning");
+    expect(screen.getByLabelText(/^titel/i)).toHaveValue(
+      "Hastigheds Begrænsning",
+    );
   });
 
-  it("blocks Next while required fields are empty", () => {
+  it("blocks Næste while required fields are empty", () => {
     renderPage();
-    click(/next/i);
-    expect(screen.getByText("Title is required.")).toBeInTheDocument();
-    expect(screen.getByText("Description is required.")).toBeInTheDocument();
-    expect(screen.getByText(/step 1 of 3/i)).toBeInTheDocument();
+    click(/næste/i);
+    expect(screen.getByText("Titel er påkrævet.")).toBeInTheDocument();
+    expect(screen.getByText("Beskrivelse er påkrævet.")).toBeInTheDocument();
+    expect(screen.getByText(/trin 1 af 3/i)).toBeInTheDocument();
   });
 
-  it("shows an inline error when end date is not after start date", () => {
+  it("shows an inline error when slutdato is not after startdato", () => {
     renderPage();
-    type(/^title/i, "T");
-    type(/^description/i, "D");
-    click(/next/i);
-    type(/^start date/i, "2026-11-05");
-    type(/^end date/i, "2026-11-01");
-    click(/next/i);
-    expect(screen.getByText(/after start date/i)).toBeInTheDocument();
-    expect(screen.getByText(/step 2 of 3/i)).toBeInTheDocument();
+    type(/^titel/i, "T");
+    type(/^beskrivelse/i, "B");
+    click(/næste/i);
+    type(/^startdato/i, "2026-11-05");
+    type(/^slutdato/i, "2026-11-01");
+    click(/næste/i);
+    expect(
+      screen.getByText("Slutdato skal være efter startdato."),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/trin 2 af 3/i)).toBeInTheDocument();
   });
 
   it("does not call the API when the last step is invalid", () => {
     renderPage();
-    type(/^title/i, "T");
-    type(/^description/i, "D");
-    click(/next/i);
-    type(/^start date/i, "2026-11-01");
-    type(/^end date/i, "2026-11-02");
-    click(/next/i);
-    click(/create draft/i);
-    expect(screen.getByText("Location is required.")).toBeInTheDocument();
+    type(/^titel/i, "T");
+    type(/^beskrivelse/i, "B");
+    click(/næste/i);
+    type(/^startdato/i, "2026-11-01");
+    click(/næste/i);
+    click(/opret kladde/i);
+    expect(screen.getByText("Sted er påkrævet.")).toBeInTheDocument();
     expect(createMock).not.toHaveBeenCalled();
   });
 
   it("submits with the JWT and redirects with a success notification", async () => {
     createMock.mockResolvedValue({
       id: "abc-123",
-      title: "Speed restriction",
-      description: "Reduced speed",
+      title: "Hastigheds Begrænsning",
+      description: "Nedsat hastighed",
       location: "Nørreport",
       startDate: "2026-11-01",
       endDate: "2026-11-02",
     });
     renderPage();
     fillToLastStep();
-    click(/create draft/i);
+    click(/opret kladde/i);
 
-    expect(await screen.findByText("Detail page")).toBeInTheDocument();
-    expect(screen.getByText("Restriction draft created.")).toBeInTheDocument();
+    expect(await screen.findByText("Detaljeside")).toBeInTheDocument();
+    expect(
+      screen.getByText("Driftsrestriktion oprettet som kladde."),
+    ).toBeInTheDocument();
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Speed restriction",
+        title: "Hastigheds Begrænsning",
         startDate: "2026-11-01",
         endDate: "2026-11-02",
       }),
+      "test-token",
+    );
+  });
+
+  it("submits without slutdato and sends null", async () => {
+    createMock.mockResolvedValue({
+      id: "abc-123",
+      title: "Hastigheds Begrænsning",
+      description: "Nedsat hastighed",
+      location: "Nørreport",
+      startDate: "2026-11-01",
+      endDate: null,
+    });
+    renderPage();
+    fillToLastStep({ withEndDate: false });
+    click(/opret kladde/i);
+
+    expect(await screen.findByText("Detaljeside")).toBeInTheDocument();
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({ endDate: null }),
       "test-token",
     );
   });
@@ -135,22 +160,22 @@ describe("CreateRestrictionPage", () => {
     createMock.mockReturnValue(new Promise(() => {})); // never resolves
     renderPage();
     fillToLastStep();
-    click(/create draft/i);
+    click(/opret kladde/i);
 
-    const button = await screen.findByRole("button", { name: /creating/i });
+    const button = await screen.findByRole("button", { name: /opretter/i });
     expect(button).toBeDisabled();
   });
 
   it("shows server validation errors above the form on 400", async () => {
     createMock.mockRejectedValue(
-      new RestrictionValidationError(["Title is too long."]),
+      new RestrictionValidationError(["Titlen er for lang."]),
     );
     renderPage();
     fillToLastStep();
-    click(/create draft/i);
+    click(/opret kladde/i);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Title is too long.",
+      "Titlen er for lang.",
     );
   });
 });

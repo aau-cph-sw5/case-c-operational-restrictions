@@ -1,18 +1,9 @@
 // PAGE:
-// Step-by-step form for an Originator to create an Operational Restriction draft.
+// Trin-for-trin formular til at oprette en kladde af en driftsrestriktion.
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -21,6 +12,7 @@ import {
   RestrictionValidationError,
   createRestriction,
 } from "../services/restrictionApi";
+import { FIELDS, STEPS } from "../lib/restrictionFields";
 import {
   EMPTY_VALUES,
   hasErrors,
@@ -32,16 +24,8 @@ import type {
   RestrictionFormValues,
 } from "../lib/restrictionValidation";
 
-const STEPS: { title: string; fields: RestrictionField[] }[] = [
-  { title: "Basics", fields: ["title", "description"] },
-  { title: "Period", fields: ["startDate", "endDate"] },
-  { title: "Location", fields: ["location", "notes"] },
-];
-
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return <p className="text-sm text-destructive">{message}</p>;
-}
+const controlClass =
+  "h-11 border-pattens-blue bg-white font-body text-lg md:text-lg";
 
 export function CreateRestrictionPage() {
   const navigate = useNavigate();
@@ -52,6 +36,7 @@ export function CreateRestrictionPage() {
   const [loading, setLoading] = useState(false);
 
   const isLastStep = step === STEPS.length - 1;
+  const stepFields = FIELDS.filter((field) => field.step === step);
 
   function handleChange(field: RestrictionField) {
     return (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -61,7 +46,10 @@ export function CreateRestrictionPage() {
   }
 
   function handleNext() {
-    const stepErrors = validateRestrictionForm(values, STEPS[step].fields);
+    const stepErrors = validateRestrictionForm(
+      values,
+      stepFields.map((field) => field.name),
+    );
     setErrors(stepErrors);
     if (!hasErrors(stepErrors)) setStep(step + 1);
   }
@@ -69,7 +57,7 @@ export function CreateRestrictionPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    // Pressing Enter on an earlier step behaves like "Next".
+    // Enter på et tidligere trin virker som "Næste".
     if (!isLastStep) {
       handleNext();
       return;
@@ -78,8 +66,8 @@ export function CreateRestrictionPage() {
     const allErrors = validateRestrictionForm(values);
     if (hasErrors(allErrors)) {
       setErrors(allErrors);
-      const firstBadStep = STEPS.findIndex((s) =>
-        s.fields.some((f) => allErrors[f]),
+      const firstBadStep = STEPS.findIndex((_, index) =>
+        FIELDS.some((f) => f.step === index && allErrors[f.name]),
       );
       if (firstBadStep >= 0) setStep(firstBadStep);
       return;
@@ -87,7 +75,7 @@ export function CreateRestrictionPage() {
 
     const token = authService.getStoredToken();
     if (!token) {
-      setServerErrors(["You are not logged in."]);
+      setServerErrors(["Du er ikke logget ind."]);
       return;
     }
 
@@ -101,20 +89,20 @@ export function CreateRestrictionPage() {
           description: values.description.trim(),
           location: values.location.trim(),
           startDate: values.startDate,
-          endDate: values.endDate,
+          endDate: values.endDate || null,
           notes: values.notes.trim() || undefined,
         },
         token,
       );
       navigate(`/restrictions/${created.id}`, {
-        state: { notification: "Restriction draft created." },
+        state: { notification: "Driftsrestriktion oprettet som kladde." },
       });
     } catch (err) {
       if (err instanceof RestrictionValidationError) {
         setServerErrors(err.messages);
       } else {
         setServerErrors([
-          err instanceof Error ? err.message : "Something went wrong.",
+          err instanceof Error ? err.message : "Noget gik galt.",
         ]);
       }
     } finally {
@@ -123,144 +111,122 @@ export function CreateRestrictionPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-4 p-4">
+    <div className="mx-auto flex max-w-xl flex-col gap-4 p-4 text-left">
+      <header className="flex flex-col gap-1">
+        <h1 className="font-ui text-2xl font-bold text-black">
+          Ny driftsrestriktion
+        </h1>
+        <p className="font-ui text-base font-bold text-anvil-grey">
+          Trin {step + 1} af {STEPS.length}
+        </p>
+      </header>
+
       {serverErrors.length > 0 && (
-        <Alert variant="destructive" role="alert">
-          <AlertTitle>Could not create the restriction</AlertTitle>
-          <AlertDescription>
-            <ul className="list-disc pl-4">
-              {serverErrors.map((message) => (
-                <li key={message}>{message}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-lg border border-gold-drop bg-beeswax p-4"
+        >
+          <p className="font-ui text-base text-gold-drop">
+            Driftsrestriktionen kunne ikke oprettes
+          </p>
+          <ul className="mt-2 list-disc pl-5 font-body text-lg text-black">
+            {serverErrors.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>New Operational Restriction</CardTitle>
-          <CardDescription>
-            Step {step + 1} of {STEPS.length}: {STEPS[step].title}
-          </CardDescription>
-          <div className="flex gap-2 pt-2" aria-hidden="true">
-            {STEPS.map((s, index) => (
-              <div
-                key={s.title}
-                className={`h-1.5 flex-1 rounded-full ${
-                  index <= step ? "bg-primary" : "bg-muted"
-                }`}
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="flex flex-col gap-5 rounded-xl border border-pattens-blue bg-zumthor p-6"
+      >
+        <div className="flex gap-2" aria-hidden="true">
+          {STEPS.map((s, index) => (
+            <div
+              key={s.title}
+              className={`h-1.5 flex-1 rounded-full ${
+                index <= step ? "bg-mirror-blue" : "bg-pattens-blue"
+              }`}
+            />
+          ))}
+        </div>
+
+        <h2 className="font-ui text-base font-bold text-mirror-blue">
+          {STEPS[step].title}
+        </h2>
+
+        {stepFields.map((field) => (
+          <div key={field.name} className="flex flex-col gap-2">
+            <Label
+              htmlFor={field.name}
+              className="font-body text-xl text-black"
+            >
+              {field.label}
+              {field.required ? " *" : " (valgfri)"}
+            </Label>
+
+            {field.kind === "textarea" ? (
+              <Textarea
+                id={field.name}
+                value={values[field.name]}
+                onChange={handleChange(field.name)}
+                aria-invalid={!!errors[field.name]}
+                className={controlClass}
               />
-            ))}
+            ) : (
+              <Input
+                id={field.name}
+                type={field.kind === "date" ? "date" : "text"}
+                value={values[field.name]}
+                onChange={handleChange(field.name)}
+                aria-invalid={!!errors[field.name]}
+                className={controlClass}
+              />
+            )}
+
+            {errors[field.name] && (
+              <p className="font-ui text-sm font-bold text-gold-drop">
+                {errors[field.name]}
+              </p>
+            )}
           </div>
-        </CardHeader>
+        ))}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <CardContent className="flex flex-col gap-4">
-            {step === 0 && (
-              <>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={values.title}
-                    onChange={handleChange("title")}
-                    aria-invalid={!!errors.title}
-                  />
-                  <FieldError message={errors.title} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea
-                    id="description"
-                    value={values.description}
-                    onChange={handleChange("description")}
-                    aria-invalid={!!errors.description}
-                  />
-                  <FieldError message={errors.description} />
-                </div>
-              </>
-            )}
-
-            {step === 1 && (
-              <>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="startDate">Start date *</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={values.startDate}
-                    onChange={handleChange("startDate")}
-                    aria-invalid={!!errors.startDate}
-                  />
-                  <FieldError message={errors.startDate} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="endDate">End date *</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={values.endDate}
-                    onChange={handleChange("endDate")}
-                    aria-invalid={!!errors.endDate}
-                  />
-                  <FieldError message={errors.endDate} />
-                </div>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
-                    value={values.location}
-                    onChange={handleChange("location")}
-                    aria-invalid={!!errors.location}
-                  />
-                  <FieldError message={errors.location} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={values.notes}
-                    onChange={handleChange("notes")}
-                  />
-                </div>
-              </>
-            )}
-          </CardContent>
-
-          <CardFooter className="justify-between pt-6">
-            {step > 0 ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep(step - 1)}
-                disabled={loading}
-              >
-                Back
-              </Button>
-            ) : (
-              <span />
-            )}
-            {isLastStep ? (
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create draft"}
-              </Button>
-            ) : (
-              <Button type="button" onClick={handleNext}>
-                Next
-              </Button>
-            )}
-          </CardFooter>
-        </form>
-      </Card>
+        <div className="flex justify-between pt-2">
+          {step > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="font-ui font-bold"
+              onClick={() => setStep(step - 1)}
+              disabled={loading}
+            >
+              Tilbage
+            </Button>
+          ) : (
+            <span />
+          )}
+          {isLastStep ? (
+            <Button
+              type="submit"
+              className="font-ui font-bold"
+              disabled={loading}
+            >
+              {loading ? "Opretter..." : "Opret kladde"}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className="font-ui font-bold"
+              onClick={handleNext}
+            >
+              Næste
+            </Button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }

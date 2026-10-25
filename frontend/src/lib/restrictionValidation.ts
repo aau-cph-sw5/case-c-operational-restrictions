@@ -1,45 +1,31 @@
 // Pure validation, kept separate from the page so it is easy to unit test.
-export interface RestrictionFormValues {
-  title: string;
-  description: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  notes: string;
-}
+import { FIELDS } from "./restrictionFields";
+import type {
+  RestrictionField,
+  RestrictionFormValues,
+} from "./restrictionFields";
 
-export type RestrictionField = keyof RestrictionFormValues;
+export type { RestrictionField, RestrictionFormValues };
 export type FormErrors = Partial<Record<RestrictionField, string>>;
 
-export const EMPTY_VALUES: RestrictionFormValues = {
-  title: "",
-  description: "",
-  location: "",
-  startDate: "",
-  endDate: "",
-  notes: "",
-};
-
-const REQUIRED: Record<string, string> = {
-  title: "Title is required.",
-  description: "Description is required.",
-  location: "Location is required.",
-  startDate: "Start date is required.",
-  endDate: "End date is required.",
-};
+export const EMPTY_VALUES = Object.fromEntries(
+  FIELDS.map((field) => [field.name, ""]),
+) as RestrictionFormValues;
 
 export function validateRestrictionForm(
   values: RestrictionFormValues,
-  fields: RestrictionField[] = Object.keys(values) as RestrictionField[],
+  fields: RestrictionField[] = FIELDS.map((field) => field.name),
 ): FormErrors {
   const errors: FormErrors = {};
 
-  for (const field of fields) {
-    if (field in REQUIRED && values[field].trim() === "") {
-      errors[field] = REQUIRED[field];
+  for (const def of FIELDS) {
+    if (!fields.includes(def.name)) continue;
+    if (def.required && values[def.name].trim() === "") {
+      errors[def.name] = `${def.label} er påkrævet.`;
     }
   }
 
+  // Slutdato is optional, so it is only compared when it has been filled in.
   // yyyy-MM-dd strings compare correctly as plain strings.
   if (
     fields.includes("endDate") &&
@@ -47,7 +33,7 @@ export function validateRestrictionForm(
     values.endDate &&
     values.endDate <= values.startDate
   ) {
-    errors.endDate = "End date must be after start date.";
+    errors.endDate = "Slutdato skal være efter startdato.";
   }
 
   return errors;

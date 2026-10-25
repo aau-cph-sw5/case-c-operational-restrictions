@@ -3,7 +3,7 @@ export interface CreateRestrictionRequest {
   description: string;
   location: string;
   startDate: string; // yyyy-MM-dd
-  endDate: string; // yyyy-MM-dd
+  endDate: string | null; // yyyy-MM-dd
   notes?: string;
 }
 
