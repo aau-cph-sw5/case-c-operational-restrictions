@@ -7,6 +7,6 @@ public interface IOperationalRestrictionService
 {
   Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request);
 
-  Task<OperationalRestrictionDto> GetByIdAsync(Guid id);
-  Task<List<OperationalRestrictionDto>> GetAllAsync();
+  Task<OperationalRestrictionDto> GetByIdAsync(Guid id, Guid currentUserId);
+  Task<List<OperationalRestrictionDto>> GetAllAsync(Guid currentUserId);
 }

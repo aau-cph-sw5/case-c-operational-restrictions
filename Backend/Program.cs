@@ -103,12 +103,17 @@ app.MapGet("/api/hello", () => new
     timestamp = DateTime.UtcNow
 });
 
-// Apply EF migrations (Development only, and not while EF tools are running)
+// Apply EF migrations and seed data (Development only, and not while EF tools are running)
 if (app.Environment.IsDevelopment() &&
     Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 {
     using var scope = app.Services.CreateScope();
-    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+    var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await appDbContext.Database.MigrateAsync();
+    await DbSeeder.SeedAsync(appDbContext);
 }
 
 app.Run();
+
+// Makes Program visible to WebApplicationFactory in the integration tests.
+public partial class Program { }

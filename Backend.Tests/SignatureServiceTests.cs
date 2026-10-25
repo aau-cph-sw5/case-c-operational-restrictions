@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enum;
@@ -10,9 +11,17 @@ namespace Backend.Tests;
 
 public class SignatureServiceTests
 {
-    // The service keeps its data in static lists, so every test uses its own restriction id.
-    // xUnit creates a new test class instance per test, so each test gets a fresh service.
-    private readonly SignatureService _service = new(null!);
+    // Users come from a seeded in-memory database, but required signatures and signatures are still kept
+    // in static lists, so every test uses its own restriction id.
+    // xUnit creates a new test class instance per test, so each test gets a fresh service and database.
+    private readonly AppDbContext _appDbContext;
+    private readonly SignatureService _service;
+
+    public SignatureServiceTests()
+    {
+        _appDbContext = TestDatabase.CreateSeededContext();
+        _service = new SignatureService(_appDbContext);
+    }
 
     [Fact]
     public void SignatureHasNoPublicSetters()
@@ -40,7 +49,7 @@ public class SignatureServiceTests
 
         Assert.Equal(required.SigneeId, signature.SigneeId);
         Assert.Equal(restrictionVersionId, signature.OperationalRestrictionId);
-        Assert.NotEqual(default, signature.SigneeRole);
+        Assert.Equal(_appDbContext.Users.Single(x => x.Id == required.SigneeId).Role, signature.SigneeRole);
         Assert.True(signature.SignedAt >= before);
     }
 
@@ -79,10 +88,12 @@ public class SignatureServiceTests
     [Fact]
     public void CreateRequiredSignaturesSkipsUsersOnHolidayAndStartsUnsigned()
     {
+        var usersNotOnHoliday = _appDbContext.Users.Count(x => x.WorkingStatus != UserWorkingStatus.OnHoliday);
 
         var required = _service.CreateRequiredSignatures(Guid.NewGuid());
 
-        Assert.Equal(4, required.Count);
+        Assert.Equal(usersNotOnHoliday, required.Count);
+        Assert.DoesNotContain(required, x => x.SigneeId == DbSeeder.MikkelId);
         Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.Unsigned, x.RequiresSignatureStatus));
     }
 }

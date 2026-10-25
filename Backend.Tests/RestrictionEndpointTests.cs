@@ -1,0 +1,127 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+using Backend.Data;
+using Backend.Models.DTOs;
+using Backend.Models.Enum;
+
+namespace Backend.Tests;
+
+// Integration tests that go through the full HTTP pipeline: routing, JWT authentication, model binding and the database.
+public class RestrictionEndpointTests : IAsyncLifetime
+{
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    private readonly TestWebApplicationFactory _factory = new();
+
+    public Task InitializeAsync() => _factory.SeedAsync();
+
+    public async Task DisposeAsync() => await _factory.DisposeAsync();
+
+    [Fact]
+    public async Task RequestsWithoutTokenReturn401()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/restriction");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostCreatesDraftWithLoggedInUserAsOriginatorAndPersistsIt()
+    {
+        var client = CreateClientFor(DbSeeder.AnnaId);
+
+        var response = await client.PostAsJsonAsync("/api/restriction", new
+        {
+            createdBy = DbSeeder.LarsId,
+            startDate = DateTime.UtcNow.AddDays(1),
+            endDate = DateTime.UtcNow.AddDays(2)
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await ReadAsync<OperationalRestrictionDto>(response);
+        Assert.Equal(DbSeeder.AnnaId, created.OriginatorUserId);
+        Assert.Equal(RestrictionStatus.Draft, created.Status);
+
+        var fetched = await client.GetAsync($"/api/restriction/{created.Id}");
+        Assert.Equal(HttpStatusCode.OK, fetched.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostWithEndDateBeforeStartDateReturns400()
+    {
+        var client = CreateClientFor(DbSeeder.AnnaId);
+
+        var response = await client.PostAsJsonAsync("/api/restriction", new
+        {
+            startDate = DateTime.UtcNow.AddDays(2),
+            endDate = DateTime.UtcNow.AddDays(1)
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetByIdOfOtherUsersDraftReturns404()
+    {
+        var draft = await CreateDraftAsAsync(DbSeeder.AnnaId);
+
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restriction/{draft.Id}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetByIdOfNonDraftReturns200ForAnyUser()
+    {
+        // Seeded Approved restriction owned by Anna.
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restriction/5eed0000-0000-0000-0000-000000000006");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetAllReturnsNonDraftsAndOnlyOwnDrafts()
+    {
+        await CreateDraftAsAsync(DbSeeder.AnnaId);
+
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restriction");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var restrictions = await ReadAsync<List<OperationalRestrictionDto>>(response);
+        Assert.Contains(restrictions, x => x.Status != RestrictionStatus.Draft);
+        Assert.Contains(restrictions, x => x.Status == RestrictionStatus.Draft && x.OriginatorUserId == DbSeeder.LarsId);
+        Assert.DoesNotContain(restrictions, x => x.Status == RestrictionStatus.Draft && x.OriginatorUserId != DbSeeder.LarsId);
+    }
+
+    private HttpClient CreateClientFor(Guid userId)
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _factory.CreateTokenFor(userId));
+
+        return client;
+    }
+
+    private async Task<OperationalRestrictionDto> CreateDraftAsAsync(Guid userId)
+    {
+        var response = await CreateClientFor(userId).PostAsJsonAsync("/api/restriction", new
+        {
+            startDate = DateTime.UtcNow.AddDays(1),
+            endDate = DateTime.UtcNow.AddDays(2)
+        });
+        response.EnsureSuccessStatusCode();
+
+        return await ReadAsync<OperationalRestrictionDto>(response);
+    }
+
+    private static async Task<T> ReadAsync<T>(HttpResponseMessage response) =>
+        (await response.Content.ReadFromJsonAsync<T>(JsonOptions))!;
+}

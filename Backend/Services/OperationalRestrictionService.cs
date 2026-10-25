@@ -20,57 +20,6 @@ public class OperationalRestrictionService :IOperationalRestrictionService
         _signatureService = signatureService;
     }
 
-    // Temporary seed data until users are stored in the database.
-    // Fixed Guids so the same users can be referenced between runs.
-    private static readonly List<User> _users =
-    [
-        new User
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Name = "Anna Jensen",
-            Email = "anna.jensen@example.com",
-            PasswordHash = "seed-password-hash-1",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Name = "Lars Nielsen",
-            Email = "lars.nielsen@example.com",
-            PasswordHash = "seed-password-hash-2",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Name = "Sofie Hansen",
-            Email = "sofie.hansen@example.com",
-            PasswordHash = "seed-password-hash-3",
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            Name = "Mikkel Pedersen",
-            Email = "mikkel.pedersen@example.com",
-            PasswordHash = "seed-password-hash-4",
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            Name = "Camilla Andersen",
-            Email = "camilla.andersen@example.com",
-            PasswordHash = "seed-password-hash-5",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
-        }
-    ];
-
     /// <summary>
     /// Creates the first version of a new operational restriction as a draft.
     /// The creator is also recorded as the originator.
@@ -100,14 +49,15 @@ public class OperationalRestrictionService :IOperationalRestrictionService
 
     /// <summary>
     /// Retrieves an operational restriction by its ID. Throws an exception if not found.
+    /// Drafts are private to their originator, so another user's draft is treated as not found.
     /// </summary>
-    public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id)
+    public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id, Guid currentUserId)
     {
         var restriction = await _appDbContext.OperationalRestrictions
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id);
 
-        if (restriction == null)
+        if (restriction == null || (restriction.Status == RestrictionStatus.Draft && restriction.Originator != currentUserId))
             throw new OperationalRestrictionNotFoundException(id);
 
         return OperationalRestrictionDto.FromDalEntity(restriction);
@@ -115,11 +65,13 @@ public class OperationalRestrictionService :IOperationalRestrictionService
 
     /// <summary>
     /// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
+    /// Drafts are only included for their originator.
     /// </summary>
-    public async Task<List<OperationalRestrictionDto>> GetAllAsync()
+    public async Task<List<OperationalRestrictionDto>> GetAllAsync(Guid currentUserId)
     {
         var restrictions = await _appDbContext.OperationalRestrictions
             .AsNoTracking()
+            .Where(x => x.Status != RestrictionStatus.Draft || x.Originator == currentUserId)
             .ToListAsync();
 
         return restrictions
