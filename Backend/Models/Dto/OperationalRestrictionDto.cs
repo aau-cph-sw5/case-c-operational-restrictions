@@ -19,7 +19,7 @@ public class OperationalRestrictionDto
     new()
     {
       Id = operationalRestriction.Id,
-      OriginatorUserId = operationalRestriction.OriginatorUserId,
+      OriginatorUserId = operationalRestriction.Originator,
       CreatedBy = operationalRestriction.CreatedBy,
       Status = operationalRestriction.Status,
       StartDate = operationalRestriction.StartDate,

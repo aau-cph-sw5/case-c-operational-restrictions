@@ -11,15 +11,20 @@ Our infrastructure requires continuous deployment to a remote server across mult
 
 Additionally, because we host multiple environments on a single remote machine, we need a way to route traffic dynamically to the correct Docker stack (e.g., `dev.domain.com` vs `staging.domain.com`). Manually managing port allocations and reverse proxy configurations for every new branch or environment creates unnecessary maintenance overhead.
 
+Furthermore, browser security requirements (such as PWA installation and secure cookie handling for authentication) require all environments to be served securely over HTTPS. Manually issuing, installing, and renewing SSL/TLS certificates across dynamic subdomains is inefficient and error-prone.
+
 ## Decision
 
 We will automate server bootstrapping and continuous deployment pipelines using `appleboy/ssh-action` and `appleboy/scp-action`, and deploy Traefik as a global reverse proxy to dynamically route traffic to our Docker Compose environments.
+
+We will also configure Traefik with an Automated Certificate Management Environment (ACME) provider using Let's Encrypt to automatically handle SSL/TLS certificate issuance, HTTP to HTTPS redirection, and certificate renewals for all routed subdomains.
 
 ## Consequences
 
 **What becomes easier**
 - Deployments are fully hands off and triggered directly by branch pushes.
 - Traefik automatically detects new Docker containers via the Docker socket and provisions routing dynamically based on environment variables, eliminating the need to update reverse proxy configurations manually.
+- SSL/TLS certificates are provisioned and renewed automatically via Let's Encrypt (ACME), enforcing HTTPS and supporting PWA installations and secure cookies without manual intervention.
 - The `appleboy/ssh-action` natively handles SSH socket connections and abstracts away the need to manually configure `~/.ssh/known_hosts`.
 - Explicit GitHub Action parameters for source and target directories prevent us from having to write raw Bash scripts over SSH pipelines, reducing syntax errors.
 

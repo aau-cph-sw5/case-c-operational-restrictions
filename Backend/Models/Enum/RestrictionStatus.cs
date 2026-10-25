@@ -7,5 +7,6 @@ public enum RestrictionStatus
   Approved,
   Active,
   Archived,
-  Cancelled
+  Cancelled,
+  CLOSING
 }

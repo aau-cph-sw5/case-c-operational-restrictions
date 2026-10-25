@@ -83,7 +83,7 @@ public class OperationalRestrictionService :IOperationalRestrictionService
         var restriction = new OperationalRestriction
         {
             Id = Guid.NewGuid(),
-            OriginatorUserId = request.CreatedBy,
+            Originator = request.CreatedBy,
             CreatedBy = request.CreatedBy,
             Status = RestrictionStatus.Draft,
             StartDate = request.StartDate,
