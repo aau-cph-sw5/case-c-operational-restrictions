@@ -26,6 +26,8 @@ import type {
 
 const controlClass =
   "h-11 border-pattens-blue bg-white font-body text-lg md:text-lg";
+const textareaClass =
+  "min-h-32 border-pattens-blue bg-white font-body text-lg md:text-lg";
 
 export function CreateRestrictionPage() {
   const navigate = useNavigate();
@@ -85,12 +87,12 @@ export function CreateRestrictionPage() {
     try {
       const created = await createRestriction(
         {
-          title: values.title.trim(),
-          description: values.description.trim(),
-          location: values.location.trim(),
           startDate: values.startDate,
           endDate: values.endDate || null,
-          notes: values.notes.trim() || undefined,
+          reference: values.reference.trim() || undefined,
+          situationDescription: values.situationDescription.trim(),
+          restrictionDescription: values.restrictionDescription.trim(),
+          cancellationDescription: values.cancellationDescription.trim(),
         },
         token,
       );
@@ -173,7 +175,7 @@ export function CreateRestrictionPage() {
                 value={values[field.name]}
                 onChange={handleChange(field.name)}
                 aria-invalid={!!errors[field.name]}
-                className={controlClass}
+                className={textareaClass}
               />
             ) : (
               <Input

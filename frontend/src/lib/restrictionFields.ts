@@ -1,38 +1,51 @@
+// Single source of truth for the form: field names, Danish labels, step.
 export const STEPS = [
-  { title: "Grundoplysninger" },
   { title: "Periode" },
-  { title: "Lokation" },
+  { title: "Situation og restriktion" },
+  { title: "Ophævelse" },
 ] as const;
 
 export const FIELDS = [
-  { name: "title", label: "Titel", kind: "text", required: true, step: 0 },
   {
-    name: "description",
-    label: "Beskrivelse",
-    kind: "textarea",
+    name: "startDate",
+    label: "Ikrafttræden",
+    kind: "date",
     required: true,
     step: 0,
   },
   {
-    name: "startDate",
-    label: "Startdato",
+    name: "endDate",
+    label: "Annulleres",
     kind: "date",
+    required: false,
+    step: 0,
+  },
+  {
+    name: "reference",
+    label: "Reference",
+    kind: "text",
+    required: false,
+    step: 0,
+  },
+  {
+    name: "situationDescription",
+    label: "Om situationen",
+    kind: "textarea",
     required: true,
     step: 1,
   },
   {
-    name: "endDate",
-    label: "Slutdato",
-    kind: "date",
-    required: false,
+    name: "restrictionDescription",
+    label: "Om driftsrestriktionen",
+    kind: "textarea",
+    required: true,
     step: 1,
   },
-  { name: "location", label: "Sted", kind: "text", required: true, step: 2 },
   {
-    name: "notes",
-    label: "Bemærkninger",
+    name: "cancellationDescription",
+    label: "Om ophævelse",
     kind: "textarea",
-    required: false,
+    required: true,
     step: 2,
   },
 ] as const;

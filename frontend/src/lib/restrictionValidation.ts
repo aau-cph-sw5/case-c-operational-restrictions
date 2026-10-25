@@ -33,7 +33,7 @@ export function validateRestrictionForm(
     values.endDate &&
     values.endDate <= values.startDate
   ) {
-    errors.endDate = "Slutdato skal være efter startdato.";
+    errors.endDate = "Annulleres skal være efter Ikrafttræden.";
   }
 
   return errors;

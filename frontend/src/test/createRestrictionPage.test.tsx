@@ -15,6 +15,15 @@ vi.mock("../services/restrictionApi", async (importOriginal) => {
 
 const createMock = vi.mocked(createRestriction);
 
+const created = {
+  id: "abc-123",
+  startDate: "2026-11-01",
+  endDate: "2026-11-02",
+  situationDescription: "Situationen",
+  restrictionDescription: "Restriktionen",
+  cancellationDescription: "Ophævelsen",
+};
+
 function DetailStub() {
   const location = useLocation();
   const note = (location.state as { notification?: string } | null)
@@ -47,13 +56,13 @@ function click(name: RegExp) {
 }
 
 function fillToLastStep({ withEndDate = true } = {}) {
-  type(/^titel/i, "Hastigheds Begrænsning");
-  type(/^beskrivelse/i, "Nedsat hastighed");
+  type(/^ikrafttræden/i, "2026-11-01");
+  if (withEndDate) type(/^annulleres/i, "2026-11-02");
   click(/næste/i);
-  type(/^startdato/i, "2026-11-01");
-  if (withEndDate) type(/^slutdato/i, "2026-11-02");
+  type(/^om situationen/i, "Situationen");
+  type(/^om driftsrestriktionen/i, "Restriktionen");
   click(/næste/i);
-  type(/^sted/i, "Nørreport");
+  type(/^om ophævelse/i, "Ophævelsen");
 }
 
 describe("CreateRestrictionPage", () => {
@@ -69,55 +78,44 @@ describe("CreateRestrictionPage", () => {
 
   it("updates inputs as the user types", () => {
     renderPage();
-    type(/^titel/i, "Hastigheds Begrænsning");
-    expect(screen.getByLabelText(/^titel/i)).toHaveValue(
-      "Hastigheds Begrænsning",
+    type(/^reference/i, "Metro 101 - 2026 version");
+    expect(screen.getByLabelText(/^reference/i)).toHaveValue(
+      "Metro 101 - 2026 version",
     );
   });
 
-  it("blocks Næste while required fields are empty", () => {
+  it("blocks Næste while ikrafttræden is empty", () => {
     renderPage();
     click(/næste/i);
-    expect(screen.getByText("Titel er påkrævet.")).toBeInTheDocument();
-    expect(screen.getByText("Beskrivelse er påkrævet.")).toBeInTheDocument();
+    expect(screen.getByText("Ikrafttræden er påkrævet.")).toBeInTheDocument();
     expect(screen.getByText(/trin 1 af 3/i)).toBeInTheDocument();
   });
 
-  it("shows an inline error when slutdato is not after startdato", () => {
+  it("shows an inline error when annulleres is not after ikrafttræden", () => {
     renderPage();
-    type(/^titel/i, "T");
-    type(/^beskrivelse/i, "B");
-    click(/næste/i);
-    type(/^startdato/i, "2026-11-05");
-    type(/^slutdato/i, "2026-11-01");
+    type(/^ikrafttræden/i, "2026-11-05");
+    type(/^annulleres/i, "2026-11-01");
     click(/næste/i);
     expect(
-      screen.getByText("Slutdato skal være efter startdato."),
+      screen.getByText("Annulleres skal være efter Ikrafttræden."),
     ).toBeInTheDocument();
-    expect(screen.getByText(/trin 2 af 3/i)).toBeInTheDocument();
+    expect(screen.getByText(/trin 1 af 3/i)).toBeInTheDocument();
   });
 
   it("does not call the API when the last step is invalid", () => {
     renderPage();
-    type(/^titel/i, "T");
-    type(/^beskrivelse/i, "B");
+    type(/^ikrafttræden/i, "2026-11-01");
     click(/næste/i);
-    type(/^startdato/i, "2026-11-01");
+    type(/^om situationen/i, "S");
+    type(/^om driftsrestriktionen/i, "R");
     click(/næste/i);
     click(/opret kladde/i);
-    expect(screen.getByText("Sted er påkrævet.")).toBeInTheDocument();
+    expect(screen.getByText("Om ophævelse er påkrævet.")).toBeInTheDocument();
     expect(createMock).not.toHaveBeenCalled();
   });
 
   it("submits with the JWT and redirects with a success notification", async () => {
-    createMock.mockResolvedValue({
-      id: "abc-123",
-      title: "Hastigheds Begrænsning",
-      description: "Nedsat hastighed",
-      location: "Nørreport",
-      startDate: "2026-11-01",
-      endDate: "2026-11-02",
-    });
+    createMock.mockResolvedValue(created);
     renderPage();
     fillToLastStep();
     click(/opret kladde/i);
@@ -128,23 +126,18 @@ describe("CreateRestrictionPage", () => {
     ).toBeInTheDocument();
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Hastigheds Begrænsning",
         startDate: "2026-11-01",
         endDate: "2026-11-02",
+        situationDescription: "Situationen",
+        restrictionDescription: "Restriktionen",
+        cancellationDescription: "Ophævelsen",
       }),
       "test-token",
     );
   });
 
-  it("submits without slutdato and sends null", async () => {
-    createMock.mockResolvedValue({
-      id: "abc-123",
-      title: "Hastigheds Begrænsning",
-      description: "Nedsat hastighed",
-      location: "Nørreport",
-      startDate: "2026-11-01",
-      endDate: null,
-    });
+  it("submits without annulleres and sends null", async () => {
+    createMock.mockResolvedValue({ ...created, endDate: null });
     renderPage();
     fillToLastStep({ withEndDate: false });
     click(/opret kladde/i);
@@ -168,14 +161,14 @@ describe("CreateRestrictionPage", () => {
 
   it("shows server validation errors above the form on 400", async () => {
     createMock.mockRejectedValue(
-      new RestrictionValidationError(["Titlen er for lang."]),
+      new RestrictionValidationError(["Referencen er for lang."]),
     );
     renderPage();
     fillToLastStep();
     click(/opret kladde/i);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Titlen er for lang.",
+      "Referencen er for lang.",
     );
   });
 });
