@@ -4,6 +4,7 @@ import { formatUtc } from "../lib/dateFormat";
 import { restrictionTexts as t } from "../lib/restrictionTexts";
 import type { SignatureDto } from "../types/restrictionDto";
 import { RestrictionInfoCard } from "./RestrictionInfoCard";
+import { Badge } from "./ui/badge";
 
 interface SignatureSectionProps {
   signatures: SignatureDto[];
@@ -25,9 +26,12 @@ export function SignatureSection({
           {t.signaturesHeading}
         </h2>
         {signatures.length === 0 && (
-          <span className="inline-flex items-center rounded-full border border-[#EF7D00] bg-[#FEF3C7] px-3 py-0.5 font-['Inter_Variable','Inter',sans-serif] text-base font-medium text-[#EF7D00]">
+          <Badge
+            variant="outline"
+            className="h-auto border-[#EF7D00] bg-[#FEF3C7] px-3 py-0.5 font-['Inter_Variable','Inter',sans-serif] text-base text-[#EF7D00]"
+          >
             {t.unsignedDraft}
-          </span>
+          </Badge>
         )}
       </div>
 

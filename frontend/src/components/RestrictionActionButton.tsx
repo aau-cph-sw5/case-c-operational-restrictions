@@ -1,11 +1,13 @@
 // COMPONENT:
 // Reusable UI building blocks (e.g. Buttons, Cards)
-// "Operational Restriction Button" from the design guide: Mirror Blue pill,
-// bold white label and an icon (e.g. Underskriv with a pencil).
+// "Operational Restriction Button" from the design guide: a shadcn Button
+// styled as a Mirror Blue pill with a bold white label and an icon
+// (e.g. Underskriv with a pencil).
 import { LoaderCircle } from "lucide-react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
+import { Button } from "./ui/button";
 
-interface RestrictionActionButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface RestrictionActionButtonProps extends ComponentProps<typeof Button> {
   icon?: ReactNode;
   loading?: boolean;
   loadingLabel?: string;
@@ -20,15 +22,14 @@ export function RestrictionActionButton({
   ...props
 }: RestrictionActionButtonProps) {
   return (
-    <button
-      type="button"
+    <Button
       disabled={disabled || loading}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#2563EB] px-5 font-['Inter_Variable','Inter',sans-serif] text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      className="h-11 gap-2 rounded-full bg-[#2563EB] px-5 font-['Inter_Variable','Inter',sans-serif] text-base font-bold text-white hover:bg-[#2563EB]/90"
       {...props}
     >
       {loading ? (
         <>
-          <LoaderCircle className="size-4 animate-spin" aria-hidden />
+          <LoaderCircle className="animate-spin" aria-hidden />
           {loadingLabel ?? children}
         </>
       ) : (
@@ -37,6 +38,6 @@ export function RestrictionActionButton({
           {icon}
         </>
       )}
-    </button>
+    </Button>
   );
 }

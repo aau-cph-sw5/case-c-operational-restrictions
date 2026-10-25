@@ -1,6 +1,7 @@
 // COMPONENT:
 // Reusable UI building blocks (e.g. Buttons, Cards)
 import { cn } from "@/lib/utils";
+import { Badge } from "./ui/badge";
 import { statusClasses, statusLabels } from "../lib/restrictionStatus";
 import type { RestrictionStatus } from "../types/restrictionDto";
 
@@ -10,14 +11,15 @@ export function RestrictionStatusBadge({
   status: RestrictionStatus;
 }) {
   return (
-    <span
+    <Badge
+      variant="outline"
       data-testid="status-badge"
       className={cn(
-        "inline-flex items-center rounded-full border px-3 py-0.5 font-['Inter_Variable','Inter',sans-serif] text-base font-medium",
+        "h-auto px-3 py-0.5 font-['Inter_Variable','Inter',sans-serif] text-base",
         statusClasses[status],
       )}
     >
       {statusLabels[status]}
-    </span>
+    </Badge>
   );
 }

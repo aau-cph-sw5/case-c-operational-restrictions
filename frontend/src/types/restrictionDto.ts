@@ -13,6 +13,7 @@ export type RestrictionStatus =
 
 export interface SignatureDto {
   signeeId: string;
+  // Optional: the backend may only return the id. The UI falls back to the id.
   signeeName?: string;
   signeeRole: string;
   signedAt: string;

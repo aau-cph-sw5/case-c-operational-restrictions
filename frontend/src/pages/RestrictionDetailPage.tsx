@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Button, buttonVariants } from "../components/ui/button";
 import { RestrictionActionButton } from "../components/RestrictionActionButton";
 import { RestrictionInfoCard } from "../components/RestrictionInfoCard";
 import { RestrictionStatusBadge } from "../components/RestrictionStatusBadge";
@@ -51,31 +53,30 @@ function signErrorMessage(error: unknown): string {
   return t.signFailed;
 }
 
-// Important-notification style from the design guide
+// Important-notification style from the design guide: Beeswax background,
+// Gold Drop text, octagon alert symbol.
 function ErrorAlert({ children }: { children: ReactNode }) {
   return (
-    <div
-      role="alert"
-      className="flex items-start gap-2 rounded-lg border border-[#EF7D00] bg-[#FEF3C7] p-3 font-['Inter_Variable','Inter',sans-serif] text-base text-[#EF7D00]"
-    >
-      <OctagonAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
-      <span>{children}</span>
-    </div>
+    <Alert className="border-[#EF7D00] bg-[#FEF3C7] font-['Inter_Variable','Inter',sans-serif] text-base text-[#EF7D00]">
+      <OctagonAlert aria-hidden />
+      <AlertDescription className="text-base">{children}</AlertDescription>
+    </Alert>
   );
 }
 
 // TEMPORARY: stands in for the app header's back chevron until the shared
+// header/navigation exists.
 function TemporaryBackButton() {
   const navigate = useNavigate();
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={() => navigate("/home")}
-      className="inline-flex items-center gap-1 self-start font-['Inter_Variable','Inter',sans-serif] text-base font-medium text-[#2563EB]"
+      className="-ml-2 gap-1 self-start font-['Inter_Variable','Inter',sans-serif] text-base font-medium text-[#2563EB] hover:text-[#2563EB]"
     >
-      <ChevronLeft className="size-5" aria-hidden />
+      <ChevronLeft aria-hidden />
       {t.back}
-    </button>
+    </Button>
   );
 }
 
@@ -128,12 +129,14 @@ export function RestrictionDetailPage() {
     setSignError(null);
 
     try {
-      // The response may or may not carry the updated restriction; if not,re-fetch this one restriction so the signature block is shown.
+      // The response may or may not carry the updated restriction; if not,
+      // re-fetch this one restriction so the signature block is shown.
       const updated =
         (await signRestriction(restriction.id)) ??
         (await getRestrictionById(restriction.id));
       setRestriction(updated);
     } catch (error) {
+      // State stays Draft; the restriction in memory is left untouched.
       setSignError(signErrorMessage(error));
     } finally {
       setSigning(false);
@@ -158,7 +161,11 @@ export function RestrictionDetailPage() {
         <ErrorAlert>{loadError ?? t.loadFailed}</ErrorAlert>
         <Link
           to="/home"
-          className="font-['Inter_Variable','Inter',sans-serif] text-base text-[#2563EB] underline"
+          className={buttonVariants({
+            variant: "link",
+            className:
+              "self-start font-['Inter_Variable','Inter',sans-serif] text-base text-[#2563EB]",
+          })}
         >
           {t.backToHome}
         </Link>
