@@ -15,5 +15,9 @@ const statusLabels = {
 export function NotificationStatus({
   status,
 }: NotificationStatusProps) {
-  return <span>{statusLabels[status]}</span>;
+return (
+  <span className={`notification-status status-${status}`}>
+    {statusLabels[status]}
+  </span>
+);
 }

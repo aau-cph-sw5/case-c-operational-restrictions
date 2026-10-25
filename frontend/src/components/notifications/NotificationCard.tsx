@@ -31,6 +31,11 @@ export function NotificationCard({
       ? "system"
       : "info";
 
+  const actionLabel = notification.action ?? "Se besked";
+  const isPrimaryAction =
+    notification.required &&
+    actionLabel.toLowerCase().includes("underskriv");
+
   return (
     <article
       className={[
@@ -83,11 +88,11 @@ export function NotificationCard({
       <button
         type="button"
         className={`notification-action ${
-          notification.action === "Underskriv nu" ? "primary" : ""
+          isPrimaryAction ? "primary" : ""
         }`}
         onClick={() => onOpen(notification)}
       >
-        {notification.action ?? "Se besked"}
+        {actionLabel}
       </button>
 
       <div hidden>

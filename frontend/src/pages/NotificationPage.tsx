@@ -15,8 +15,7 @@ const initialNotifications: Notification[] = [
     id: "OR-001",
     category: "DRIFTSRESTRIKTION",
     title: "Johans: Signatur Påkrævet",
-    message:
-      "En ny driftsrestriktion kræver din umiddelbare signatur ...",
+    message: "En ny driftsrestriktion kræver din umiddelbare signatur ...",
     time: "10 min. siden",
     status: "pending",
     unread: true,
@@ -27,8 +26,7 @@ const initialNotifications: Notification[] = [
     id: "OR-002",
     category: "DRIFTSRESTRIKTION",
     title: "Anmeldt af DOM: Ændringer Påkrævet",
-    message:
-      "Gennemgå venligst de anmodede seneste ændringer ...",
+    message: "Gennemgå venligst de anmodede seneste ændringer ...",
     time: "2 timer siden",
     status: "pending",
     unread: true,
@@ -49,8 +47,7 @@ const initialNotifications: Notification[] = [
     id: "SYS-002",
     category: "SYSTEM INFO",
     title: "Rutinemæssig Vedligeholdelse",
-    message:
-      "Information om planlagt vedligeholdelse af systemet ...",
+    message: "Information om planlagt vedligeholdelse af systemet ...",
     time: "22. okt.",
     status: "sent",
     unread: true,
@@ -80,10 +77,8 @@ const initialNotifications: Notification[] = [
 ];
 
 export function NotificationPage() {
-  const [notifications, setNotifications] =
-    useState(initialNotifications);
-  const [activeTab, setActiveTab] =
-    useState<NotificationTab>("all");
+  const [notifications, setNotifications] = useState(initialNotifications);
+  const [activeTab, setActiveTab] = useState<NotificationTab>("all");
   const [selectedNotification, setSelectedNotification] =
     useState<Notification | null>(null);
 
@@ -100,16 +95,11 @@ export function NotificationPage() {
   });
 
   function openNotification(notification: Notification) {
-    const updatedNotification = {
-      ...notification,
-      unread: false,
-    };
+    const updatedNotification = { ...notification, unread: false };
 
     setNotifications((current) =>
       current.map((item) =>
-        item.id === notification.id
-          ? updatedNotification
-          : item,
+        item.id === notification.id ? updatedNotification : item,
       ),
     );
 
@@ -139,9 +129,9 @@ export function NotificationPage() {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          background: #e0f2fe;
-          color: #111827;
-          font-family: Arial, sans-serif;
+          background: #E0F3FF;
+          color: #000000;
+          font-family: Inter, sans-serif;
         }
 
         .notification-page *,
@@ -154,31 +144,27 @@ export function NotificationPage() {
           flex-shrink: 0;
           text-align: center;
           padding: 20px 16px 12px;
-          border-bottom: 2px solid #64748b;
-          position: relative;
+          border-bottom: 1px solid #CBD5E1;
         }
 
         .notification-header h1 {
           max-width: 100%;
-          overflow-wrap: anywhere;
-        }
-
-        .notification-header h1 {
-          color: #111827;
-          font: 700 25px Arial, sans-serif;
           margin: 0;
+          color: #000000;
+          font: 700 24px/1.3 "Instrument Sans", sans-serif;
+          overflow-wrap: anywhere;
         }
 
         .notification-filters {
           flex-shrink: 0;
           padding: 12px 16px;
-          border-bottom: 1px solid #cbd5e1;
+          border-bottom: 1px solid #CBD5E1;
         }
 
         .notification-unread-count {
-          font: 600 16px Arial, sans-serif;
-          color: #475569;
           margin: 0 0 12px;
+          color: #6B6B6B;
+          font: 700 16px/1.4 "Instrument Sans", sans-serif;
         }
 
         .notification-tabs {
@@ -188,19 +174,19 @@ export function NotificationPage() {
         }
 
         .notification-tab {
-          border: 1px solid #d1d5db;
+          border: 1px solid #D1D5DB;
           border-radius: 22px;
           padding: 8px 12px;
-          background: white;
+          background: #FFFFFF;
           color: #374151;
-          font: 16px Arial, sans-serif;
+          font: 400 14px/1.4 Inter, sans-serif;
           cursor: pointer;
         }
 
         .notification-tab.active {
-          background: #2563eb;
-          border-color: #2563eb;
-          color: white;
+          background: #2563EB;
+          border-color: #2563EB;
+          color: #FFFFFF;
         }
 
         .notification-list {
@@ -218,23 +204,21 @@ export function NotificationPage() {
         .notification-card {
           flex-shrink: 0;
           min-width: 0;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #D1D5DB;
           border-radius: 12px;
-          background: white;
-          color: #111827;
+          background: #EFF6FF;
+          color: #000000;
           padding: 12px;
         }
 
-        /* Ulæste beskeder */
         .notification-card.unread {
-          background: #eff6ff;
-          border-color: #93c5fd;
-          color: #172033;
+          background: #EFF6FF;
+          border-color: #93C5FD;
         }
 
-        .notification-card.unread h2,
-        .notification-card.unread .notification-message {
-          color: #172033;
+        /* Mørkere kant kun på kort, der kræver handling */
+        .notification-card.needs-action {
+          border: 1px solid #334155;
         }
 
         .notification-card-top {
@@ -251,29 +235,34 @@ export function NotificationPage() {
           align-items: center;
           justify-content: center;
           border-radius: 50%;
-          font: 700 17px Arial, sans-serif;
+          font: 700 17px/1 Inter, sans-serif;
           flex-shrink: 0;
         }
 
-        /* Gul cirkel: kræver handling/underskrift */
-        .notification-icon.icon-required {
-          background: #fef3c7;
-          color: #b45309;
-          border: 1px solid #f59e0b;
+        /* Blyant i stedet for orange udråbstegn */
+        .notification-card.needs-action .notification-icon.icon-required {
+          background: #FFF0DF;
+          color: #EF7D00;
+          border: 1px solid #EF7D00;
+          font-size: 0;
         }
 
-        /* Grøn cirkel: systeminformation */
+        .notification-card.needs-action .notification-icon.icon-required::after {
+          content: "✎";
+          font: 700 21px/1 Inter, sans-serif;
+          color: #EF7D00;
+        }
+
         .notification-icon.icon-system {
-          background: #dcfce7;
-          color: #15803d;
-          border: 1px solid #22c55e;
+          background: #DCFCE7;
+          color: #15803D;
+          border: 1px solid #22C55E;
         }
 
-        /* Neutral cirkel: almindelig information */
         .notification-icon.icon-info {
-          background: #e5e7eb;
-          color: #6b7280;
-          border: 1px solid #9ca3af;
+          background: #E5E7EB;
+          color: #6B7280;
+          border: 1px solid #9CA3AF;
         }
 
         .notification-category {
@@ -281,42 +270,39 @@ export function NotificationPage() {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-          font: 12px Arial, sans-serif;
-          font-weight: 600;
-          color: #64748b;
+          font: 400 16px/1.4 Inter, sans-serif;
+          color: #6B6B6B;
         }
 
         .notification-card.needs-action .notification-category {
-          color: #b45309;
+          color: #EF7D00;
         }
 
         .notification-time {
-          color: #2563eb;
-          font-size: 12px;
+          color: #6B6B6B;
+          font: 400 14px/1.4 Inter, sans-serif;
           white-space: nowrap;
         }
 
-        /* Blå prik: ulæst */
         .notification-unread-dot {
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          background: #2563eb;
+          background: #2563EB;
           flex-shrink: 0;
         }
 
         .notification-card h2 {
-          font: 700 18px/1.3 Arial, sans-serif;
           margin: 10px 0 5px;
-          color: #111827;
+          color: #000000;
+          font: 700 22px/1.3 "Inria Serif", serif;
           overflow-wrap: anywhere;
         }
 
-        .notification-message {
+        .notification-card .notification-message {
           margin: 0;
-          font-size: 15px;
-          line-height: 1.5;
-          color: #374151;
+          color: #000000;
+          font: 400 20px/1.3 "Inria Serif", serif;
           overflow-wrap: anywhere;
         }
 
@@ -326,22 +312,31 @@ export function NotificationPage() {
           border: 0;
           padding: 6px 0;
           background: transparent;
-          color: #2563eb;
-          font: 600 15px Arial, sans-serif;
+          color: #2563EB;
+          font: 600 15px/1.4 Inter, sans-serif;
           cursor: pointer;
           text-align: left;
         }
 
         .notification-action.primary {
           border-radius: 20px;
-          background: #2563eb;
-          color: white;
+          background: #2563EB;
+          color: #FFFFFF;
           padding: 9px 14px;
+        }
+
+        /* Blyant ved siden af underskriftsknappen */
+        .notification-action.primary::before {
+          content: "✎";
+          display: inline-block;
+          margin-right: 7px;
+          font-size: 17px;
+          line-height: 1;
         }
 
         .notification-action:focus-visible,
         .notification-tab:focus-visible {
-          outline: 3px solid #93c5fd;
+          outline: 3px solid #93C5FD;
           outline-offset: 3px;
         }
 
@@ -365,15 +360,15 @@ export function NotificationPage() {
           overflow-y: auto;
           padding: 24px;
           border-radius: 16px;
-          background: white;
-          color: #111827;
-          font-family: Arial, sans-serif;
+          background: #FFFFFF;
+          color: #000000;
+          font-family: Inter, sans-serif;
         }
 
         .notification-details h2 {
           margin: 16px 40px 16px 0;
-          font-size: 22px;
-          line-height: 1.35;
+          color: #000000;
+          font: 700 22px/1.3 "Inria Serif", serif;
           overflow-wrap: anywhere;
         }
 
@@ -383,28 +378,11 @@ export function NotificationPage() {
           overflow-wrap: anywhere;
         }
 
-        .notification-details-close {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid #d1d5db;
-          border-radius: 50%;
-          background: #f3f4f6;
-          color: #111827;
-          font-size: 27px;
-          cursor: pointer;
-        }
-
         @media (min-width: 700px) {
           .notification-page {
             max-width: 760px;
             margin: 0 auto;
-            border-inline: 1px solid #cbd5e1;
+            border-inline: 1px solid #CBD5E1;
           }
 
           .notification-header {
@@ -422,19 +400,6 @@ export function NotificationPage() {
 
           .notification-card {
             padding: 14px 16px;
-          }
-
-          .notification-card h2 {
-            font-size: 20px;
-          }
-
-          .notification-message {
-            font-size: 16px;
-          }
-
-          .notification-category,
-          .notification-time {
-            font-size: 13px;
           }
         }
 
@@ -457,7 +422,7 @@ export function NotificationPage() {
 
           .notification-tab {
             padding: 7px 9px;
-            font-size: 14px;
+            font-size: 13px;
           }
 
           .notification-list {
@@ -479,19 +444,19 @@ export function NotificationPage() {
           }
 
           .notification-category {
-            font-size: 10px;
+            font-size: 11px;
           }
 
           .notification-time {
-            font-size: 10px;
+            font-size: 11px;
           }
 
           .notification-card h2 {
-            font-size: 16px;
+            font-size: 18px;
           }
 
-          .notification-message {
-            font-size: 14px;
+          .notification-card .notification-message {
+            font-size: 16px;
           }
         }
       `}</style>
@@ -512,10 +477,7 @@ export function NotificationPage() {
         />
       </section>
 
-      <section
-        className="notification-list"
-        aria-label="Notifikationer"
-      >
+      <section className="notification-list" aria-label="Notifikationer">
         {visibleNotifications.length === 0 ? (
           <p>Ingen notifikationer i denne kategori.</p>
         ) : (

@@ -34,13 +34,13 @@ export function NotificationDetails({
             position: "absolute",
             top: "12px",
             right: "12px",
-            width: "40px",
-            height: "40px",
-            fontSize: "28px",
-            fontWeight: "bold",
-            background: "#eeeeee",
-            color: "#111111",
-            border: "1px solid #cccccc",
+            width: "36px",
+            height: "36px",
+            fontSize: "26px",
+            fontWeight: 400,
+            background: "#E0F3FF",
+            color: "#111827",
+            border: "1px solid #2563EB",
             borderRadius: "50%",
             cursor: "pointer",
             display: "flex",
@@ -52,38 +52,56 @@ export function NotificationDetails({
           ×
         </button>
 
-        <p className="notification-category">
+        <p
+          className="notification-category"
+          style={{
+            fontFamily: "Inter, sans-serif",
+            fontSize: "16px",
+            color: notification.required ? "#EF7D00" : "#6B6B6B",
+          }}
+        >
           {notification.category}
         </p>
 
-            <h2
-            id="notification-details-title"
-            style={{
-                paddingRight: "45px",
-                color: "#172033",
-                fontSize: "24px",
-                fontWeight: 700,
-                marginTop: "20px",
-                marginBottom: "20px",
-            }}
-            >
-            {notification.title}
-            </h2>
+        <h2
+          id="notification-details-title"
+          style={{
+            paddingRight: "45px",
+            color: "#000000",
+            fontFamily: '"Inria Serif", serif',
+            fontSize: "22px",
+            fontWeight: 700,
+            lineHeight: 1.3,
+            marginTop: "20px",
+            marginBottom: "20px",
+          }}
+        >
+          {notification.title}
+        </h2>
 
-        <p>
+        <p
+          style={{
+            color: "#000000",
+            fontFamily: '"Inria Serif", serif',
+            fontSize: "20px",
+            fontWeight: 400,
+            lineHeight: 1.3,
+            overflowWrap: "anywhere",
+          }}
+        >
           {notification.message.replace(/\s*\.\.\.$/, ".")}
         </p>
 
-        <p>
+        <p style={{ marginTop: "16px", color: "#6B6B6B" }}>
           <strong>Tidspunkt:</strong> {notification.time}
         </p>
 
-        <p>
+        <p style={{ marginTop: "8px", color: "#6B6B6B" }}>
           <strong>Status:</strong> {notification.status}
         </p>
 
         {notification.required && (
-          <p>
+          <p style={{ marginTop: "12px", color: "#000000" }}>
             Der kræves en handling på denne notifikation.
           </p>
         )}
