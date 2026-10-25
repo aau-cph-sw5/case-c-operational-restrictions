@@ -3,6 +3,7 @@
 import { Route, Routes } from "react-router-dom";
 import App from "../App";
 import { LoginPage } from "../pages/LoginPage";
+import { NotificationPage } from "../pages/NotificationPage";
 import { ProtectedRoute } from "../hooks/ProtectedRoute";
 import { InstallButton } from "../components/InstallButton";
 
@@ -13,9 +14,9 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/notifications" element={<NotificationPage />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/home" element={<App />} />
         </Route>
       </Routes>
