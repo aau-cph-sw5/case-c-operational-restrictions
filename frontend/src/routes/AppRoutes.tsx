@@ -13,6 +13,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/notifications" element={<NotificationPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<App />} />

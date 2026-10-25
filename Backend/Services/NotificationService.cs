@@ -81,4 +81,16 @@ public class NotificationService(
       notification.ResolvedAt = now;
     }
   }
+
+  /// <summary>
+  /// Returns all notifications for a recipient, newest first, for the in-app inbox.
+  /// </summary>
+  public async Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId)
+  {
+    return await _appDbContext.Notifications
+      .AsNoTracking()
+      .Where(x => x.RecipientUserId == recipientUserId)
+      .OrderByDescending(x => x.CreatedAt)
+      .ToListAsync();
+  }
 }
