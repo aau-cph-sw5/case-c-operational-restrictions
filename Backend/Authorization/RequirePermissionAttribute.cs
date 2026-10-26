@@ -12,6 +12,7 @@ namespace Backend.Authorization;
 // claim), then checks the permission through the user -> role -> permission
 // connection in the database. Returns 401 when there is no logged-in user and 403
 // when the user does not have the permission.
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public class RequirePermissionAttribute : Attribute, IAsyncAuthorizationFilter
 {
     private readonly string _permission;
