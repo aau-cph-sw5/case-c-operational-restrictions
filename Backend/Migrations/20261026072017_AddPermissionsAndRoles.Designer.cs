@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261020152918_AddRolesAndPermissions")]
-    partial class AddRolesAndPermissions
+    [Migration("20261026072017_AddPermissionsAndRoles")]
+    partial class AddPermissionsAndRoles
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -70,21 +70,6 @@ namespace Backend.Migrations
                     b.ToTable("Permissions");
                 });
 
-            modelBuilder.Entity("Backend.Models.Entities.PermissionHasRole", b =>
-                {
-                    b.Property<string>("RoleName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PermissionName")
-                        .HasColumnType("text");
-
-                    b.HasKey("RoleName", "PermissionName");
-
-                    b.HasIndex("PermissionName");
-
-                    b.ToTable("PermissionHasRoles");
-                });
-
             modelBuilder.Entity("Backend.Models.Entities.Role", b =>
                 {
                     b.Property<string>("Name")
@@ -117,6 +102,21 @@ namespace Backend.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Backend.Models.Entities.RolePermissionAssignment", b =>
+                {
+                    b.Property<string>("RoleName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PermissionName")
+                        .HasColumnType("text");
+
+                    b.HasKey("RoleName", "PermissionName");
+
+                    b.HasIndex("PermissionName");
+
+                    b.ToTable("PermissionHasRoles");
+                });
+
             modelBuilder.Entity("Backend.Models.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -127,6 +127,9 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("InCharge")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -134,6 +137,9 @@ namespace Backend.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("WorkingStatus")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -143,16 +149,31 @@ namespace Backend.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Backend.Models.Entities.PermissionHasRole", b =>
+            modelBuilder.Entity("Backend.Models.Entities.UserRoleAssignment", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RoleName")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "RoleName");
+
+                    b.HasIndex("RoleName");
+
+                    b.ToTable("UserRoleAssignment");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.RolePermissionAssignment", b =>
                 {
                     b.HasOne("Backend.Models.Entities.PermissionEntity", "Permission")
-                        .WithMany()
+                        .WithMany("RoleAssignments")
                         .HasForeignKey("PermissionName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Backend.Models.Entities.Role", "Role")
-                        .WithMany()
+                        .WithMany("PermissionAssignments")
                         .HasForeignKey("RoleName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -160,6 +181,42 @@ namespace Backend.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.UserRoleAssignment", b =>
+                {
+                    b.HasOne("Backend.Models.Entities.Role", "Role")
+                        .WithMany("UserAssignments")
+                        .HasForeignKey("RoleName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Entities.User", "User")
+                        .WithMany("RoleAssignments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.PermissionEntity", b =>
+                {
+                    b.Navigation("RoleAssignments");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.Role", b =>
+                {
+                    b.Navigation("PermissionAssignments");
+
+                    b.Navigation("UserAssignments");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.User", b =>
+                {
+                    b.Navigation("RoleAssignments");
                 });
 #pragma warning restore 612, 618
         }

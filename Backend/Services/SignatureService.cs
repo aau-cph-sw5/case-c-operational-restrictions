@@ -3,6 +3,8 @@ using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enum;
 
+using Microsoft.VisualBasic;
+
 namespace Backend.Services;
 
 public class SignatureService(
@@ -19,7 +21,6 @@ public class SignatureService(
             Name = "Anna Jensen",
             Email = "anna.jensen@example.com",
             PasswordHash = "seed-password-hash-1",
-            Role = UserRole.DutyOperationsManager,
             WorkingStatus = UserWorkingStatus.AtWork,
             InCharge = false
         },
@@ -29,7 +30,6 @@ public class SignatureService(
             Name = "Lars Nielsen",
             Email = "lars.nielsen@example.com",
             PasswordHash = "seed-password-hash-2",
-            Role = UserRole.Operator,
             WorkingStatus = UserWorkingStatus.AtWork,
             InCharge = false
         },
@@ -39,7 +39,6 @@ public class SignatureService(
             Name = "Sofie Hansen",
             Email = "sofie.hansen@example.com",
             PasswordHash = "seed-password-hash-3",
-            Role = UserRole.Operator,
             WorkingStatus = UserWorkingStatus.OffWork,
             InCharge = false
         },
@@ -49,7 +48,6 @@ public class SignatureService(
             Name = "Mikkel Pedersen",
             Email = "mikkel.pedersen@example.com",
             PasswordHash = "seed-password-hash-4",
-            Role = UserRole.ControlroomSupervisor,
             WorkingStatus = UserWorkingStatus.OnHoliday,
             InCharge = false
         },
@@ -59,10 +57,54 @@ public class SignatureService(
             Name = "Camilla Andersen",
             Email = "camilla.andersen@example.com",
             PasswordHash = "seed-password-hash-5",
-            Role = UserRole.Betriebsleiter,
             WorkingStatus = UserWorkingStatus.AtWork,
             InCharge = true
         }
+    ];
+    
+    private static readonly List<Role> _roles =
+    [
+        new Role
+        {
+            Name = "DutyOperationsManager"
+        },
+        new Role
+        {
+            Name = "Operator"
+        },
+        new Role
+        {
+            Name = "ControlroomSupervisor"
+        },
+        new Role
+        {
+            Name = "Betriebsleiter"
+        }
+    ];
+
+    private static readonly List<UserRoleAssignment> _userRoleAssignments =
+    [
+        new UserRoleAssignment
+        {
+            User = _users.Find(u => u.Id == Guid.Parse("11111111-1111-1111-1111-111111111111"))!,
+            Role = _roles.Find(r => r.Name == "DutyOperationsManager")!
+        },
+        new UserRoleAssignment
+        {
+            User = _users.Find(u => u.Id == Guid.Parse("22222222-2222-2222-2222-222222222222"))!,
+            Role = _roles.Find(r => r.Name == "Operator")!
+        },
+        new UserRoleAssignment
+        {
+            User = _users.Find(u => u.Id == Guid.Parse("44444444-4444-4444-4444-444444444444"))!,
+            Role = _roles.Find(r => r.Name == "ControlroomSupervisor")!
+        },
+        new UserRoleAssignment
+        {
+            User = _users.Find(u => u.Id == Guid.Parse("55555555-5555-5555-5555-555555555555"))!,
+            Role = _roles.Find(r => r.Name == "Betriebsleiter")!
+        },
+
     ];
 
     //Midlertidigt mens der ikke er database
@@ -129,6 +171,7 @@ public class SignatureService(
 
         //I fremtiden skal den bruge GetUserById
         var signee = _users.Single(user => user.Id == signerUserId);
+        var signeeRole = _userRoleAssignments.Single(ur => ur.User == signee);
 
         var signature = new Signature
         {
@@ -136,7 +179,7 @@ public class SignatureService(
             RequiresSignatureId = requiredSignature.Id,
             OperationalRestrictionId = requiredSignature.OperationalRestrictionId,
             SigneeId = signerUserId,
-            SigneeRole = signee.Role,
+            SigneeRole = signeeRole.Role,
             SignedAt = DateTime.UtcNow
         };
         //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
