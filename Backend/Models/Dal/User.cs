@@ -20,7 +20,5 @@ public class User
     public UserWorkingStatus WorkingStatus { get; set; }
 
     public bool InCharge { get; set; }
-    public string? RoleName { get; set; }
-
-    public Role? Role { get; set; }
+    public ICollection<UserRoleAssignment> RoleAssignments { get; set; } = new List<UserRoleAssignment>();
 }

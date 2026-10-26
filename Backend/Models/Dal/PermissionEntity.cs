@@ -7,4 +7,6 @@ namespace Backend.Models.Entities;
 public class PermissionEntity
 {
     public string Name { get; set; } = string.Empty;
+
+    public ICollection<RolePermissionAssignment> RoleAssignments { get; set; } = new List<RolePermissionAssignment>();
 }
