@@ -30,6 +30,7 @@ TinyMapper.Bind<User, UserDto>();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
 builder.Services.AddScoped<SignatureService>();
 
