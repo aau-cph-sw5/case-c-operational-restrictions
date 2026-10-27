@@ -1,4 +1,4 @@
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 
 namespace Backend.Models.Entities;
 
@@ -8,7 +8,7 @@ public class RequiresSignature
     public Guid OperationalRestrictionId { get; set; }
     public Guid SigneeId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public RequiresSignatureStatus RequiresSignatureStatus  { get; set; }
-    public virtual OperationalRestriction OperationalRestriction { get; set; }
-    public virtual User Signee { get; set; }
+    public RequiresSignatureStatus RequiresSignatureStatus { get; set; }
+    public virtual OperationalRestriction? OperationalRestriction { get; set; }
+    public virtual User? Signee { get; set; }
 }

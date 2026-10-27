@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 using Backend.Data;
 using Backend.Models.DTOs;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 
 namespace Backend.Tests;
 

@@ -1,7 +1,7 @@
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 
 namespace Backend.Services;
 
@@ -11,7 +11,7 @@ public class SignatureService(
 {
     private readonly AppDbContext _appDbContext = appDbContext;
     //Midlertidigt mens der ikke er database
-    private static List<RequiresSignature> _requiredSignatures = [];
+    private static readonly List<RequiresSignature> _requiredSignatures = [];
     //Midlertidigt mens der ikke er database
     private static readonly List<Signature> _signatures = [];
 
@@ -34,7 +34,7 @@ public class SignatureService(
                 Id = Guid.NewGuid(),
                 OperationalRestrictionId = operationalRestrictionId,
                 SigneeId = user.Id,
-                RequiresSignatureStatus = RequiresSignatureStatus.Unsigned
+                RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
             })
             .ToList();
 
@@ -69,7 +69,7 @@ public class SignatureService(
         if (requiredSignature.SigneeId != signerUserId)
             throw new NotRequiredSignerException(signerUserId, requiresSignatureId);
 
-        if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.Unsigned)
+        if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.PendingSignature)
             throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
         var signee = _appDbContext.Users.Single(user => user.Id == signerUserId);
@@ -87,7 +87,7 @@ public class SignatureService(
         _signatures.Add(signature);
 
         //dette skal opdateres i databasen
-        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.Signed;
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
 
 
         return signature;
@@ -112,6 +112,6 @@ public class SignatureService(
         if (signature == null)
             throw new SignatureNotFoundException(signatureId);
 
-        return GetRequiresSignatureById(signature.RequiresSignatureId).RequiresSignatureStatus == RequiresSignatureStatus.Signed;
+        return GetRequiresSignatureById(signature.RequiresSignatureId).RequiresSignatureStatus == RequiresSignatureStatus.CompletedSignature;
     }
 }

@@ -2,7 +2,7 @@ using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 using Backend.Models.Requests;
 
 using Microsoft.EntityFrameworkCore;

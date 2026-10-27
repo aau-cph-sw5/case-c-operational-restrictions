@@ -1,5 +1,5 @@
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 using Backend.Services.Auth;
 
 using Microsoft.EntityFrameworkCore;

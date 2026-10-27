@@ -4,7 +4,7 @@ using System.Security.Claims;
 using Backend.Controllers;
 using Backend.Data;
 using Backend.Models.DTOs;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 using Backend.Models.Requests;
 using Backend.Services;
 
