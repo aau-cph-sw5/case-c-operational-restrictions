@@ -10,61 +10,6 @@ public class SignatureService(
 )
 {
     private readonly AppDbContext _appDbContext = appDbContext;
-    //Temporary before db
-    private static readonly List<User> _users =
-    [
-        new User
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Name = "Anna Jensen",
-            Email = "anna.jensen@example.com",
-            PasswordHash = "seed-password-hash-1",
-            Role = UserRole.DutyOperationsManager,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Name = "Lars Nielsen",
-            Email = "lars.nielsen@example.com",
-            PasswordHash = "seed-password-hash-2",
-            Role = UserRole.Operator,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Name = "Sofie Hansen",
-            Email = "sofie.hansen@example.com",
-            PasswordHash = "seed-password-hash-3",
-            Role = UserRole.Operator,
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            Name = "Mikkel Pedersen",
-            Email = "mikkel.pedersen@example.com",
-            PasswordHash = "seed-password-hash-4",
-            Role = UserRole.ControlroomSupervisor,
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            Name = "Camilla Andersen",
-            Email = "camilla.andersen@example.com",
-            PasswordHash = "seed-password-hash-5",
-            Role = UserRole.Betriebsleiter,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
-        }
-    ];
-
     //Midlertidigt mens der ikke er database
     private static List<RequiresSignature> _requiredSignatures = [];
     //Midlertidigt mens der ikke er database
@@ -82,7 +27,7 @@ public class SignatureService(
 
     public List<RequiresSignature> CreateRequiredSignatures(Guid operationalRestrictionId)
     {
-        var createdSignatures = _users
+        var createdSignatures = _appDbContext.Users
             .Where(user => user.WorkingStatus != UserWorkingStatus.OnHoliday)
             .Select(user => new RequiresSignature
             {
@@ -127,8 +72,7 @@ public class SignatureService(
         if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.Unsigned)
             throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
-        //I fremtiden skal den bruge GetUserById
-        var signee = _users.Single(user => user.Id == signerUserId);
+        var signee = _appDbContext.Users.Single(user => user.Id == signerUserId);
 
         var signature = new Signature
         {
