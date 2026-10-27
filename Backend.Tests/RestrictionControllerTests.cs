@@ -79,13 +79,13 @@ public class RestrictionControllerTests
         Assert.DoesNotContain(restrictions, x => x.Status == RestrictionStatus.Draft && x.OriginatorUserId != DbSeeder.LarsId);
     }
 
-    private RestrictionController CreateControllerFor(Guid userId)
+    private RestrictionsController CreateControllerFor(Guid userId)
     {
         var user = new ClaimsPrincipal(new ClaimsIdentity(
             [new Claim(JwtRegisteredClaimNames.Sub, userId.ToString())],
             "Test"));
 
-        return new RestrictionController(_service)
+        return new RestrictionsController(_service)
         {
             ControllerContext = new ControllerContext
             {

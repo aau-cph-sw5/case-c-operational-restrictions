@@ -11,11 +11,11 @@ namespace Backend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class RestrictionController : ApiControllerBase
+public class RestrictionsController : ApiControllerBase
 {
     private readonly IOperationalRestrictionService _operationalRestrictionService;
 
-    public RestrictionController(IOperationalRestrictionService operationalRestrictionService)
+    public RestrictionsController(IOperationalRestrictionService operationalRestrictionService)
     {
         _operationalRestrictionService = operationalRestrictionService;
     }
