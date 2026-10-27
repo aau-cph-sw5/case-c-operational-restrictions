@@ -44,8 +44,17 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
     originatorUserId: String(raw.originatorUserId),
     status: normalizeStatus(raw.status),
     startDate: String(raw.startDate),
-    endDate: String(raw.endDate),
-    restrictionDescription: String(raw.restrictionDescription ?? ""),
+    endDate: raw.endDate ? String(raw.endDate) : null,
+    restrictionDescription: String(
+      raw.restrictionDescription ?? raw.description ?? "",
+    ),
+    reference: raw.reference ? String(raw.reference) : null,
+    situationDescription: raw.situationDescription
+      ? String(raw.situationDescription)
+      : undefined,
+    cancellationDescription: raw.cancellationDescription
+      ? String(raw.cancellationDescription)
+      : undefined,
     signatures: signatures.map((s) =>
       toSignature(s as Record<string, unknown>),
     ),
@@ -82,7 +91,7 @@ export async function signRestriction(
 
   try {
     const body: unknown = await response.json();
-    if (body && typeof body === "object" && "id" in body) {
+    if (body && typeof body === "object" && "id" in body && "status" in body) {
       return toRestriction(body as Record<string, unknown>);
     }
   } catch {

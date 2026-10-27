@@ -24,7 +24,10 @@ export interface RestrictionDto {
   originatorUserId: string;
   status: RestrictionStatus;
   startDate: string;
-  endDate: string;
+  endDate: string | null;
   restrictionDescription: string;
+  reference?: string | null;
+  situationDescription?: string;
+  cancellationDescription?: string;
   signatures: SignatureDto[];
 }

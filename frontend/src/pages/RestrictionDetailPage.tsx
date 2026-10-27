@@ -1,6 +1,7 @@
 // PAGE:
 // Route-level screen component rendered by React Router for a specific URL
 import {
+  CheckCircle2,
   ChevronLeft,
   FilePen,
   LoaderCircle,
@@ -8,7 +9,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Button, buttonVariants } from "../components/ui/button";
 import { RestrictionActionButton } from "../components/RestrictionActionButton";
@@ -85,12 +86,19 @@ const pageClasses =
 
 export function RestrictionDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const [restriction, setRestriction] = useState<RestrictionDto | null>(null);
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+
+  const navNotification =
+    (location.state as { notification?: string; successMessage?: string } | null)
+      ?.notification ??
+    (location.state as { notification?: string; successMessage?: string } | null)
+      ?.successMessage;
 
   useEffect(() => {
     if (!id) {
@@ -184,6 +192,18 @@ export function RestrictionDetailPage() {
     <main className={pageClasses}>
       <TemporaryBackButton />
 
+      {navNotification && (
+        <Alert
+          data-testid="navigation-notification"
+          className="border-[#37AB87] bg-[#DAFBEA] font-['Inter_Variable','Inter',sans-serif] text-base text-[#1E745B]"
+        >
+          <CheckCircle2 className="size-5 text-[#37AB87]" aria-hidden />
+          <AlertDescription className="text-base text-[#1E745B]">
+            {navNotification}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <header className="space-y-1">
         <p className="font-['Instrument_Sans',sans-serif] text-base font-bold text-[#2563EB]">
           {t.screenLabel}
@@ -191,6 +211,11 @@ export function RestrictionDetailPage() {
         <h1 className="font-['Instrument_Sans',sans-serif] text-2xl font-bold break-all text-black">
           {restriction.id}
         </h1>
+        {restriction.reference && (
+          <p className="font-['Instrument_Sans',sans-serif] text-base text-[#6B6B6B]">
+            Ref: {restriction.reference}
+          </p>
+        )}
         <p className="font-['Instrument_Sans',sans-serif] text-base font-bold text-[#6B6B6B]">
           {t.idLabel}
         </p>
@@ -211,13 +236,17 @@ export function RestrictionDetailPage() {
         </RestrictionInfoCard>
 
         <RestrictionInfoCard label={t.endDate}>
-          <p data-testid="end-local">{formatLocal(restriction.endDate)}</p>
-          <p
-            data-testid="end-utc"
-            className="text-[20px] font-normal text-[#6B6B6B]"
-          >
-            {formatUtc(restriction.endDate)}
+          <p data-testid="end-local">
+            {restriction.endDate ? formatLocal(restriction.endDate) : t.noEndDate}
           </p>
+          {restriction.endDate && (
+            <p
+              data-testid="end-utc"
+              className="text-[20px] font-normal text-[#6B6B6B]"
+            >
+              {formatUtc(restriction.endDate)}
+            </p>
+          )}
         </RestrictionInfoCard>
 
         <RestrictionInfoCard label={t.description}>
@@ -241,6 +270,7 @@ export function RestrictionDetailPage() {
             loading={signing}
             loadingLabel={t.signing}
             icon={<Pencil className="size-4" aria-hidden />}
+            title="Sign and Submit for Approval"
           >
             {t.sign}
           </RestrictionActionButton>

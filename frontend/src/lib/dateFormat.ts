@@ -10,7 +10,8 @@ export function parseApiDate(value: string): Date {
 const pad = (n: number) => String(n).padStart(2, "0");
 
 // YYYY-MM-DD HH:mm:ss UTC
-export function formatUtc(value: string): string {
+export function formatUtc(value?: string | null): string {
+  if (!value || value === "null") return "–";
   const date = parseApiDate(value);
   if (Number.isNaN(date.getTime())) return "Invalid date";
 
@@ -21,7 +22,8 @@ export function formatUtc(value: string): string {
 }
 
 // Browser-local time, e.g. "2026-10-22 14:30:00 GMT+2"
-export function formatLocal(value: string): string {
+export function formatLocal(value?: string | null): string {
+  if (!value || value === "null") return "–";
   const date = parseApiDate(value);
   if (Number.isNaN(date.getTime())) return "Invalid date";
 

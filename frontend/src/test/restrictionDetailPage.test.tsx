@@ -53,9 +53,9 @@ function apiError(status: number): RestrictionApiError {
   return Object.assign(new Error(`HTTP ${status}`), { status });
 }
 
-function renderPage() {
+function renderPage(initialEntry: string | { pathname: string; state?: unknown } = "/restrictions/restriction-1") {
   return render(
-    <MemoryRouter initialEntries={["/restrictions/restriction-1"]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/restrictions/:id" element={<RestrictionDetailPage />} />
       </Routes>
@@ -236,5 +236,29 @@ describe("RestrictionDetailPage", () => {
     renderPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/ikke adgang/i);
+  });
+
+  it("handles nullable end date without showing Invalid date", async () => {
+    mocks.getRestrictionById.mockResolvedValue({
+      ...draft,
+      endDate: null,
+    });
+    renderPage();
+    await screen.findByText("restriction-1");
+
+    expect(screen.getByTestId("end-local")).toHaveTextContent("–");
+    expect(screen.queryByTestId("end-utc")).not.toBeInTheDocument();
+  });
+
+  it("displays a navigation notification when redirected with state", async () => {
+    renderPage({
+      pathname: "/restrictions/restriction-1",
+      state: { notification: "Driftsrestriktion oprettet som kladde." },
+    });
+    await screen.findByText("restriction-1");
+
+    expect(
+      screen.getByTestId("navigation-notification"),
+    ).toHaveTextContent("Driftsrestriktion oprettet som kladde.");
   });
 });
