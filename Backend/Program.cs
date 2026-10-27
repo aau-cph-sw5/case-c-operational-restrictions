@@ -1,0 +1,114 @@
+using System.Reflection;
+using System.Text;
+
+using Backend.Configuration;
+using Backend.Data;
+using Backend.Models.DTOs;
+using Backend.Models.Entities;
+using Backend.Services;
+using Backend.Services.Auth;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+using Nelibur.ObjectMapper;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOpenApi();
+
+builder.Services.AddControllers();
+builder.Services.AddScoped<IExampleService, ExampleService>();
+
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+TinyMapper.Bind<User, UserDto>();
+builder.Services.AddSingleton<PasswordHasher>();
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
+builder.Services.AddScoped<SignatureService>();
+
+
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
+{
+    throw new InvalidOperationException(
+        "Jwt:SigningKey is not configured. Set the Jwt__SigningKey environment variable (minimum 32 characters) before starting the server.");
+}
+
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey));
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+builder.Services.AddAuthorization();
+
+// Enable CORS with explicit frontend origins for security & cookie/auth header support
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173"
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "v1");
+    });
+}
+
+app.UseCors();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+// A simple Hello World endpoint
+app.MapGet("/api/hello", () => new
+{
+    message = "Hello from .NET 10 Web API!",
+    timestamp = DateTime.UtcNow
+});
+
+// Apply EF migrations (Development only, and not while EF tools are running)
+if (app.Environment.IsDevelopment() &&
+    Assembly.GetEntryAssembly()?.GetName().Name != "ef")
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
+
+app.Run();
