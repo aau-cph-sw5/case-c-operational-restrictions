@@ -17,9 +17,6 @@
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\Enum\" />
+    <PackageReference Include="TinyMapper" Version="3.0.3" />
   </ItemGroup>
 </Project>
