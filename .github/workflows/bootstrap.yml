@@ -1,4 +1,4 @@
-#GitHub Action Deployment
+# GitHub Action Deployment
 name: Server Bootstrap - Install Dependencies
 
 on: workflow_dispatch
@@ -8,9 +8,6 @@ jobs:
     name: Build and deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository code
-        uses: actions/checkout@v4
-
       - name: Install Docker and Docker Compose
         uses: appleboy/ssh-action@v1
         with:
@@ -19,79 +16,34 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
           script: |
-                # Download and run Docker install script
-                curl -fsSL https://get.docker.com -o get-docker.sh
-                sudo sh get-docker.sh
+            # Download and run Docker install script
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
 
-                # Add user to docker group
-                sudo usermod -aG docker ${{ secrets.SERVER_USER }}
-                
-                # Verify Docker installation
-                echo "=== Checking Docker installation ==="
-                DOCKER_VERSION=$(docker --version 2>&1)
-                if ! echo "$DOCKER_VERSION" | grep -q "Docker version"; then
-                  echo "ERROR: Docker is not installed correctly. Got: $DOCKER_VERSION"
-                  exit 1
-                fi
-                echo "Docker: $DOCKER_VERSION"
+            # Add user to docker group
+            sudo usermod -aG docker ${{ secrets.SERVER_USER }}
 
-                # Verify Docker Compose installation
-                echo "=== Checking Docker Compose installation ==="
-                COMPOSE_VERSION=$(docker compose version 2>&1)
-                if ! echo "$COMPOSE_VERSION" | grep -q "Docker Compose version"; then
-                  echo "ERROR: Docker Compose is not installed correctly. Got: $COMPOSE_VERSION"
-                  exit 1
-                fi
-                echo "Docker Compose: $COMPOSE_VERSION"
+            # Verify Docker installation
+            echo "=== Checking Docker installation ==="
+            DOCKER_VERSION=$(docker --version 2>&1)
+            if ! echo "$DOCKER_VERSION" | grep -q "Docker version"; then
+              echo "ERROR: Docker is not installed correctly. Got: $DOCKER_VERSION"
+              exit 1
+            fi
+            echo "Docker: $DOCKER_VERSION"
 
-                echo "Docker and Docker Compose installed successfully!"
+            # Verify Docker Compose installation
+            echo "=== Checking Docker Compose installation ==="
+            COMPOSE_VERSION=$(docker compose version 2>&1)
+            if ! echo "$COMPOSE_VERSION" | grep -q "Docker Compose version"; then
+              echo "ERROR: Docker Compose is not installed correctly. Got: $COMPOSE_VERSION"
+              exit 1
+            fi
+            echo "Docker Compose: $COMPOSE_VERSION"
 
-      - name: Configure Server and Traefik Network
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
-          script: |
-                # Update OS 
-                while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do echo 'Waiting for apt lock...'; sleep 5; done
-                sudo apt update && sudo apt upgrade -y
+            echo "Docker and Docker Compose installed successfully!"
 
-                # Create external network for Traefik
-                docker network inspect traefik-net >/dev/null 2>&1 || docker network create traefik-net
-
-                 # Verify network installation for Traefik
-                echo "=== Checking network installation ==="
-                NETWORK=$(docker network ls | grep traefik-net)
-                if ! echo "$NETWORK" | grep -q "traefik-net"; then
-                  echo "ERROR: Traefik network is not installed correctly."
-                  exit 1
-                fi
-                echo "Traefik network: $NETWORK"
-
-                # Create directory with correct permissions 
-                sudo mkdir -p /opt/stacks/traefik
-                
-                # Create acme.json and set strict Let's Encrypt permissions
-                sudo touch /opt/stacks/traefik/acme.json
-                sudo chmod 600 /opt/stacks/traefik/acme.json
-                
-                # Ensure correct ownership
-                sudo chown -R $USER:$USER /opt/stacks
-                
-      - name: Deploy Traefik Compose File
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
-          source: "infrastructure/traefik/traefik-compose.yml"
-          target: "/opt/stacks/traefik"
-          strip_components: 2
-
-      - name: Start Traefik reverse proxy
+      - name: Configure Server, Network, and Traefik HTTPS
         uses: appleboy/ssh-action@v1.2.0
         env:
           ACME_EMAIL_SECRET: ${{ secrets.ACME_EMAIL }}
@@ -102,10 +54,77 @@ jobs:
           fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
           envs: ACME_EMAIL_SECRET
           script: |
+            # Wait for apt lock if automatic system updates are running
+            while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do 
+              echo 'Waiting for apt lock...'; 
+              sleep 5; 
+            done
+            sudo apt update && sudo apt upgrade -y
+
+            # Safely create external network for Traefik if it doesn't exist
+            docker network inspect traefik-net >/dev/null 2>&1 || docker network create traefik-net
+
+            # Verify network creation
+            echo "=== Checking Traefik network ==="
+            NETWORK=$(docker network ls | grep traefik-net)
+            if ! echo "$NETWORK" | grep -q "traefik-net"; then
+              echo "ERROR: Traefik network is not installed correctly."
+              exit 1
+            fi
+            echo "Traefik network: $NETWORK"
+
+            # Create stack directory structure
+            sudo mkdir -p /opt/stacks/traefik
+            
+            # Take ownership of the stacks directory
+            sudo chown -R $USER:$USER /opt/stacks
+            
+            # Create acme.json and set strict permissions required by Let's Encrypt
+            touch /opt/stacks/traefik/acme.json
+            chmod 600 /opt/stacks/traefik/acme.json
             cd /opt/stacks/traefik
-            
-            # Write the email secret to a .env file for docker compose to consume
+
+            # Store ACME_EMAIL secret in .env for Docker Compose consumption
             echo "ACME_EMAIL=$ACME_EMAIL_SECRET" > .env
-            
-            docker compose -f traefik-compose.yml up -d
-            echo "Traefik proxy is now running!"
+
+            # Write the production Traefik Compose file with HTTPS & Let's Encrypt
+            cat << 'EOF' > docker-compose.yml
+            services:
+              traefik:
+                image: traefik:v3.7.13
+                container_name: global-traefik
+                restart: always
+                command:
+                  - "--api.insecure=false"
+                  - "--providers.docker=true"
+                  - "--providers.docker.exposedbydefault=false"
+                  
+                  # Entrypoints for HTTP (80) and HTTPS (443)
+                  - "--entrypoints.web.address=:80"
+                  - "--entrypoints.websecure.address=:443"
+
+                  # Automatic HTTP to HTTPS Redirection
+                  - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+                  - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+
+                  # Let's Encrypt (ACME) Certificate Resolver
+                  - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+                  - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}" 
+                  - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+                ports:
+                  - "80:80"
+                  - "443:443"
+                volumes:
+                  - "/var/run/docker.sock:/var/run/docker.sock:ro"
+                  - "/opt/stacks/traefik/acme.json:/letsencrypt/acme.json"
+                networks:
+                  - traefik-net
+
+            networks:
+              traefik-net:
+                external: true
+            EOF
+
+            # Start Traefik reverse proxy
+            docker compose up -d
+            echo "Traefik HTTPS proxy started successfully!"
