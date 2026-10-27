@@ -1,0 +1,11 @@
+name: Deploy Development
+on:
+  push:
+    branches: ["development"]
+jobs:
+  call-deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: dev
+      target_dir: /opt/stacks/dev
+    secrets: inherit

@@ -1,0 +1,167 @@
+---
+config:
+  layout: elk
+---
+classDiagram
+direction LR
+
+%% =========================
+%% ENTITIES
+%% =========================
+
+class Signature {
+    <<immutable>>
+    SignatureId : Guid  PK
+    Type : SignatureType 
+    Signed : bool 
+    SigneeId : Guid  FK to User.UserId
+    SigneeRole : UserRole 
+    RestrictionId : Guid  FK to OperationalRestriction
+    CreatedAt : DateTime 
+    UpdatedAt : DateTime? 
+}
+
+class User {
+    <<Entity>>
+    UserId : Guid  PK
+    Name : string 
+    Email : string 
+    PasswordHash : string 
+    Role : UserRole 
+    StartDate : DateTime 
+    EndDate : DateTime? 
+    UserStatus : UserStatus 
+    WorkingStatus : WorkingStatus 
+    ReportsTo : Guid  FK to User.UserId
+    CreatedAt: DateTime 
+    UpdatedAt : DateTime? 
+}
+
+class OperationalRestriction {
+    <<Entity>>
+    RestrictionId : Guid  PK
+    OriginatorUserId : Guid  FK to User.UserId
+    SignatureSheet : List~Signature~ 
+    State : RestrictionState 
+    StartDate : DateTime 
+    EndDate : DateTime? 
+    CreatedAt : DateTime 
+    ArchivedAt : DateTime?
+    RententionUntil : DateTime?
+    RestrictionDescription : string 
+    Files : List~File~ 
+    Version : int 
+    ReviewerId : Guid  FK to User.UserId
+    ApprovedForSigning : bool 
+    ReviewDescription : string 
+    AssignedOperatorsIds : List~Guid~  FK to user.UserId
+    UpdatedAt : DateTime? 
+}
+
+class File {
+    <<Entity>>
+    FileID : Guid  PK
+    FileName : string 
+    StoragePath : string 
+    RestrictionId : Guid  FK to OperationalRestriction
+    CreatedAt : DateTime 
+}
+
+%% =========================
+%% SERVICES
+%% =========================
+
+class UserService {
+    <<Service>>
+    +login(string email, string password) LoginResponseDto
+    +logout() bool
+    +createUser(CreateUserDto userData) UserDto
+    +deactivateUser(Guid userId) User
+    +getActiveUsers() List~User~
+}
+
+class OperationalRestrictionService {
+    <<Service>>
+    +createRestriction(CreateRestrictionDto data) OperationalRestriction
+    +editRestriction(Guid id, UpdateRestrictionDto data) OperationalRestriction
+    +approveRestriction(Guid id, Guid approverId) bool
+    +denyRestriction(Guid id, Guid approverId, string reason) bool
+    +archiveRestriction(Guid id) bool
+    +assignOperator(Guid id, Guid operatorId) bool
+    +getRestrictionById(Guid id) OperationalRestriction
+    +getActiveRestrictions() List~OperationalRestriction~
+
+}
+
+class SignatureService {
+   <<Service>>
+    +assignSignee(Guid signatureId, Guide userId) bool
+    +signRestriction(Guid signatureId, Guid userId) bool
+    +getSignatureByRestriction(Guid restrictionId) List ~Signature~
+    +getPendingSignatures(Guid userId) List ~Signature~
+}
+
+%% =========================
+%% ENUMS
+%% =========================
+
+class SignatureType {
+    <<enumeration>>
+    IMPLEMENTATION
+    CLOSURE
+}
+
+class UserStatus {
+    <<enumeration>>
+    ACTIVE
+    INACTIVE
+    INVITED
+}
+
+class WorkingStatus {
+    <<enumeration>>
+    ATWORK
+    OFFWORK
+    ONHOLIDAY
+}
+
+class UserRole {
+    <<enumeration>>
+    ORIGINATOR
+    DUTY_OPERATIONS_MANAGER
+    OPERATOR
+    CONTROLROOM_SUPERVISOR
+    BETRIEBSLEITER
+}
+
+class RestrictionState {
+    <<enumeration>>
+    DRAFT
+    PENDING_DOM_APPROVAL
+    RETURNED_FOR_CHANGES
+    CANCELLED_REFUSED
+    APPROVED
+    ACTIVE
+    PENDING_CANCELLATION
+    CANCELLATION_APPROVED
+    OUT_OF_FORCE
+    AWAITING_OPERATOR_SIGNATURE
+    AWAITING_OPERATOR_SIGN_OUT
+    ARCHIVED
+}
+
+%% =========================
+%% RELATIONSHIPS
+%% =========================
+
+User "1" --> "*" Signature : signs
+UserService ..> User : uses
+
+User "1" --> "*" OperationalRestriction : originates
+OperationalRestrictionService ..> OperationalRestriction : uses
+
+OperationalRestriction "1" *-- "*" Signature : contains
+
+SignatureService ..> Signature
+SignatureService ..> User
+SignatureService ..> OperationalRestriction

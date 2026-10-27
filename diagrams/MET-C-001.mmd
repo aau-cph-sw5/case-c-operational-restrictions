@@ -1,0 +1,37 @@
+---
+config:
+  layout: dagre
+---
+stateDiagram
+  direction TB
+  [*] --> DraftOR
+  DraftOR --> PendingDOMApproval:Originator signs
+  PendingDOMApproval --> CancelledRefused:DOM refuses
+  PendingDOMApproval --> ReturnedForChanges:DOM requests changes
+  ReturnedForChanges --> DraftOR:Operational restriction is <br>returned to the originator
+  PendingDOMApproval --> Approved:DOM signs the operational restriction
+  Approved --> Active:CRS signs and implements <br>operational restriction in control room
+  Active --> PendingCancellation:Operational Restriction is resolved & tested / Originator signs cancellation
+  PendingCancellation --> Active:DOM requests changes
+  PendingCancellation --> CancellationApproved:DOM approves and signs
+  CancellationApproved --> OutOfForce:CRS removes Operational Restriction
+  OutOfForce --> AwaitingOperatorSignOut:An original operator has not yet signed out
+  AwaitingOperatorSignOut --> AwaitingOperatorSignOut:Operator signs out
+  AwaitingOperatorSignOut --> Archived:All original operators have signed out
+  Archived --> [*]
+  CancelledRefused --> [*]
+  Active --> AwaitingOperatorSignatures:An operator has not yet signed
+  AwaitingOperatorSignatures --> AwaitingOperatorSignatures:Operator signs
+  AwaitingOperatorSignatures --> OutOfForce:Operational restriction is out of force
+  note right of AwaitingOperatorSignatures: n number of operators may need to sign.<br>The loop repeats until the operational restriction is out of force.
+  note right of AwaitingOperatorSignOut: Every operator who originally signed must also sign out.<br>The loop repeats until all original operators have signed out. If a operator have left the organistation, the betriebsleiter can overrule the need of his signature.
+  DraftOR:Draft Operation Restriction
+  PendingDOMApproval:Pending<br>DOM Approval
+  CancelledRefused:Operational restriction is discarded
+  ReturnedForChanges:Operational Restriction <br>returned for changes
+  Active:Operational restriction is active
+  AwaitingOperatorSignatures:Awaiting signatures from operators
+  PendingCancellation:Operational Restriction is pending cancellation
+  CancellationApproved:Operational Restriction is approved for removal
+  OutOfForce:Operational Restriction is now out of force
+  AwaitingOperatorSignOut:Awaiting sign out from original operators

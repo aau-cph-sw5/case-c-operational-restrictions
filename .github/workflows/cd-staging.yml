@@ -1,0 +1,11 @@
+name: Deploy Staging
+on:
+  push:
+    branches: ["staging"]
+jobs:
+  call-deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: staging
+      target_dir: /opt/stacks/staging
+    secrets: inherit
