@@ -10,10 +10,14 @@ public class OperationalRestrictionDto
   public Guid CreatedBy { get; set; }
   public RestrictionStatus Status { get; set; }
   public DateTime StartDate { get; set; }
-  public DateTime EndDate { get; set; }
+  public DateTime? EndDate { get; set; }
   public DateTime CreatedAt { get; set; }
   public DateTime ArchivedAt { get; set; }
   public Guid? OriginalOperationalRestrictionId { get; set; }
+  public string? Reference { get; set; }
+  public string SituationDescription { get; set; } = string.Empty;
+  public string RestrictionDescription { get; set; } = string.Empty;
+  public string CancellationDescription { get; set; } = string.Empty;
 
   public static OperationalRestrictionDto FromDalEntity(OperationalRestriction operationalRestriction) =>
     new()
@@ -26,6 +30,10 @@ public class OperationalRestrictionDto
       EndDate = operationalRestriction.EndDate,
       CreatedAt = operationalRestriction.CreatedAt,
       ArchivedAt = operationalRestriction.ArchivedAt,
-      OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId
+      OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId,
+      Reference = operationalRestriction.Reference,
+      SituationDescription = operationalRestriction.SituationDescription,
+      RestrictionDescription = operationalRestriction.RestrictionDescription,
+      CancellationDescription = operationalRestriction.CancellationDescription
     };
 }

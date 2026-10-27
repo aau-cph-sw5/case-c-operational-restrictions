@@ -32,6 +32,49 @@ public class OperationalRestrictionServiceTests
     }
 
     [Fact]
+    public async Task CreateRestrictionPersistsTextDescriptionsAndReference()
+    {
+        var request = new CreateRestrictionRequest(
+            DbSeeder.AnnaId,
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            Reference: "REF-99",
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
+
+        var created = await _service.CreateRestrictionAsync(request);
+
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.Id == created.Id);
+        Assert.Equal("REF-99", stored.Reference);
+        Assert.Equal("Situation details", stored.SituationDescription);
+        Assert.Equal("Restriction details", stored.RestrictionDescription);
+        Assert.Equal("Cancellation details", stored.CancellationDescription);
+
+        Assert.Equal("REF-99", created.Reference);
+        Assert.Equal("Situation details", created.SituationDescription);
+        Assert.Equal("Restriction details", created.RestrictionDescription);
+        Assert.Equal("Cancellation details", created.CancellationDescription);
+    }
+
+    [Fact]
+    public async Task CreateRestrictionAllowsNullEndDate()
+    {
+        var request = new CreateRestrictionRequest(
+            DbSeeder.AnnaId,
+            DateTime.UtcNow.AddDays(1),
+            EndDate: null
+        );
+
+        var created = await _service.CreateRestrictionAsync(request);
+
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.Id == created.Id);
+        Assert.Null(stored.EndDate);
+        Assert.Null(created.EndDate);
+    }
+
+    [Fact]
     public async Task CreateRestrictionWithEndDateBeforeStartDateThrows()
     {
         var request = new CreateRestrictionRequest(DbSeeder.AnnaId, DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(1));

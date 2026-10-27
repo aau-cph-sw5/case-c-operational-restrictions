@@ -26,8 +26,11 @@ public class OperationalRestrictionService : IOperationalRestrictionService
     /// </summary>
     public async Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request)
     {
-        if (request.EndDate <= request.StartDate)
-            throw new InvalidRestrictionPeriodException(request.StartDate, request.EndDate);
+        var startUtc = ToUtc(request.StartDate);
+        DateTime? endUtc = request.EndDate.HasValue ? ToUtc(request.EndDate.Value) : null;
+
+        if (endUtc.HasValue && endUtc.Value <= startUtc)
+            throw new InvalidRestrictionPeriodException(startUtc, endUtc.Value);
 
         var restriction = new OperationalRestriction
         {
@@ -35,10 +38,15 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             Originator = request.CreatedBy,
             CreatedBy = request.CreatedBy,
             Status = RestrictionStatus.Draft,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
+            StartDate = startUtc,
+            EndDate = endUtc,
             CreatedAt = DateTime.UtcNow,
-            OriginalOperationalRestrictionId = null
+            ArchivedAt = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc),
+            OriginalOperationalRestrictionId = null,
+            Reference = request.Reference,
+            SituationDescription = request.SituationDescription,
+            RestrictionDescription = request.RestrictionDescription,
+            CancellationDescription = request.CancellationDescription
         };
 
         _appDbContext.Add(restriction);
@@ -103,12 +111,12 @@ public class OperationalRestrictionService : IOperationalRestrictionService
 
         if (request.StartDate != null)
         {
-            originalRestriction.StartDate = request.StartDate.Value;
+            originalRestriction.StartDate = ToUtc(request.StartDate.Value);
         }
 
         if (request.EndDate != null)
         {
-            originalRestriction.EndDate = request.EndDate.Value;
+            originalRestriction.EndDate = ToUtc(request.EndDate.Value);
         }
 
         originalRestriction.Id = Guid.NewGuid();
@@ -122,4 +130,12 @@ public class OperationalRestrictionService : IOperationalRestrictionService
 
         return OperationalRestrictionDto.FromDalEntity(originalRestriction);
     }
+
+    private static DateTime ToUtc(DateTime dateTime) =>
+        dateTime.Kind switch
+        {
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => dateTime.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+        };
 }

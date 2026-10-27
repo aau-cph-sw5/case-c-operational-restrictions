@@ -31,13 +31,17 @@ namespace Backend.Migrations
                     b.Property<DateTime>("ArchivedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CancellationDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("OriginalOperationalRestrictionId")
@@ -45,6 +49,17 @@ namespace Backend.Migrations
 
                     b.Property<Guid>("Originator")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RestrictionDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SituationDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");

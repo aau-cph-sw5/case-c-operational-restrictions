@@ -14,8 +14,13 @@ public class OperationalRestriction
 
   public RestrictionStatus Status{ get; set; }
   public DateTime StartDate { get; set; }
-  public DateTime EndDate { get; set; }
+  public DateTime? EndDate { get; set; }
   public DateTime CreatedAt { get; set; }
   public DateTime ArchivedAt { get; set; }
   public Guid? OriginalOperationalRestrictionId { get; set; }
+
+  public string? Reference { get; set; }
+  public string SituationDescription { get; set; } = string.Empty;
+  public string RestrictionDescription { get; set; } = string.Empty;
+  public string CancellationDescription { get; set; } = string.Empty;
 }
