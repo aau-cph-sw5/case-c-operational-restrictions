@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
-public class OperationalRestrictionService :IOperationalRestrictionService
+public class OperationalRestrictionService : IOperationalRestrictionService
 {
     private readonly AppDbContext _appDbContext;
     private readonly SignatureService _signatureService;

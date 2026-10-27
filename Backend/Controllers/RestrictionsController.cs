@@ -36,7 +36,12 @@ public class RestrictionController : ApiControllerBase
         }
         catch (InvalidRestrictionPeriodException exception)
         {
-            return BadRequest(new { error = exception.Message });
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid restriction period",
+                Detail = exception.Message,
+                Status = StatusCodes.Status400BadRequest
+            });
         }
     }
 

@@ -11,7 +11,7 @@ using Backend.Models.Enum;
 namespace Backend.Tests;
 
 // Integration tests that go through the full HTTP pipeline: routing, JWT authentication, model binding and the database.
-public class RestrictionEndpointTests : IAsyncLifetime
+public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -24,12 +24,26 @@ public class RestrictionEndpointTests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _factory.DisposeAsync();
 
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _factory.Dispose();
+        }
+    }
+
     [Fact]
     public async Task RequestsWithoutTokenReturn401()
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/restriction");
+        var response = await client.GetAsync("/api/restrictions");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -39,7 +53,7 @@ public class RestrictionEndpointTests : IAsyncLifetime
     {
         var client = CreateClientFor(DbSeeder.AnnaId);
 
-        var response = await client.PostAsJsonAsync("/api/restriction", new
+        var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
             createdBy = DbSeeder.LarsId,
             startDate = DateTime.UtcNow.AddDays(1),
@@ -51,7 +65,7 @@ public class RestrictionEndpointTests : IAsyncLifetime
         Assert.Equal(DbSeeder.AnnaId, created.OriginatorUserId);
         Assert.Equal(RestrictionStatus.Draft, created.Status);
 
-        var fetched = await client.GetAsync($"/api/restriction/{created.Id}");
+        var fetched = await client.GetAsync($"/api/restrictions/{created.Id}");
         Assert.Equal(HttpStatusCode.OK, fetched.StatusCode);
     }
 
@@ -60,7 +74,7 @@ public class RestrictionEndpointTests : IAsyncLifetime
     {
         var client = CreateClientFor(DbSeeder.AnnaId);
 
-        var response = await client.PostAsJsonAsync("/api/restriction", new
+        var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
             startDate = DateTime.UtcNow.AddDays(2),
             endDate = DateTime.UtcNow.AddDays(1)
@@ -74,7 +88,7 @@ public class RestrictionEndpointTests : IAsyncLifetime
     {
         var draft = await CreateDraftAsAsync(DbSeeder.AnnaId);
 
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restriction/{draft.Id}");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restrictions/{draft.Id}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -83,7 +97,7 @@ public class RestrictionEndpointTests : IAsyncLifetime
     public async Task GetByIdOfNonDraftReturns200ForAnyUser()
     {
         // Seeded Approved restriction owned by Anna.
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restriction/5eed0000-0000-0000-0000-000000000006");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restrictions/5eed0000-0000-0000-0000-000000000006");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -93,7 +107,7 @@ public class RestrictionEndpointTests : IAsyncLifetime
     {
         await CreateDraftAsAsync(DbSeeder.AnnaId);
 
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restriction");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restrictions");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var restrictions = await ReadAsync<List<OperationalRestrictionDto>>(response);
@@ -112,7 +126,7 @@ public class RestrictionEndpointTests : IAsyncLifetime
 
     private async Task<OperationalRestrictionDto> CreateDraftAsAsync(Guid userId)
     {
-        var response = await CreateClientFor(userId).PostAsJsonAsync("/api/restriction", new
+        var response = await CreateClientFor(userId).PostAsJsonAsync("/api/restrictions", new
         {
             startDate = DateTime.UtcNow.AddDays(1),
             endDate = DateTime.UtcNow.AddDays(2)
