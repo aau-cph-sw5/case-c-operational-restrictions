@@ -83,6 +83,6 @@ public class SignatureServiceTests
         var required = _service.CreateRequiredSignatures(Guid.NewGuid());
 
         Assert.Equal(4, required.Count);
-        Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.Pending, x.RequiresSignatureStatus));
+        Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
     }
 }
