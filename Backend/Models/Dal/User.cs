@@ -1,4 +1,4 @@
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
