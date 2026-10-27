@@ -27,7 +27,14 @@ public class RestrictionControllerTests
     public async Task CreateReturns201WithLoggedInUserAsOriginator()
     {
         // CreatedBy in the body is ignored; the originator always comes from the JWT.
-        var request = new CreateRestrictionRequest(DbSeeder.LarsId, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(2));
+        var request = new CreateRestrictionRequest(
+            DbSeeder.LarsId,
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
 
         var result = await CreateControllerFor(DbSeeder.AnnaId).Create(request);
 
@@ -35,12 +42,54 @@ public class RestrictionControllerTests
         var restriction = Assert.IsType<OperationalRestrictionDto>(created.Value);
         Assert.Equal(DbSeeder.AnnaId, restriction.OriginatorUserId);
         Assert.Equal(RestrictionStatus.Draft, restriction.Status);
+        Assert.Equal("Situation details", restriction.SituationDescription);
+        Assert.Equal("Restriction details", restriction.RestrictionDescription);
+        Assert.Equal("Cancellation details", restriction.CancellationDescription);
     }
 
     [Fact]
     public async Task CreateWithInvalidPeriodReturns400()
     {
-        var request = new CreateRestrictionRequest(Guid.Empty, DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(1));
+        var request = new CreateRestrictionRequest(
+            Guid.Empty,
+            DateTime.UtcNow.AddDays(2),
+            DateTime.UtcNow.AddDays(1),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
+
+        var result = await CreateControllerFor(DbSeeder.AnnaId).Create(request);
+
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreateWithoutStartDateReturns400()
+    {
+        var request = new CreateRestrictionRequest(
+            DbSeeder.LarsId,
+            StartDate: null,
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
+
+        var result = await CreateControllerFor(DbSeeder.AnnaId).Create(request);
+
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreateWithEmptyDescriptionReturns400()
+    {
+        var request = new CreateRestrictionRequest(
+            DbSeeder.LarsId,
+            StartDate: DateTime.UtcNow.AddDays(1),
+            SituationDescription: "",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
 
         var result = await CreateControllerFor(DbSeeder.AnnaId).Create(request);
 
@@ -96,7 +145,14 @@ public class RestrictionControllerTests
 
     private Task<OperationalRestrictionDto> CreateDraftAsync(Guid createdBy)
     {
-        var request = new CreateRestrictionRequest(createdBy, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(2));
+        var request = new CreateRestrictionRequest(
+            createdBy,
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
 
         return _service.CreateRestrictionAsync(request);
     }

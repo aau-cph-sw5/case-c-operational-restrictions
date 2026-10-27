@@ -43,6 +43,15 @@ public class RestrictionsController : ApiControllerBase
                 Status = StatusCodes.Status400BadRequest
             });
         }
+        catch (MissingRequiredRestrictionFieldException exception)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Missing required field",
+                Detail = exception.Message,
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
     }
 
     /// <summary>

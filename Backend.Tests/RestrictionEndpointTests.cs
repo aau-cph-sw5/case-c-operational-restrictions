@@ -57,13 +57,19 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         {
             createdBy = DbSeeder.LarsId,
             startDate = DateTime.UtcNow.AddDays(1),
-            endDate = DateTime.UtcNow.AddDays(2)
+            endDate = DateTime.UtcNow.AddDays(2),
+            situationDescription = "Situation details",
+            restrictionDescription = "Restriction details",
+            cancellationDescription = "Cancellation details"
         });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await ReadAsync<OperationalRestrictionDto>(response);
         Assert.Equal(DbSeeder.AnnaId, created.OriginatorUserId);
         Assert.Equal(RestrictionStatus.Draft, created.Status);
+        Assert.Equal("Situation details", created.SituationDescription);
+        Assert.Equal("Restriction details", created.RestrictionDescription);
+        Assert.Equal("Cancellation details", created.CancellationDescription);
 
         var fetched = await client.GetAsync($"/api/restrictions/{created.Id}");
         Assert.Equal(HttpStatusCode.OK, fetched.StatusCode);
@@ -77,7 +83,51 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
             startDate = DateTime.UtcNow.AddDays(2),
-            endDate = DateTime.UtcNow.AddDays(1)
+            endDate = DateTime.UtcNow.AddDays(1),
+            situationDescription = "Situation details",
+            restrictionDescription = "Restriction details",
+            cancellationDescription = "Cancellation details"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostWithoutStartDateReturns400()
+    {
+        var client = CreateClientFor(DbSeeder.AnnaId);
+
+        var response = await client.PostAsJsonAsync("/api/restrictions", new
+        {
+            endDate = DateTime.UtcNow.AddDays(2),
+            situationDescription = "Situation details",
+            restrictionDescription = "Restriction details",
+            cancellationDescription = "Cancellation details"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("", "Restriction details", "Cancellation details")]
+    [InlineData("   ", "Restriction details", "Cancellation details")]
+    [InlineData("Situation details", "", "Cancellation details")]
+    [InlineData("Situation details", "   ", "Cancellation details")]
+    [InlineData("Situation details", "Restriction details", "")]
+    [InlineData("Situation details", "Restriction details", "   ")]
+    public async Task PostWithMissingOrEmptyDescriptionsReturns400(
+        string situation,
+        string restriction,
+        string cancellation)
+    {
+        var client = CreateClientFor(DbSeeder.AnnaId);
+
+        var response = await client.PostAsJsonAsync("/api/restrictions", new
+        {
+            startDate = DateTime.UtcNow.AddDays(1),
+            situationDescription = situation,
+            restrictionDescription = restriction,
+            cancellationDescription = cancellation
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -129,7 +179,10 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         var response = await CreateClientFor(userId).PostAsJsonAsync("/api/restrictions", new
         {
             startDate = DateTime.UtcNow.AddDays(1),
-            endDate = DateTime.UtcNow.AddDays(2)
+            endDate = DateTime.UtcNow.AddDays(2),
+            situationDescription = "Situation details",
+            restrictionDescription = "Restriction details",
+            cancellationDescription = "Cancellation details"
         });
         response.EnsureSuccessStatusCode();
 

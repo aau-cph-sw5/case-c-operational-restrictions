@@ -23,6 +23,14 @@ public class InvalidRestrictionPeriodException : Exception
     {
     }
 }
+
+public class MissingRequiredRestrictionFieldException : Exception
+{
+    public MissingRequiredRestrictionFieldException(string fieldName)
+        : base($"{fieldName} is required")
+    {
+    }
+}
 public class SignatureNotFoundException : Exception
 {
     public SignatureNotFoundException(Guid id)

@@ -26,7 +26,19 @@ public class OperationalRestrictionService : IOperationalRestrictionService
     /// </summary>
     public async Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request)
     {
-        var startUtc = ToUtc(request.StartDate);
+        if (!request.StartDate.HasValue || request.StartDate.Value == default)
+            throw new MissingRequiredRestrictionFieldException(nameof(request.StartDate));
+
+        if (string.IsNullOrWhiteSpace(request.SituationDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.SituationDescription));
+
+        if (string.IsNullOrWhiteSpace(request.RestrictionDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.RestrictionDescription));
+
+        if (string.IsNullOrWhiteSpace(request.CancellationDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.CancellationDescription));
+
+        var startUtc = ToUtc(request.StartDate.Value);
         DateTime? endUtc = request.EndDate.HasValue ? ToUtc(request.EndDate.Value) : null;
 
         if (endUtc.HasValue && endUtc.Value <= startUtc)

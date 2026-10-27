@@ -64,7 +64,10 @@ public class OperationalRestrictionServiceTests
         var request = new CreateRestrictionRequest(
             DbSeeder.AnnaId,
             DateTime.UtcNow.AddDays(1),
-            EndDate: null
+            EndDate: null,
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
         );
 
         var created = await _service.CreateRestrictionAsync(request);
@@ -77,7 +80,14 @@ public class OperationalRestrictionServiceTests
     [Fact]
     public async Task CreateRestrictionWithEndDateBeforeStartDateThrows()
     {
-        var request = new CreateRestrictionRequest(DbSeeder.AnnaId, DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(1));
+        var request = new CreateRestrictionRequest(
+            DbSeeder.AnnaId,
+            DateTime.UtcNow.AddDays(2),
+            DateTime.UtcNow.AddDays(1),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
 
         await Assert.ThrowsAsync<InvalidRestrictionPeriodException>(() => _service.CreateRestrictionAsync(request));
     }
@@ -86,9 +96,53 @@ public class OperationalRestrictionServiceTests
     public async Task CreateRestrictionWithEndDateEqualToStartDateThrows()
     {
         var date = DateTime.UtcNow.AddDays(1);
-        var request = new CreateRestrictionRequest(DbSeeder.AnnaId, date, date);
+        var request = new CreateRestrictionRequest(
+            DbSeeder.AnnaId,
+            date,
+            date,
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
 
         await Assert.ThrowsAsync<InvalidRestrictionPeriodException>(() => _service.CreateRestrictionAsync(request));
+    }
+
+    [Fact]
+    public async Task CreateRestrictionWithoutStartDateThrows()
+    {
+        var request = new CreateRestrictionRequest(
+            DbSeeder.AnnaId,
+            StartDate: null,
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
+
+        await Assert.ThrowsAsync<MissingRequiredRestrictionFieldException>(() => _service.CreateRestrictionAsync(request));
+    }
+
+    [Theory]
+    [InlineData("", "Restriction details", "Cancellation details")]
+    [InlineData("   ", "Restriction details", "Cancellation details")]
+    [InlineData("Situation details", "", "Cancellation details")]
+    [InlineData("Situation details", "   ", "Cancellation details")]
+    [InlineData("Situation details", "Restriction details", "")]
+    [InlineData("Situation details", "Restriction details", "   ")]
+    public async Task CreateRestrictionWithEmptyOrWhitespaceDescriptionThrows(
+        string situation,
+        string restriction,
+        string cancellation)
+    {
+        var request = new CreateRestrictionRequest(
+            DbSeeder.AnnaId,
+            DateTime.UtcNow.AddDays(1),
+            SituationDescription: situation,
+            RestrictionDescription: restriction,
+            CancellationDescription: cancellation
+        );
+
+        await Assert.ThrowsAsync<MissingRequiredRestrictionFieldException>(() => _service.CreateRestrictionAsync(request));
     }
 
     [Fact]
@@ -145,7 +199,14 @@ public class OperationalRestrictionServiceTests
 
     private Task<OperationalRestrictionDto> CreateDraftAsync(Guid createdBy)
     {
-        var request = new CreateRestrictionRequest(createdBy, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(2));
+        var request = new CreateRestrictionRequest(
+            createdBy,
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
 
         return _service.CreateRestrictionAsync(request);
     }
