@@ -1,4 +1,5 @@
 using Backend.Models.Enum;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Models.Entities;
@@ -16,7 +17,7 @@ public class User
 
     public UserRole Role { get; set; }
 
-    public UserWorkingStatus  WorkingStatus { get; set; }
+    public UserWorkingStatus WorkingStatus { get; set; }
 
     public bool InCharge { get; set; }
 }

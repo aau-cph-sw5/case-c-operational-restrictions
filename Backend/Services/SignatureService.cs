@@ -66,7 +66,7 @@ public class SignatureService(
     ];
 
     //Midlertidigt mens der ikke er database
-    private static List<RequiresSignature> _requiredSignatures = [];
+    private static readonly List<RequiresSignature> _requiredSignatures = [];
     //Midlertidigt mens der ikke er database
     private static readonly List<Signature> _signatures = [];
 
