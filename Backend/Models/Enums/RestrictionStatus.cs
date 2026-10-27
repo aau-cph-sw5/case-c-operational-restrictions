@@ -1,4 +1,4 @@
-namespace Backend.Models.Enum;
+namespace Backend.Models.Enums;
 
 public enum RestrictionStatus
 {
