@@ -4,9 +4,8 @@
 import type { Notification } from "../components/notifications/NotificationCard";
 import type { NotificationDto } from "../types/notificationDto";
 
-function formatTime(createdAt: string): string {
-  const date = new Date(createdAt);
-  const minutes = Math.floor((Date.now() - date.getTime()) / 60_000);
+function formatTime(createdAt: Date): string {
+  const minutes = Math.floor((Date.now() - createdAt.getTime()) / 60_000);
 
   if (minutes < 1) return "Lige nu";
   if (minutes < 60) return `${minutes} min. siden`;
@@ -21,7 +20,7 @@ function formatTime(createdAt: string): string {
   return new Intl.DateTimeFormat("da-DK", {
     day: "numeric",
     month: "short",
-  }).format(date);
+  }).format(createdAt);
 }
 
 function categoryFor(type: NotificationDto["type"]): string {

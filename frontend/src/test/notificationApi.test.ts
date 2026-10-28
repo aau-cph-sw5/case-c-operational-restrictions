@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getNotifications } from "../services/notificationApi";
-import type { NotificationDto } from "../types/notificationDto";
 import * as tokenStorage from "../services/tokenStorage";
 
 describe("notificationApi", () => {
@@ -31,8 +30,8 @@ describe("notificationApi", () => {
     });
   });
 
-  it("returns the parsed notifications", async () => {
-    const notifications: NotificationDto[] = [
+  it("returns the parsed notifications with dates as Date objects", async () => {
+    const responseBody = [
       {
         id: "id-1",
         operationalRestrictionId: null,
@@ -41,7 +40,7 @@ describe("notificationApi", () => {
         message: "Message",
         requiresAction: false,
         createdAt: "2026-10-01T00:00:00Z",
-        readAt: null,
+        readAt: "2026-10-02T00:00:00Z",
         resolvedAt: null,
       },
     ];
@@ -49,13 +48,26 @@ describe("notificationApi", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(notifications), { status: 200 }),
+        new Response(JSON.stringify(responseBody), { status: 200 }),
       ),
     );
 
     const result = await getNotifications();
 
-    expect(result).toEqual(notifications);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      id: "id-1",
+      operationalRestrictionId: null,
+      type: "SystemInfo",
+      title: "Info",
+      message: "Message",
+      requiresAction: false,
+      createdAt: new Date("2026-10-01T00:00:00Z"),
+      readAt: new Date("2026-10-02T00:00:00Z"),
+      resolvedAt: null,
+    });
+    expect(result[0].createdAt).toBeInstanceOf(Date);
+    expect(result[0].readAt).toBeInstanceOf(Date);
   });
 
   it("throws on a non-ok response", async () => {

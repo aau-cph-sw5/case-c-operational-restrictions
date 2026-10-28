@@ -45,7 +45,11 @@ describe("PWA Install Functionality by Platform", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /install app/i }));
 
-    expect(screen.getByText(/chrome \/ edge \(desktop\)/i)).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/chrome \/ edge:/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/install icon in the address bar/i),
+    ).toBeInTheDocument();
   });
 
   it("Standalone: hides the button when already installed", () => {

@@ -12,7 +12,7 @@ function makeDto(
     title: "Info",
     message: "Message",
     requiresAction: false,
-    createdAt: "2026-10-25T12:00:00Z",
+    createdAt: new Date("2026-10-25T12:00:00Z"),
     readAt: null,
     resolvedAt: null,
     ...overrides,
@@ -51,7 +51,7 @@ describe("notificationMapper", () => {
     vi.setSystemTime(new Date("2026-10-25T12:00:00Z"));
 
     const result = toNotificationViewModel(
-      makeDto({ readAt: "2026-10-25T12:10:00Z" }),
+      makeDto({ readAt: new Date("2026-10-25T12:10:00Z") }),
     );
 
     expect(result.unread).toBe(false);
@@ -65,7 +65,7 @@ describe("notificationMapper", () => {
       makeDto({
         type: "ChangesRequested",
         requiresAction: true,
-        resolvedAt: "2026-10-25T12:05:00Z",
+        resolvedAt: new Date("2026-10-25T12:05:00Z"),
       }),
     );
 
@@ -85,7 +85,7 @@ describe("notificationMapper", () => {
     vi.setSystemTime(new Date("2026-10-25T12:00:00Z"));
 
     const result = toNotificationViewModel(
-      makeDto({ createdAt: "2026-09-01T09:00:00Z" }),
+      makeDto({ createdAt: new Date("2026-09-01T09:00:00Z") }),
     );
 
     expect(result.time).toBe("1. sep.");
