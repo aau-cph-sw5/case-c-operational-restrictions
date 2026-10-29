@@ -5,7 +5,6 @@ public enum UserRole
     Originator,
     DutyOperationsManager,
     Operator,
-    ControlRoomSupervisor,
-    Betriebsleiter,
-    Empty,
+    ControlroomSupervisor,
+    Betriebsleiter
 }

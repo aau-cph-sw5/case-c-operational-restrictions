@@ -39,9 +39,9 @@ public class SignatureServiceTests
         var signature = _service.Sign(required.Id, required.SigneeId);
 
         Assert.Equal(required.SigneeId, signature.SigneeId);
-        Assert.Equal(restrictionVersionId, signature.RestrictionId);
+        Assert.Equal(restrictionVersionId, signature.OperationalRestrictionId);
         Assert.NotEqual(default, signature.SigneeRole);
-        Assert.True(signature.CreatedAt >= before);
+        Assert.True(signature.SignedAt >= before);
     }
 
     [Fact]
@@ -67,11 +67,11 @@ public class SignatureServiceTests
         var restrictionVersionId = Guid.NewGuid();
         var requiredSignatures = _service.CreateRequiredSignatures(restrictionVersionId);
         var signature = _service.Sign(requiredSignatures[0].Id, requiredSignatures[0].SigneeId);
-        Assert.True(_service.IsSignatureValid(signature.SignatureId));
+        Assert.True(_service.IsSignatureValid(signature.Id));
 
         _service.InvalidateRequiredSignatures(restrictionVersionId);
 
-        Assert.False(_service.IsSignatureValid(signature.SignatureId));
+        Assert.False(_service.IsSignatureValid(signature.Id));
         Assert.Throws<RequiresSignatureNotSignableException>(() =>
             _service.Sign(requiredSignatures[1].Id, requiredSignatures[1].SigneeId));
     }

@@ -15,48 +15,53 @@ public class SignatureService(
     [
         new User
         {
-            UserId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
             Name = "Anna Jensen",
             Email = "anna.jensen@example.com",
             PasswordHash = "seed-password-hash-1",
             Role = UserRole.DutyOperationsManager,
-            WorkingStatus = WorkingStatus.AtWork
+            WorkingStatus = UserWorkingStatus.AtWork,
+            InCharge = false
         },
         new User
         {
-            UserId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
             Name = "Lars Nielsen",
             Email = "lars.nielsen@example.com",
             PasswordHash = "seed-password-hash-2",
             Role = UserRole.Operator,
-            WorkingStatus = WorkingStatus.AtWork
+            WorkingStatus = UserWorkingStatus.AtWork,
+            InCharge = false
         },
         new User
         {
-            UserId = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
             Name = "Sofie Hansen",
             Email = "sofie.hansen@example.com",
             PasswordHash = "seed-password-hash-3",
             Role = UserRole.Operator,
-            WorkingStatus = WorkingStatus.OffWork
+            WorkingStatus = UserWorkingStatus.OffWork,
+            InCharge = false
         },
         new User
         {
-            UserId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
             Name = "Mikkel Pedersen",
             Email = "mikkel.pedersen@example.com",
             PasswordHash = "seed-password-hash-4",
-            Role = UserRole.ControlRoomSupervisor,
-            WorkingStatus = WorkingStatus.OnHoliday
+            Role = UserRole.ControlroomSupervisor,
+            WorkingStatus = UserWorkingStatus.OnHoliday,
+            InCharge = false
         },
         new User
         {
-            UserId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
             Name = "Camilla Andersen",
             Email = "camilla.andersen@example.com",
             PasswordHash = "seed-password-hash-5",
             Role = UserRole.Betriebsleiter,
-            WorkingStatus = WorkingStatus.AtWork
+            WorkingStatus = UserWorkingStatus.AtWork,
+            InCharge = true
         }
     ];
 
@@ -78,12 +83,12 @@ public class SignatureService(
     public List<RequiresSignature> CreateRequiredSignatures(Guid operationalRestrictionId)
     {
         var createdSignatures = _users
-            .Where(user => user.WorkingStatus != WorkingStatus.OnHoliday)
+            .Where(user => user.WorkingStatus != UserWorkingStatus.OnHoliday)
             .Select(user => new RequiresSignature
             {
                 Id = Guid.NewGuid(),
                 OperationalRestrictionId = operationalRestrictionId,
-                SigneeId = user.UserId,
+                SigneeId = user.Id,
                 RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
             })
             .ToList();
@@ -123,15 +128,16 @@ public class SignatureService(
             throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
         //I fremtiden skal den bruge GetUserById
-        var signee = _users.Single(user => user.UserId == signerUserId);
+        var signee = _users.Single(user => user.Id == signerUserId);
 
         var signature = new Signature
         {
-            SignatureId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = requiredSignature.OperationalRestrictionId,
             SigneeId = signerUserId,
             SigneeRole = signee.Role,
-            RestrictionId = requiredSignature.OperationalRestrictionId,
-            CreatedAt = DateTime.UtcNow
+            SignedAt = DateTime.UtcNow
         };
         //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
         _signatures.Add(signature);
@@ -157,11 +163,11 @@ public class SignatureService(
 
     public bool IsSignatureValid(Guid signatureId)
     {
-        var signature = _signatures.FirstOrDefault(x => x.SignatureId == signatureId);
+        var signature = _signatures.FirstOrDefault(x => x.Id == signatureId);
 
         if (signature == null)
             throw new SignatureNotFoundException(signatureId);
 
-        return GetRequiresSignatureById(signature.RestrictionId).RequiresSignatureStatus == RequiresSignatureStatus.CompletedSignature;
+        return GetRequiresSignatureById(signature.RequiresSignatureId).RequiresSignatureStatus == RequiresSignatureStatus.CompletedSignature;
     }
 }
