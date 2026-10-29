@@ -1,8 +1,8 @@
+using Backend.Models.Enums;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Models.Entities;
-
-public enum Role { Originator, Dom, Operator }
 
 [Index(nameof(Email), IsUnique = true)]
 public class User
@@ -15,5 +15,9 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public Role Role { get; set; }
+    public UserRole Role { get; set; }
+
+    public UserWorkingStatus WorkingStatus { get; set; }
+
+    public bool InCharge { get; set; }
 }

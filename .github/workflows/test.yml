@@ -66,6 +66,12 @@ jobs:
         run: dotnet ef database update --project Backend --startup-project Backend
         env:
           Jwt__SigningKey: "ci-only-signing-key-not-a-secret-1234567890"
+          
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Run backend tests
         run: dotnet test CaseC.slnx --nologo

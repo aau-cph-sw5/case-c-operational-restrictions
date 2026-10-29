@@ -3,12 +3,16 @@ using System.Text;
 
 using Backend.Configuration;
 using Backend.Data;
+using Backend.Models.DTOs;
+using Backend.Models.Entities;
 using Backend.Services;
 using Backend.Services.Auth;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
+using Nelibur.ObjectMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +26,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+TinyMapper.Bind<User, UserDto>();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
@@ -31,6 +36,8 @@ builder.Services.Configure<NotificationDeliveryOptions>(builder.Configuration.Ge
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<INotificationDeliveryProcessor, NotificationDeliveryProcessor>();
 builder.Services.AddHostedService<NotificationDeliveryWorker>();
+builder.Services.AddScoped<SignatureService>();
+
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
