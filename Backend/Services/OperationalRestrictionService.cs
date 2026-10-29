@@ -20,65 +20,32 @@ public class OperationalRestrictionService : IOperationalRestrictionService
         _signatureService = signatureService;
     }
 
-    // Temporary seed data until users are stored in the database.
-    // Fixed Guids so the same users can be referenced between runs.
-    private static readonly List<User> _users =
-    [
-        new User
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Name = "Anna Jensen",
-            Email = "anna.jensen@example.com",
-            PasswordHash = "seed-password-hash-1",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Name = "Lars Nielsen",
-            Email = "lars.nielsen@example.com",
-            PasswordHash = "seed-password-hash-2",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Name = "Sofie Hansen",
-            Email = "sofie.hansen@example.com",
-            PasswordHash = "seed-password-hash-3",
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            Name = "Mikkel Pedersen",
-            Email = "mikkel.pedersen@example.com",
-            PasswordHash = "seed-password-hash-4",
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            Name = "Camilla Andersen",
-            Email = "camilla.andersen@example.com",
-            PasswordHash = "seed-password-hash-5",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
-        }
-    ];
-
     /// <summary>
     /// Creates the first version of a new operational restriction as a draft.
     /// The creator is also recorded as the originator.
     /// </summary>
     public async Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request)
     {
-        if (request.EndDate <= request.StartDate)
-            throw new InvalidRestrictionPeriodException(request.StartDate, request.EndDate);
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.Title));
+
+        if (!request.StartDate.HasValue || request.StartDate.Value == default)
+            throw new MissingRequiredRestrictionFieldException(nameof(request.StartDate));
+
+        if (string.IsNullOrWhiteSpace(request.SituationDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.SituationDescription));
+
+        if (string.IsNullOrWhiteSpace(request.RestrictionDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.RestrictionDescription));
+
+        if (string.IsNullOrWhiteSpace(request.CancellationDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.CancellationDescription));
+
+        var startUtc = ToUtc(request.StartDate.Value);
+        DateTime? endUtc = request.EndDate.HasValue ? ToUtc(request.EndDate.Value) : null;
+
+        if (endUtc.HasValue && endUtc.Value <= startUtc)
+            throw new InvalidRestrictionPeriodException(startUtc, endUtc.Value);
 
         var restriction = new OperationalRestriction
         {
@@ -86,10 +53,16 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             Originator = request.CreatedBy,
             CreatedBy = request.CreatedBy,
             Status = RestrictionStatus.Draft,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
+            StartDate = startUtc,
+            EndDate = endUtc,
             CreatedAt = DateTime.UtcNow,
-            OriginalOperationalRestrictionId = null
+            ArchivedAt = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc),
+            OriginalOperationalRestrictionId = null,
+            Title = request.Title,
+            Reference = request.Reference,
+            SituationDescription = request.SituationDescription,
+            RestrictionDescription = request.RestrictionDescription,
+            CancellationDescription = request.CancellationDescription
         };
 
         _appDbContext.Add(restriction);
@@ -100,14 +73,15 @@ public class OperationalRestrictionService : IOperationalRestrictionService
 
     /// <summary>
     /// Retrieves an operational restriction by its ID. Throws an exception if not found.
+    /// Drafts are private to their originator, so another user's draft is treated as not found.
     /// </summary>
-    public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id)
+    public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id, Guid currentUserId)
     {
         var restriction = await _appDbContext.OperationalRestrictions
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id);
 
-        if (restriction == null)
+        if (restriction == null || (restriction.Status == RestrictionStatus.Draft && restriction.Originator != currentUserId))
             throw new OperationalRestrictionNotFoundException(id);
 
         return OperationalRestrictionDto.FromDalEntity(restriction);
@@ -115,11 +89,13 @@ public class OperationalRestrictionService : IOperationalRestrictionService
 
     /// <summary>
     /// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
+    /// Drafts are only included for their originator.
     /// </summary>
-    public async Task<List<OperationalRestrictionDto>> GetAllAsync()
+    public async Task<List<OperationalRestrictionDto>> GetAllAsync(Guid currentUserId)
     {
         var restrictions = await _appDbContext.OperationalRestrictions
             .AsNoTracking()
+            .Where(x => x.Status != RestrictionStatus.Draft || x.Originator == currentUserId)
             .ToListAsync();
 
         return restrictions
@@ -151,12 +127,12 @@ public class OperationalRestrictionService : IOperationalRestrictionService
 
         if (request.StartDate != null)
         {
-            originalRestriction.StartDate = request.StartDate.Value;
+            originalRestriction.StartDate = ToUtc(request.StartDate.Value);
         }
 
         if (request.EndDate != null)
         {
-            originalRestriction.EndDate = request.EndDate.Value;
+            originalRestriction.EndDate = ToUtc(request.EndDate.Value);
         }
 
         originalRestriction.Id = Guid.NewGuid();
@@ -170,4 +146,12 @@ public class OperationalRestrictionService : IOperationalRestrictionService
 
         return OperationalRestrictionDto.FromDalEntity(originalRestriction);
     }
+
+    private static DateTime ToUtc(DateTime dateTime) =>
+        dateTime.Kind switch
+        {
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => dateTime.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+        };
 }

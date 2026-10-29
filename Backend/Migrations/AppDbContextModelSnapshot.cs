@@ -31,13 +31,17 @@ namespace Backend.Migrations
                     b.Property<DateTime>("ArchivedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CancellationDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("OriginalOperationalRestrictionId")
@@ -46,11 +50,26 @@ namespace Backend.Migrations
                     b.Property<Guid>("Originator")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RestrictionDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SituationDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -67,6 +86,9 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("InCharge")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -76,6 +98,9 @@ namespace Backend.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkingStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
