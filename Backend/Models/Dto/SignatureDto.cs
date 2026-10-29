@@ -1,22 +1,27 @@
 using Backend.Models.Entities;
+using Backend.Models.Enums;
 
 namespace Backend.Models.DTOs;
 
 public class SignatureDto
 {
-    public Guid Id { get; set; }
-    public Guid RequiresSignatureId { get; set; }
-    public Guid OperationalRestrictionId { get; set; }
+    public Guid SignatureId { get; set; }
+    public SignatureType Type { get; set; }
+    public bool IsSigned { get; set; }
     public Guid SigneeId { get; set; }
-    public DateTime SignedAt { get; set; }
+    public UserRole SigneeRole { get; set; }
+    public Guid RestrictionId { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public static SignatureDto FromDalEntity(Signature signature) =>
       new()
       {
-          Id = signature.Id,
-          RequiresSignatureId = signature.RequiresSignatureId,
-          OperationalRestrictionId = signature.OperationalRestrictionId,
+          SignatureId = signature.SignatureId,
+          Type = signature.Type,
+          IsSigned = signature.IsSigned,
           SigneeId = signature.SigneeId,
-          SignedAt = signature.SignedAt
+          SigneeRole = signature.SigneeRole,
+          RestrictionId = signature.RestrictionId,
+          CreatedAt = signature.CreatedAt
       };
 }

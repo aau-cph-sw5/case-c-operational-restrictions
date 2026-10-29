@@ -4,6 +4,8 @@ using System.Text;
 using Backend.Configuration;
 using Backend.Data;
 using Backend.Lifecycle;
+using Backend.Models.DTOs;
+using Backend.Models.Entities;
 using Backend.Services;
 using Backend.Services.Auth;
 
