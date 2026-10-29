@@ -13,7 +13,7 @@ class Signature {
     <<immutable>>
     SignatureId : Guid  PK
     Type : SignatureType 
-    Signed : bool 
+    IsSigned : bool 
     SigneeId : Guid  FK to User.UserId
     SigneeRole : UserRole 
     RestrictionId : Guid  FK to OperationalRestriction
