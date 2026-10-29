@@ -2,14 +2,17 @@ using Backend.Models.Enums;
 
 namespace Backend.Models.Entities;
 
-// Immutable once created: a signature can never be changed after it is signed.
-public sealed class Signature
+// MODEL - ENTITY (MVCS):
+// Represents database tables managed and mapped by EF Core to PostgreSQL
+public class Signature
 {
-    public required Guid Id { get; init; }
-    public required Guid RequiresSignatureId { get; init; }
-    public required Guid OperationalRestrictionId { get; init; }
-    public required Guid SigneeId { get; init; }
-    // The signee's role at the time of signing, so later role changes do not rewrite history.
-    public required UserRole SigneeRole { get; init; }
-    public required DateTime SignedAt { get; init; } = DateTime.UtcNow;
+    public Guid SignatureId { get; set; }
+    public SignatureType Type { get; set; }
+    public bool IsSigned { get; set; }
+    public Guid SigneeId { get; set; }
+    public UserRole SigneeRole { get; set; }
+    public Guid RestrictionId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime? UpdatedAt { get; set; } = DateTime.Now;
+    
 }

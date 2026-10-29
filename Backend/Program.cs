@@ -3,8 +3,7 @@ using System.Text;
 
 using Backend.Configuration;
 using Backend.Data;
-using Backend.Models.DTOs;
-using Backend.Models.Entities;
+using Backend.Lifecycle;
 using Backend.Services;
 using Backend.Services.Auth;
 
@@ -21,7 +20,28 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IExampleService, ExampleService>();
 
-// Database
+
+// Register Lifecycle services
+builder.Services.AddScoped<RestrictionLifecycleService>();
+builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
+builder.Services.AddScoped<IOperationalRestrictionRepository, OperationalRestrictionRepository>();
+
+// Register Guards
+builder.Services.AddSingleton<IRestrictionGuard, StartDateIsFoundGuard>();
+builder.Services.AddSingleton<IRestrictionGuard, OperationalRestictionIdIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, DescriptionTextIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, OriginatorSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, DutyOperationsManagerSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, ControlRoomSupervisorSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, OperatorsAreAssigned>();
+builder.Services.AddSingleton<IRestrictionGuard, ReturnedForChanges>();
+builder.Services.AddSingleton<IRestrictionGuard, CancelledRefused>();
+
+// Register User Service
+builder.Services.AddScoped<IUserService, UserService>();
+
+
+// Register User Service
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -30,9 +50,6 @@ TinyMapper.Bind<User, UserDto>();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
-builder.Services.AddScoped<SignatureService>();
-
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))

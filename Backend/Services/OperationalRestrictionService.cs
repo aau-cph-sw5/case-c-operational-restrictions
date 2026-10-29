@@ -1,173 +1,283 @@
-using Backend.Data;
 using Backend.Exceptions;
+using Backend.Data;
+using Backend.Lifecycle;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
 
-using Microsoft.EntityFrameworkCore;
-
 namespace Backend.Services;
 
-public class OperationalRestrictionService : IOperationalRestrictionService
-{
-    private readonly AppDbContext _appDbContext;
-    private readonly SignatureService _signatureService;
 
-    public OperationalRestrictionService(AppDbContext appDbContext, SignatureService signatureService)
+//TODO: This interface should be seperated from the class
+
+public class OperationalRestrictionService
+    : IOperationalRestrictionService
+{
+    private readonly RestrictionLifecycleService _lifecycleService;
+    private readonly IOperationalRestrictionRepository _repository;
+
+    public OperationalRestrictionService(
+        RestrictionLifecycleService lifecycleService,
+        IOperationalRestrictionRepository repository)
     {
-        _appDbContext = appDbContext;
-        _signatureService = signatureService;
+        _lifecycleService = lifecycleService;
+        _repository = repository;
     }
 
-    // Temporary seed data until users are stored in the database.
-    // Fixed Guids so the same users can be referenced between runs.
-    private static readonly List<User> _users =
-    [
-        new User
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Name = "Anna Jensen",
-            Email = "anna.jensen@example.com",
-            PasswordHash = "seed-password-hash-1",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Name = "Lars Nielsen",
-            Email = "lars.nielsen@example.com",
-            PasswordHash = "seed-password-hash-2",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Name = "Sofie Hansen",
-            Email = "sofie.hansen@example.com",
-            PasswordHash = "seed-password-hash-3",
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            Name = "Mikkel Pedersen",
-            Email = "mikkel.pedersen@example.com",
-            PasswordHash = "seed-password-hash-4",
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            Name = "Camilla Andersen",
-            Email = "camilla.andersen@example.com",
-            PasswordHash = "seed-password-hash-5",
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
-        }
-    ];
-
-    /// <summary>
-    /// Creates the first version of a new operational restriction as a draft.
-    /// The creator is also recorded as the originator.
-    /// </summary>
-    public async Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request)
+    public async Task<OperationalRestrictionDto> CreateRestrictionAsync(
+        CreateRestrictionRequest data)
     {
-        if (request.EndDate <= request.StartDate)
-            throw new InvalidRestrictionPeriodException(request.StartDate, request.EndDate);
+        if (data.EndDate <= data.StartDate)
+            throw new InvalidRestrictionPeriodException(data.StartDate, data.EndDate);
+
+        _lifecycleService.EnsureCanCreate(data);
+
+        var now = DateTime.UtcNow;
 
         var restriction = new OperationalRestriction
         {
-            Id = Guid.NewGuid(),
-            Originator = request.CreatedBy,
-            CreatedBy = request.CreatedBy,
-            Status = RestrictionStatus.Draft,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
-            CreatedAt = DateTime.UtcNow,
+            RestrictionId = Guid.NewGuid(),
+            OriginatorUserId = data.CreatedBy,
+            CreatedBy = data.CreatedBy,
+            StartDate = data.StartDate,
+            EndDate = data.EndDate,
+            RestrictionDescription = data.RestrictionDescription,
+            State = RestrictionState.Draft,
+            CreatedAt = now,
+            UpdatedAt = now,
             OriginalOperationalRestrictionId = null
         };
 
-        _appDbContext.Add(restriction);
-        await _appDbContext.SaveChangesAsync();
+        await _repository.AddAsync(restriction);
 
-        return OperationalRestrictionDto.FromDalEntity(restriction);
+        return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
     }
 
-    /// <summary>
-    /// Retrieves an operational restriction by its ID. Throws an exception if not found.
-    /// </summary>
-    public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id)
-    {
-        var restriction = await _appDbContext.OperationalRestrictions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id);
+    public async Task<OperationalRestriction> SubmitForApprovalAsync(
+    Guid id,
+    OperationalRestrictionDto data)
+{
+    var restriction = await GetRestrictionOrThrowAsync(id);
 
-        if (restriction == null)
-            throw new OperationalRestrictionNotFoundException(id);
+    _lifecycleService.EnsureCanTransition(
+        restriction.State,
+        RestrictionAction.PendingDutyOperationsManagerApproval,
+        data);
 
-        return OperationalRestrictionDto.FromDalEntity(restriction);
-    }
-
-    /// <summary>
-    /// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
-    /// </summary>
-    public async Task<List<OperationalRestrictionDto>> GetAllAsync()
-    {
-        var restrictions = await _appDbContext.OperationalRestrictions
-            .AsNoTracking()
-            .ToListAsync();
-
-        return restrictions
-            .Select(OperationalRestrictionDto.FromDalEntity)
-            .ToList();
-    }
-
-    /// <summary>
-    /// Makes a clone of a previous operational restriction with the fields from the request.
-    /// </summary>
-    private async Task<OperationalRestrictionDto> UpdateByIdAsync(UpdateByIdRequest request)
-    {
-        var originalRestriction = await _appDbContext.OperationalRestrictions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == request.Id);
-
-        if (originalRestriction == null)
-            throw new OperationalRestrictionNotFoundException(request.Id);
-
-        if (originalRestriction.OriginalOperationalRestrictionId == null)
-        {
-            originalRestriction.OriginalOperationalRestrictionId = request.Id;
-        }
-
-        if (request.Status != null)
-        {
-            originalRestriction.Status = request.Status.Value;
-        }
-
-        if (request.StartDate != null)
-        {
-            originalRestriction.StartDate = request.StartDate.Value;
-        }
-
-        if (request.EndDate != null)
-        {
-            originalRestriction.EndDate = request.EndDate.Value;
-        }
-
-        originalRestriction.Id = Guid.NewGuid();
-        originalRestriction.CreatedBy = request.EditedBy;
-
-        _appDbContext.Add(originalRestriction);
-        await _appDbContext.SaveChangesAsync();
-
-        // Signatures on the previous version must not carry over to the edited version.
-        _signatureService.InvalidateRequiredSignatures(request.Id);
-
-        return OperationalRestrictionDto.FromDalEntity(originalRestriction);
-    }
+    return await SaveAsNewVersionAsync(restriction, v =>
+        v.State = RestrictionState.PendingDutyOperationsManagerApproval);
 }
+
+// Versioned audit trail per MET-C-021: edits insert a new version row
+// instead of updating in place.
+    public async Task<OperationalRestriction> EditRestrictionAsync(
+    Guid id,
+    OperationalRestrictionDto updateRestrictionDto)
+{
+    var original = await GetRestrictionOrThrowAsync(id);
+
+    // TODO : restrict editing to Draft/ReturnedForChanges states.
+    return await SaveAsNewVersionAsync(original, v =>
+    {
+        v.RestrictionDescription = updateRestrictionDto.RestrictionDescription;
+        v.CreatedBy = updateRestrictionDto.CreatedBy;
+    });
+}
+
+        public async Task<OperationalRestriction> ApproveRestrictionAsync(
+        Guid id,
+        Guid approverId,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.Approved,
+            data);
+
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.Approved);
+    }
+
+        public async Task<OperationalRestriction> SubmitForControlRoomSupervisorApprovalAsync(
+        Guid id,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.PendingControlRoomSupervisorApproval,
+            data);
+
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.PendingControlRoomSupervisorApproval);
+    }
+
+        public async Task<OperationalRestriction> ActivateRestrictionAsync(
+        Guid id,
+        Guid approverId,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.Active,
+            data);
+
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.Active);
+    }
+
+    public async Task<OperationalRestriction> DenyRestrictionAsync(
+    Guid id,
+    Guid approverId,
+    string reason,
+    OperationalRestrictionDto data)
+{
+    var restriction = await GetRestrictionOrThrowAsync(id);
+
+    _lifecycleService.EnsureCanTransition(
+        restriction.State,
+        RestrictionAction.CancelledRefused,
+        data);
+
+    return await SaveAsNewVersionAsync(restriction, v =>
+    {
+        v.State = RestrictionState.CancelledRefused;
+        v.ReviewDescription = reason;   // deny reason finally gets stored
+    });
+}
+
+        public async Task<OperationalRestriction> ArchiveRestrictionAsync(
+        Guid id)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        // TODO: Validate that archiving is allowed in the current state.
+        return await SaveAsNewVersionAsync(restriction, v =>
+        {
+            v.State = RestrictionState.Archived;
+            v.ArchivedAt = DateTime.UtcNow;
+        });
+    }
+
+        public async Task<OperationalRestriction> AssignOperatorAsync(
+        Guid id,
+        Guid operatorId)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        // TODO: Validate operator assignment rules.
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.AssignedOperatorsIds.Add(operatorId));
+    }
+
+        public async Task<OperationalRestriction> ReturnForChangesAsync(
+        Guid id,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.ReturnedForChanges,
+            data);
+
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.ReturnedForChanges);
+    }
+
+        public async Task<OperationalRestriction> ResubmitRestrictionAsync(
+        Guid id,
+        OperationalRestrictionDto data)
+    {
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        _lifecycleService.EnsureCanTransition(
+            restriction.State,
+            RestrictionAction.Resubmit,
+            data);
+
+        return await SaveAsNewVersionAsync(restriction, v =>
+            v.State = RestrictionState.Draft);
+    }
+
+    public async Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id)
+{
+    var restriction = await _repository.GetByIdAsync(id)
+        ?? throw new OperationalRestrictionNotFoundException(id);
+
+    return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
+}
+
+public async Task<List<OperationalRestrictionDto>> GetAllAsync()
+{
+    var restrictions = await _repository.GetAllAsync();
+    return restrictions
+        .Select(OperationalRestrictionDto.FromOperationalRestrictionToDto)
+        .ToList();
+}
+
+
+    public async Task<List<OperationalRestriction>>
+        GetActiveRestrictionsAsync()
+    {
+        return await _repository.GetAllAsync(
+            r => r.State == RestrictionState.Active);
+    }
+
+    private async Task<OperationalRestriction> GetRestrictionOrThrowAsync(
+        Guid id)
+    {
+        return await _repository.GetByIdAsync(id)
+            ?? throw new InvalidOperationException(
+                $"Restriction with ID '{id}' was not found.");
+    }
+
+
+
+    // Versioned audit trail per MET-C-021: writes insert a new version row
+// instead of updating in place.
+private async Task<OperationalRestriction> SaveAsNewVersionAsync(
+    OperationalRestriction original,
+    Action<OperationalRestriction> applyChanges)
+{
+    var now = DateTime.UtcNow;
+
+    var newVersion = new OperationalRestriction
+    {
+        RestrictionId = Guid.NewGuid(),
+        OriginatorUserId = original.OriginatorUserId,
+        CreatedBy = original.CreatedBy,
+        SignatureSheet = new List<Signature>(original.SignatureSheet),
+        State = original.State,
+        StartDate = original.StartDate,
+        EndDate = original.EndDate,
+        CreatedAt = now,
+        ArchivedAt = original.ArchivedAt,
+        RetentionUntil = original.RetentionUntil,
+        RestrictionDescription = original.RestrictionDescription,
+        Files = new List<Backend.Models.Entities.File>(original.Files),
+        Version = original.Version + 1,
+        ReviewerId = original.ReviewerId,
+        ApprovedForSigning = original.ApprovedForSigning,
+        ReviewDescription = original.ReviewDescription,
+        AssignedOperatorsIds = new List<Guid>(original.AssignedOperatorsIds),
+        UpdatedAt = now,
+        OriginalOperationalRestrictionId =
+            original.OriginalOperationalRestrictionId ?? original.RestrictionId
+    };
+
+    applyChanges(newVersion);
+
+    await _repository.AddAsync(newVersion);
+
+    return newVersion;
+}
+
+}
+
