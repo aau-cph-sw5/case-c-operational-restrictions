@@ -27,6 +27,40 @@ public class RestrictionLifecycleServiceTests
             });
     }
 
+    // Guards a transition declares must exist as implementations, so the
+    // declaration in RestrictionLifecycle stays the single source of truth.
+    [Fact]
+    public void EveryDeclaredGuardHasAnImplementation()
+    {
+        var implementedGuardNames = typeof(IRestrictionGuard).Assembly
+            .GetTypes()
+            .Where(t => typeof(IRestrictionGuard).IsAssignableFrom(t)
+                && t is { IsClass: true, IsAbstract: false })
+            .Select(t => ((IRestrictionGuard)Activator.CreateInstance(t)!).Name)
+            .ToHashSet();
+
+        var declaredGuardNames = RestrictionLifecycle.Transitions.Values
+            .SelectMany(t => t.Guards)
+            .Distinct();
+
+        Assert.All(declaredGuardNames, name => Assert.Contains(name, implementedGuardNames));
+    }
+
+    [Fact]
+    public void EnsureCanTransitionReturnsDeclaredTargetState()
+    {
+        foreach (var transition in RestrictionLifecycle.Transitions.Values
+            .Where(t => t.From is not null))
+        {
+            var nextState = _sut.EnsureCanTransition(
+                transition.From!.Value,
+                transition.Action,
+                CreateValidDto(transition.From.Value));
+
+            Assert.Equal(transition.To, nextState);
+        }
+    }
+
     [Fact]
     public void EnsureCanCreateWithValidDataDoesNotThrow()
     {
@@ -44,24 +78,24 @@ public class RestrictionLifecycleServiceTests
     }
 
     [Fact]
-public void EnsureCanCreateWithInvalidDataIdentifiesFailedGuard()
-{
-    // Arrange - StartDate missing (default)
-    var data = new CreateRestrictionRequest
-    (
-        Guid.NewGuid(),
-        "Maintenance work",
-        default,
-        DateTime.Now
-    );
+    public void EnsureCanCreateWithInvalidDataIdentifiesFailedGuard()
+    {
+        // Arrange - StartDate missing (default)
+        var data = new CreateRestrictionRequest
+        (
+            Guid.NewGuid(),
+            "Maintenance work",
+            default,
+            DateTime.Now
+        );
 
-    // Act
-    var exception = Assert.Throws<InvalidOperationException>(
-        () => _sut.EnsureCanCreate(data));
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanCreate(data));
 
-    // Assert - should fail on StartDateIsFound
-    Assert.Contains("StartDateIsFound", exception.Message);
-}
+        // Assert - should fail on StartDateIsFound
+        Assert.Contains("StartDateIsFound", exception.Message);
+    }
 
     // Helper method to create a valid DTO for testing
     private static OperationalRestrictionDto CreateValidDto(
@@ -73,8 +107,48 @@ public void EnsureCanCreateWithInvalidDataIdentifiesFailedGuard()
             OriginatorUserId = Guid.NewGuid(),
             RestrictionDescription = "Test restriction",
             StartDate = DateTime.Now,
-            State = state
+            State = state,
+            ReviewerId = Guid.NewGuid(),
+            ReviewDescription = "Review comment"
         };
+    }
+
+    [Theory]
+    [InlineData(RestrictionAction.ReturnedForChanges, "ReturnedForChanges")]
+    [InlineData(RestrictionAction.CancelledRefused, "CancelledRefused")]
+    public void ReviewTransitionWithoutReasonIsRefused(
+        RestrictionAction action, string expectedGuard)
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.PendingDutyOperationsManagerApproval);
+        data.ReviewDescription = "  ";
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanTransition(
+                RestrictionState.PendingDutyOperationsManagerApproval, action, data));
+
+        // Assert
+        Assert.Contains(expectedGuard, exception.Message);
+    }
+
+    [Theory]
+    [InlineData(RestrictionAction.ReturnedForChanges, "ReturnedForChanges")]
+    [InlineData(RestrictionAction.CancelledRefused, "CancelledRefused")]
+    public void ReviewTransitionWithoutReviewerIsRefused(
+        RestrictionAction action, string expectedGuard)
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.PendingDutyOperationsManagerApproval);
+        data.ReviewerId = Guid.Empty;
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanTransition(
+                RestrictionState.PendingDutyOperationsManagerApproval, action, data));
+
+        // Assert
+        Assert.Contains(expectedGuard, exception.Message);
     }
 
     // ========== Draft State Transitions ==========

@@ -1,6 +1,7 @@
+using System.Linq.Expressions;
+
 using Backend.Models.Entities;
 using Backend.Models.Enums;
-using System.Linq.Expressions;
 
 namespace Backend.Data;
 

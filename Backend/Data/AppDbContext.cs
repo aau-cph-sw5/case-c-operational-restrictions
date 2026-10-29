@@ -1,4 +1,5 @@
 using Backend.Models.Entities;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data;
@@ -17,7 +18,8 @@ public class AppDbContext : DbContext
             .HasKey(r => r.RestrictionId);
     }
 
-    public DbSet<OperationalRestriction> OperationalRestrictions { get; set; }
+    public DbSet<OperationalRestriction> OperationalRestrictions => Set<OperationalRestriction>();
+    public DbSet<RestrictionTransitionEvent> RestrictionTransitionEvents => Set<RestrictionTransitionEvent>();
     public DbSet<User> Users => Set<User>();
 
 

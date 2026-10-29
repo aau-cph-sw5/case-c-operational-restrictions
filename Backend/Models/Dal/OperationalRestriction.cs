@@ -15,15 +15,15 @@ public class OperationalRestriction
 
     public RestrictionState State { get; set; } = RestrictionState.Empty;
 
-    public DateTime StartDate { get; set; }= DateTime.Now;
+    public DateTime StartDate { get; set; } = DateTime.Now;
 
-    public DateTime? EndDate { get; set; }= DateTime.Now;
+    public DateTime? EndDate { get; set; } = DateTime.Now;
 
-    public DateTime CreatedAt { get; set; }= DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-    public DateTime? ArchivedAt { get; set; }= DateTime.Now;
+    public DateTime? ArchivedAt { get; set; } = DateTime.Now;
 
-    public DateTime? RetentionUntil { get; set; }= DateTime.Now;
+    public DateTime? RetentionUntil { get; set; } = DateTime.Now;
 
     public string RestrictionDescription { get; set; } = string.Empty;
 
