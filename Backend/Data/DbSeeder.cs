@@ -26,8 +26,18 @@ public static class DbSeeder
 
     public static async Task SeedAsync(AppDbContext appDbContext)
     {
-        await SeedUsersAsync(appDbContext);
-        await SeedRestrictionsAsync(appDbContext);
+        if (appDbContext.Database.IsRelational() && appDbContext.Database.CurrentTransaction == null)
+        {
+            await using var transaction = await appDbContext.Database.BeginTransactionAsync();
+            await SeedUsersAsync(appDbContext);
+            await SeedRestrictionsAsync(appDbContext);
+            await transaction.CommitAsync();
+        }
+        else
+        {
+            await SeedUsersAsync(appDbContext);
+            await SeedRestrictionsAsync(appDbContext);
+        }
     }
 
     private static async Task SeedUsersAsync(AppDbContext appDbContext)
