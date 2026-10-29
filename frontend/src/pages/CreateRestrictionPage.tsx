@@ -14,6 +14,7 @@ import {
 } from "../services/restrictionApi";
 import { FIELDS, STEPS } from "../lib/restrictionFields";
 import {
+  DATE_RANGE_ERROR,
   EMPTY_VALUES,
   hasErrors,
   validateRestrictionForm,
@@ -42,8 +43,28 @@ export function CreateRestrictionPage() {
 
   function handleChange(field: RestrictionField) {
     return (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setValues((prev) => ({ ...prev, [field]: e.target.value }));
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+      const nextValue = e.target.value;
+      setValues((prev) => ({ ...prev, [field]: nextValue }));
+      setErrors((prev) => {
+        const nextErrors = { ...prev, [field]: undefined };
+
+        if (
+          (field === "startDate" || field === "endDate") &&
+          prev.endDate === DATE_RANGE_ERROR
+        ) {
+          const nextStartDate =
+            field === "startDate" ? nextValue : values.startDate;
+          const nextEndDate = field === "endDate" ? nextValue : values.endDate;
+
+          if (!nextStartDate || !nextEndDate || nextEndDate > nextStartDate) {
+            nextErrors.endDate = undefined;
+          } else {
+            nextErrors.endDate = DATE_RANGE_ERROR;
+          }
+        }
+
+        return nextErrors;
+      });
     };
   }
 

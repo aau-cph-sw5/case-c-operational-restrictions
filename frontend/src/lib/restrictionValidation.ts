@@ -8,6 +8,8 @@ import type {
 export type { RestrictionField, RestrictionFormValues };
 export type FormErrors = Partial<Record<RestrictionField, string>>;
 
+export const DATE_RANGE_ERROR = "Annulleres skal være efter Ikrafttræden.";
+
 export const EMPTY_VALUES = Object.fromEntries(
   FIELDS.map((field) => [field.name, ""]),
 ) as RestrictionFormValues;
@@ -40,7 +42,7 @@ export function validateRestrictionForm(
     values.endDate &&
     values.endDate <= values.startDate
   ) {
-    errors.endDate = "Annulleres skal være efter Ikrafttræden.";
+    errors.endDate = DATE_RANGE_ERROR;
   }
 
   return errors;

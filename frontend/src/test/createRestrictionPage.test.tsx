@@ -102,6 +102,36 @@ describe("CreateRestrictionPage", () => {
     expect(screen.getByText(/trin 1 af 3/i)).toBeInTheDocument();
   });
 
+  it("clears the annulleres date range error when ikrafttræden is corrected", () => {
+    renderPage();
+    type(/^ikrafttræden/i, "2026-11-05");
+    type(/^annulleres/i, "2026-11-01");
+    click(/næste/i);
+    expect(
+      screen.getByText("Annulleres skal være efter Ikrafttræden."),
+    ).toBeInTheDocument();
+
+    type(/^ikrafttræden/i, "2026-10-25");
+    expect(
+      screen.queryByText("Annulleres skal være efter Ikrafttræden."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the annulleres date range error when ikrafttræden is changed to another invalid date", () => {
+    renderPage();
+    type(/^ikrafttræden/i, "2026-11-05");
+    type(/^annulleres/i, "2026-11-01");
+    click(/næste/i);
+    expect(
+      screen.getByText("Annulleres skal være efter Ikrafttræden."),
+    ).toBeInTheDocument();
+
+    type(/^ikrafttræden/i, "2026-11-03");
+    expect(
+      screen.getByText("Annulleres skal være efter Ikrafttræden."),
+    ).toBeInTheDocument();
+  });
+
   it("does not call the API when the last step is invalid", () => {
     renderPage();
     type(/^ikrafttræden/i, "2026-11-01");
