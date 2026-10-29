@@ -26,6 +26,7 @@ export const FIELDS = [
     kind: "text",
     required: false,
     step: 0,
+    charLimit: 100,
   },
   {
     name: "situationDescription",
@@ -33,6 +34,7 @@ export const FIELDS = [
     kind: "textarea",
     required: true,
     step: 1,
+    charLimit: 500,
   },
   {
     name: "restrictionDescription",
@@ -40,6 +42,7 @@ export const FIELDS = [
     kind: "textarea",
     required: true,
     step: 1,
+    charLimit: 500,
   },
   {
     name: "cancellationDescription",
@@ -47,6 +50,7 @@ export const FIELDS = [
     kind: "textarea",
     required: true,
     step: 2,
+    charLimit: 500,
   },
 ] as const;
 

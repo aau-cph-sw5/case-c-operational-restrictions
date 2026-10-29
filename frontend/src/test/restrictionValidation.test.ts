@@ -60,4 +60,30 @@ describe("validateRestrictionForm", () => {
     const errors = validateRestrictionForm(EMPTY_VALUES, ["startDate"]);
     expect(Object.keys(errors)).toEqual(["startDate"]);
   });
+
+  it("rejects a field exceeding character limit", () => {
+    const errors = validateRestrictionForm({
+      ...valid,
+      reference: "a".repeat(101),
+    });
+    expect(errors.reference).toBe("Reference må højst være 100 tegn.");
+  });
+
+  it("rejects descriptions exceeding 500 characters", () => {
+    const errors = validateRestrictionForm({
+      ...valid,
+      situationDescription: "a".repeat(501),
+      restrictionDescription: "b".repeat(501),
+      cancellationDescription: "c".repeat(501),
+    });
+    expect(errors.situationDescription).toBe(
+      "Om situationen må højst være 500 tegn.",
+    );
+    expect(errors.restrictionDescription).toBe(
+      "Om driftsrestriktionen må højst være 500 tegn.",
+    );
+    expect(errors.cancellationDescription).toBe(
+      "Om ophævelse må højst være 500 tegn.",
+    );
+  });
 });

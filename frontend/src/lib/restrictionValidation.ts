@@ -23,6 +23,13 @@ export function validateRestrictionForm(
     if (def.required && values[def.name].trim() === "") {
       errors[def.name] = `${def.label} er påkrævet.`;
     }
+    if (
+      "charLimit" in def &&
+      def.charLimit &&
+      values[def.name].length > def.charLimit
+    ) {
+      errors[def.name] = `${def.label} må højst være ${def.charLimit} tegn.`;
+    }
   }
 
   // Slutdato is optional, so it is only compared when it has been filled in.
