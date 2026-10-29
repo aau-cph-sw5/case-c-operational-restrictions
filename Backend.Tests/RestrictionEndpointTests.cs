@@ -56,6 +56,8 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
             createdBy = DbSeeder.LarsId,
+            title = "Sporafspærring Nørreport",
+            reference = "REF-2026-001",
             startDate = DateTime.UtcNow.AddDays(1),
             endDate = DateTime.UtcNow.AddDays(2),
             situationDescription = "Situation details",
@@ -67,6 +69,8 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         var created = await ReadAsync<OperationalRestrictionDto>(response);
         Assert.Equal(DbSeeder.AnnaId, created.OriginatorUserId);
         Assert.Equal(RestrictionStatus.Draft, created.Status);
+        Assert.Equal("Sporafspærring Nørreport", created.Title);
+        Assert.Equal("REF-2026-001", created.Reference);
         Assert.Equal("Situation details", created.SituationDescription);
         Assert.Equal("Restriction details", created.RestrictionDescription);
         Assert.Equal("Cancellation details", created.CancellationDescription);
@@ -76,12 +80,31 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task PostWithoutTitleReturns400()
+    {
+        var client = CreateClientFor(DbSeeder.AnnaId);
+
+        var response = await client.PostAsJsonAsync("/api/restrictions", new
+        {
+            title = "",
+            startDate = DateTime.UtcNow.AddDays(1),
+            endDate = DateTime.UtcNow.AddDays(2),
+            situationDescription = "Situation details",
+            restrictionDescription = "Restriction details",
+            cancellationDescription = "Cancellation details"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PostWithEndDateBeforeStartDateReturns400()
     {
         var client = CreateClientFor(DbSeeder.AnnaId);
 
         var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
+            title = "Valid Title",
             startDate = DateTime.UtcNow.AddDays(2),
             endDate = DateTime.UtcNow.AddDays(1),
             situationDescription = "Situation details",
@@ -99,6 +122,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
 
         var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
+            title = "Valid Title",
             endDate = DateTime.UtcNow.AddDays(2),
             situationDescription = "Situation details",
             restrictionDescription = "Restriction details",
@@ -124,7 +148,9 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
 
         var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
+            title = "Valid Title",
             startDate = DateTime.UtcNow.AddDays(1),
+            endDate = DateTime.UtcNow.AddDays(2),
             situationDescription = situation,
             restrictionDescription = restriction,
             cancellationDescription = cancellation
@@ -178,6 +204,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     {
         var response = await CreateClientFor(userId).PostAsJsonAsync("/api/restrictions", new
         {
+            title = "Draft Title",
             startDate = DateTime.UtcNow.AddDays(1),
             endDate = DateTime.UtcNow.AddDays(2),
             situationDescription = "Situation details",

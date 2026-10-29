@@ -14,6 +14,7 @@ public class OperationalRestrictionDto
     public DateTime CreatedAt { get; set; }
     public DateTime ArchivedAt { get; set; }
     public Guid? OriginalOperationalRestrictionId { get; set; }
+    public string Title { get; set; } = string.Empty;
     public string? Reference { get; set; }
     public string SituationDescription { get; set; } = string.Empty;
     public string RestrictionDescription { get; set; } = string.Empty;
@@ -31,6 +32,7 @@ public class OperationalRestrictionDto
             CreatedAt = operationalRestriction.CreatedAt,
             ArchivedAt = operationalRestriction.ArchivedAt,
             OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId,
+            Title = operationalRestriction.Title,
             Reference = operationalRestriction.Reference,
             SituationDescription = operationalRestriction.SituationDescription,
             RestrictionDescription = operationalRestriction.RestrictionDescription,

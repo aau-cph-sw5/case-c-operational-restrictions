@@ -6,9 +6,10 @@ import {
 } from "../lib/restrictionValidation";
 
 const valid = {
+  title: "Metro 101 - 2026 version",
+  reference: "REF-2026-001",
   startDate: "2026-11-01",
   endDate: "2026-11-02",
-  reference: "Metro 101 - 2026 version",
   situationDescription: "Beskrivelse af situationen",
   restrictionDescription: "Beskrivelse af driftsrestriktionen",
   cancellationDescription: "Beskrivelse af ophævelsen",
@@ -22,12 +23,16 @@ describe("validateRestrictionForm", () => {
       "restrictionDescription",
       "situationDescription",
       "startDate",
+      "title",
     ]);
   });
 
   it("uses Danish error messages", () => {
     expect(validateRestrictionForm(EMPTY_VALUES).startDate).toBe(
       "Ikrafttræden er påkrævet.",
+    );
+    expect(validateRestrictionForm(EMPTY_VALUES).title).toBe(
+      "Titel er påkrævet.",
     );
   });
 
@@ -41,6 +46,12 @@ describe("validateRestrictionForm", () => {
         validateRestrictionForm({ ...valid, endDate: "", reference: "" }),
       ),
     ).toBe(false);
+  });
+
+  it("rejects an empty title", () => {
+    expect(hasErrors(validateRestrictionForm({ ...valid, title: "   " }))).toBe(
+      true,
+    );
   });
 
   it("rejects annulleres before ikrafttræden", () => {
@@ -62,11 +73,17 @@ describe("validateRestrictionForm", () => {
   });
 
   it("rejects a field exceeding character limit", () => {
-    const errors = validateRestrictionForm({
+    const titleError = validateRestrictionForm({
+      ...valid,
+      title: "a".repeat(101),
+    });
+    expect(titleError.title).toBe("Titel må højst være 100 tegn.");
+
+    const refError = validateRestrictionForm({
       ...valid,
       reference: "a".repeat(101),
     });
-    expect(errors.reference).toBe("Reference må højst være 100 tegn.");
+    expect(refError.reference).toBe("Reference må højst være 100 tegn.");
   });
 
   it("rejects descriptions exceeding 500 characters", () => {

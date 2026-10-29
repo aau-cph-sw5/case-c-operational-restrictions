@@ -19,6 +19,7 @@ public class OperationalRestriction
     public DateTime ArchivedAt { get; set; }
     public Guid? OriginalOperationalRestrictionId { get; set; }
 
+    public string Title { get; set; } = string.Empty;
     public string? Reference { get; set; }
     public string SituationDescription { get; set; } = string.Empty;
     public string RestrictionDescription { get; set; } = string.Empty;

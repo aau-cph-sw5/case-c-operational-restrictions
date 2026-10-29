@@ -35,10 +35,11 @@ public class OperationalRestrictionServiceTests
     public async Task CreateRestrictionPersistsTextDescriptionsAndReference()
     {
         var request = new CreateRestrictionRequest(
-            DbSeeder.AnnaId,
-            DateTime.UtcNow.AddDays(1),
-            DateTime.UtcNow.AddDays(2),
+            CreatedBy: DbSeeder.AnnaId,
+            Title: "Sporafspærring M1",
             Reference: "REF-99",
+            StartDate: DateTime.UtcNow.AddDays(1),
+            EndDate: DateTime.UtcNow.AddDays(2),
             SituationDescription: "Situation details",
             RestrictionDescription: "Restriction details",
             CancellationDescription: "Cancellation details"
@@ -47,11 +48,13 @@ public class OperationalRestrictionServiceTests
         var created = await _service.CreateRestrictionAsync(request);
 
         var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.Id == created.Id);
+        Assert.Equal("Sporafspærring M1", stored.Title);
         Assert.Equal("REF-99", stored.Reference);
         Assert.Equal("Situation details", stored.SituationDescription);
         Assert.Equal("Restriction details", stored.RestrictionDescription);
         Assert.Equal("Cancellation details", stored.CancellationDescription);
 
+        Assert.Equal("Sporafspærring M1", created.Title);
         Assert.Equal("REF-99", created.Reference);
         Assert.Equal("Situation details", created.SituationDescription);
         Assert.Equal("Restriction details", created.RestrictionDescription);
@@ -62,8 +65,9 @@ public class OperationalRestrictionServiceTests
     public async Task CreateRestrictionAllowsNullEndDate()
     {
         var request = new CreateRestrictionRequest(
-            DbSeeder.AnnaId,
-            DateTime.UtcNow.AddDays(1),
+            CreatedBy: DbSeeder.AnnaId,
+            Title: "Sporafspærring M1",
+            StartDate: DateTime.UtcNow.AddDays(1),
             EndDate: null,
             SituationDescription: "Situation details",
             RestrictionDescription: "Restriction details",
@@ -81,9 +85,10 @@ public class OperationalRestrictionServiceTests
     public async Task CreateRestrictionWithEndDateBeforeStartDateThrows()
     {
         var request = new CreateRestrictionRequest(
-            DbSeeder.AnnaId,
-            DateTime.UtcNow.AddDays(2),
-            DateTime.UtcNow.AddDays(1),
+            CreatedBy: DbSeeder.AnnaId,
+            Title: "Sporafspærring M1",
+            StartDate: DateTime.UtcNow.AddDays(2),
+            EndDate: DateTime.UtcNow.AddDays(1),
             SituationDescription: "Situation details",
             RestrictionDescription: "Restriction details",
             CancellationDescription: "Cancellation details"
@@ -97,9 +102,10 @@ public class OperationalRestrictionServiceTests
     {
         var date = DateTime.UtcNow.AddDays(1);
         var request = new CreateRestrictionRequest(
-            DbSeeder.AnnaId,
-            date,
-            date,
+            CreatedBy: DbSeeder.AnnaId,
+            Title: "Sporafspærring M1",
+            StartDate: date,
+            EndDate: date,
             SituationDescription: "Situation details",
             RestrictionDescription: "Restriction details",
             CancellationDescription: "Cancellation details"
@@ -112,8 +118,28 @@ public class OperationalRestrictionServiceTests
     public async Task CreateRestrictionWithoutStartDateThrows()
     {
         var request = new CreateRestrictionRequest(
-            DbSeeder.AnnaId,
+            CreatedBy: DbSeeder.AnnaId,
+            Title: "Sporafspærring M1",
             StartDate: null,
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
+
+        await Assert.ThrowsAsync<MissingRequiredRestrictionFieldException>(() => _service.CreateRestrictionAsync(request));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public async Task CreateRestrictionWithEmptyOrWhitespaceTitleThrows(string? title)
+    {
+        var request = new CreateRestrictionRequest(
+            CreatedBy: DbSeeder.AnnaId,
+            Title: title!,
+            StartDate: DateTime.UtcNow.AddDays(1),
+            EndDate: DateTime.UtcNow.AddDays(2),
             SituationDescription: "Situation details",
             RestrictionDescription: "Restriction details",
             CancellationDescription: "Cancellation details"
@@ -135,14 +161,33 @@ public class OperationalRestrictionServiceTests
         string cancellation)
     {
         var request = new CreateRestrictionRequest(
-            DbSeeder.AnnaId,
-            DateTime.UtcNow.AddDays(1),
+            CreatedBy: DbSeeder.AnnaId,
+            Title: "Sporafspærring M1",
+            StartDate: DateTime.UtcNow.AddDays(1),
             SituationDescription: situation,
             RestrictionDescription: restriction,
             CancellationDescription: cancellation
         );
 
         await Assert.ThrowsAsync<MissingRequiredRestrictionFieldException>(() => _service.CreateRestrictionAsync(request));
+    }
+
+    [Fact]
+    public async Task CreateRestrictionAllowsNullReference()
+    {
+        var request = new CreateRestrictionRequest(
+            CreatedBy: DbSeeder.AnnaId,
+            Title: "Sporafspærring M1",
+            Reference: null,
+            StartDate: DateTime.UtcNow.AddDays(1),
+            EndDate: DateTime.UtcNow.AddDays(2),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Restriction details",
+            CancellationDescription: "Cancellation details"
+        );
+
+        var created = await _service.CreateRestrictionAsync(request);
+        Assert.Null(created.Reference);
     }
 
     [Fact]
@@ -200,9 +245,10 @@ public class OperationalRestrictionServiceTests
     private Task<OperationalRestrictionDto> CreateDraftAsync(Guid createdBy)
     {
         var request = new CreateRestrictionRequest(
-            createdBy,
-            DateTime.UtcNow.AddDays(1),
-            DateTime.UtcNow.AddDays(2),
+            CreatedBy: createdBy,
+            Title: "Draft Title",
+            StartDate: DateTime.UtcNow.AddDays(1),
+            EndDate: DateTime.UtcNow.AddDays(2),
             SituationDescription: "Situation details",
             RestrictionDescription: "Restriction details",
             CancellationDescription: "Cancellation details"

@@ -26,6 +26,9 @@ public class OperationalRestrictionService : IOperationalRestrictionService
     /// </summary>
     public async Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new MissingRequiredRestrictionFieldException(nameof(request.Title));
+
         if (!request.StartDate.HasValue || request.StartDate.Value == default)
             throw new MissingRequiredRestrictionFieldException(nameof(request.StartDate));
 
@@ -55,6 +58,7 @@ public class OperationalRestrictionService : IOperationalRestrictionService
             CreatedAt = DateTime.UtcNow,
             ArchivedAt = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc),
             OriginalOperationalRestrictionId = null,
+            Title = request.Title,
             Reference = request.Reference,
             SituationDescription = request.SituationDescription,
             RestrictionDescription = request.RestrictionDescription,

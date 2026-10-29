@@ -1,7 +1,8 @@
 export interface CreateRestrictionRequest {
+  title: string;
+  reference?: string;
   startDate: string; // yyyy-MM-dd (Ikrafttræden)
   endDate: string | null; // nullable (Annulleres)
-  reference?: string;
   situationDescription: string;
   restrictionDescription: string;
   cancellationDescription: string;
