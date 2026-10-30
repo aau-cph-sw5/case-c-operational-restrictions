@@ -4,7 +4,7 @@ using Backend.Controllers;
 using Backend.Data;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 using Backend.Services;
 
 using Microsoft.AspNetCore.Http;
@@ -102,6 +102,55 @@ public class RestrictionSigningTests : IAsyncDisposable
         Assert.Same(existingSignature, _signatureService.GetOriginatorSignature(restriction.Id));
     }
 
+    [Theory]
+    [InlineData(true, false, "Valid description")]
+    [InlineData(false, true, "Valid description")]
+    [InlineData(false, false, "")]
+    [InlineData(false, false, "   ")]
+    public async Task IncompleteRestrictionCannotBeSigned(bool defaultStartDate, bool defaultEndDate, string description)
+    {
+        var restriction = new OperationalRestriction
+        {
+            Id = Guid.NewGuid(),
+            Originator = Guid.NewGuid(),
+            CreatedBy = Guid.NewGuid(),
+            Status = RestrictionStatus.Draft,
+            StartDate = defaultStartDate ? default : DateTime.UtcNow.Date,
+            EndDate = defaultEndDate ? default : DateTime.UtcNow.Date.AddDays(1),
+            CreatedAt = DateTime.UtcNow,
+            RestrictionDescription = description
+        };
+        _dbContext.OperationalRestrictions.Add(restriction);
+        await _dbContext.SaveChangesAsync();
+
+        var controller = CreateController(restriction.Originator);
+        var actionResult = await controller.Sign(restriction.Id);
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
+        Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
+
+        var persisted = await _dbContext.OperationalRestrictions
+            .AsNoTracking()
+            .SingleAsync(item => item.Id == restriction.Id);
+        Assert.Equal(RestrictionStatus.Draft, persisted.Status);
+    }
+
+    [Fact]
+    public async Task GetByIdReturnsOriginatorSignatureAfterSigning()
+    {
+        var restriction = await AddRestrictionAsync(RestrictionStatus.Draft);
+        var controller = CreateController(restriction.Originator);
+
+        await controller.Sign(restriction.Id);
+
+        var dto = await _restrictionService.GetByIdAsync(restriction.Id);
+        Assert.NotNull(dto.OriginatorSignature);
+        Assert.Equal(restriction.Id, dto.OriginatorSignature.OperationalRestrictionId);
+        Assert.Equal(restriction.Originator, dto.OriginatorSignature.SigneeId);
+        Assert.Equal(UserRole.Originator, dto.OriginatorSignature.SigneeRole);
+        Assert.Equal(RestrictionStatus.PendingApproval, dto.Status);
+    }
+
     private async Task<OperationalRestriction> AddRestrictionAsync(RestrictionStatus status)
     {
         var restriction = new OperationalRestriction
@@ -121,9 +170,9 @@ public class RestrictionSigningTests : IAsyncDisposable
         return restriction;
     }
 
-    private RestrictionController CreateController(Guid currentUserId)
+    private RestrictionsController CreateController(Guid currentUserId)
     {
-        var controller = new RestrictionController(_restrictionService)
+        var controller = new RestrictionsController(_restrictionService)
         {
             ControllerContext = new ControllerContext
             {

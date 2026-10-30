@@ -1,4 +1,4 @@
-namespace Backend.Models.Enum;
+namespace Backend.Models.Enums;
 
 public enum RestrictionStatus
 {
@@ -7,5 +7,6 @@ public enum RestrictionStatus
     Approved,
     Active,
     Archived,
-    Cancelled
+    Cancelled,
+    CLOSING
 }

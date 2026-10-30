@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 using Backend.Exceptions;
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 using Backend.Services;
 
 namespace Backend.Tests;
@@ -117,6 +117,6 @@ public class SignatureServiceTests
         var required = _service.CreateRequiredSignatures(Guid.NewGuid());
 
         Assert.Equal(4, required.Count);
-        Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.Unsigned, x.RequiresSignatureStatus));
+        Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
     }
 }

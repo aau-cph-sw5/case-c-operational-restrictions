@@ -1,6 +1,6 @@
 using Backend.Exceptions;
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 
 namespace Backend.Services;
 
@@ -77,7 +77,7 @@ public class SignatureService
                 Id = Guid.NewGuid(),
                 OperationalRestrictionId = operationalRestrictionId,
                 SigneeId = user.Id,
-                RequiresSignatureStatus = RequiresSignatureStatus.Unsigned
+                RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
             })
             .ToList();
 
@@ -112,7 +112,7 @@ public class SignatureService
         if (requiredSignature.SigneeId != signerUserId)
             throw new NotRequiredSignerException(signerUserId, requiresSignatureId);
 
-        if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.Unsigned)
+        if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.PendingSignature)
             throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
         //I fremtiden skal den bruge GetUserById
@@ -131,7 +131,7 @@ public class SignatureService
         _signatures.Add(signature);
 
         //dette skal opdateres i databasen
-        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.Signed;
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
 
 
         return signature;
@@ -148,7 +148,7 @@ public class SignatureService
         {
             throw new RequiresSignatureNotSignableException(
                 existingSignature.RequiresSignatureId,
-                RequiresSignatureStatus.Signed.ToString());
+                RequiresSignatureStatus.CompletedSignature.ToString());
         }
 
         var requiredSignature = new RequiresSignature
@@ -156,7 +156,7 @@ public class SignatureService
             Id = Guid.NewGuid(),
             OperationalRestrictionId = operationalRestrictionId,
             SigneeId = signerUserId,
-            RequiresSignatureStatus = RequiresSignatureStatus.Unsigned
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
         };
         _requiredSignatures.Add(requiredSignature);
 
@@ -170,7 +170,7 @@ public class SignatureService
             SignedAt = DateTime.UtcNow
         };
         _signatures.Add(signature);
-        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.Signed;
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
 
         return signature;
     }
@@ -212,6 +212,6 @@ public class SignatureService
         if (signature == null)
             throw new SignatureNotFoundException(signatureId);
 
-        return GetRequiresSignatureById(signature.RequiresSignatureId).RequiresSignatureStatus == RequiresSignatureStatus.Signed;
+        return GetRequiresSignatureById(signature.RequiresSignatureId).RequiresSignatureStatus == RequiresSignatureStatus.CompletedSignature;
     }
 }
