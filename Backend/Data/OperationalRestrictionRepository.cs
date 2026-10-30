@@ -27,7 +27,7 @@ public class OperationalRestrictionRepository : IOperationalRestrictionRepositor
 
     public async Task<OperationalRestriction?> GetByIdAsync(Guid id)
     {
-        return await _context.OperationalRestrictions
+        return await _context.OperationalRestrictions.AsNoTracking()
             .FirstOrDefaultAsync(r => r.RestrictionId == id);
     }
 
@@ -35,12 +35,12 @@ public class OperationalRestrictionRepository : IOperationalRestrictionRepositor
         Expression<Func<OperationalRestriction, bool>> predicate)
     {
         return await _context.OperationalRestrictions
-            .Where(predicate)
+            .Where(predicate).AsNoTracking()
             .ToListAsync();
     }
 
     public async Task<List<OperationalRestriction>> GetAllAsync()
     {
-        return await _context.OperationalRestrictions.ToListAsync();
+        return await _context.OperationalRestrictions.AsNoTracking().ToListAsync();
     }
 }

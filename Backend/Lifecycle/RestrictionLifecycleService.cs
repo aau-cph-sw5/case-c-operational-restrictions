@@ -1,6 +1,6 @@
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
-
+using Backend.Models.Requests;
 using System.Linq;
 
 namespace Backend.Lifecycle;
@@ -15,7 +15,7 @@ public sealed class RestrictionLifecycleService
         _guards = guards.ToDictionary(g => g.Name);
     }
 
-    public void EnsureCanCreate(OperationalRestrictionDto data)
+    public void EnsureCanCreate(CreateRestrictionRequest data)
     {
         var transition =
             RestrictionLifecycle.Transitions[

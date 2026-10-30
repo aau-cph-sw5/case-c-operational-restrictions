@@ -8,6 +8,7 @@ using Backend.Services;
 using Backend.Services.Auth;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IExampleService, ExampleService>();
+
 
 // Register Lifecycle services
 builder.Services.AddScoped<RestrictionLifecycleService>();
@@ -35,7 +37,9 @@ builder.Services.AddSingleton<IRestrictionGuard, CancelledRefused>();
 
 // Register User Service
 builder.Services.AddScoped<IUserService, UserService>();
-// Database
+
+
+// Register User Service
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

@@ -1,4 +1,5 @@
 using Backend.Models.Enums;
+using Microsoft.EntityFrameworkCore;
 namespace Backend.Models.Entities;
 
 public enum Role { Originator, Dom, Operator }
