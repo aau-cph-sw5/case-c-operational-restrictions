@@ -1,4 +1,5 @@
 using Backend.Models.DTOs;
+using Backend.Models.Entities;
 using Backend.Models.Requests;
 
 namespace Backend.Services;
@@ -9,4 +10,5 @@ public interface IOperationalRestrictionService
 
     Task<OperationalRestrictionDto> GetByIdAsync(Guid id);
     Task<List<OperationalRestrictionDto>> GetAllAsync();
+    Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId);
 }

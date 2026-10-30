@@ -3,5 +3,6 @@ namespace Backend.Models.Requests;
 public record CreateRestrictionRequest(
   Guid CreatedBy,
   DateTime StartDate,
-  DateTime EndDate
+  DateTime EndDate,
+  string RestrictionDescription
 );

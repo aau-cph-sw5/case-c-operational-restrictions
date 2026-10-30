@@ -12,7 +12,7 @@ public class SignatureServiceTests
 {
     // The service keeps its data in static lists, so every test uses its own restriction id.
     // xUnit creates a new test class instance per test, so each test gets a fresh service.
-    private readonly SignatureService _service = new(null!);
+    private readonly SignatureService _service = new();
 
     [Fact]
     public void SignatureHasNoPublicSetters()
@@ -42,6 +42,40 @@ public class SignatureServiceTests
         Assert.Equal(restrictionVersionId, signature.OperationalRestrictionId);
         Assert.NotEqual(default, signature.SigneeRole);
         Assert.True(signature.SignedAt >= before);
+    }
+
+    [Fact]
+    public void SignOriginatorCreatesImmutableSignatureForRestriction()
+    {
+        var restrictionId = Guid.NewGuid();
+        var originatorId = Guid.NewGuid();
+        var before = DateTime.UtcNow;
+
+        var signature = _service.SignOriginator(restrictionId, originatorId);
+
+        Assert.Equal(originatorId, signature.SigneeId);
+        Assert.Equal(UserRole.Originator, signature.SigneeRole);
+        Assert.Equal(restrictionId, signature.OperationalRestrictionId);
+        Assert.True(signature.SignedAt >= before);
+        Assert.True(_service.IsSignatureValid(signature.Id));
+        Assert.Same(signature, _service.GetOriginatorSignature(restrictionId));
+    }
+
+    [Fact]
+    public void GetOriginatorSignatureReturnsNullBeforeSigning()
+    {
+        Assert.Null(_service.GetOriginatorSignature(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void SignOriginatorTwiceThrows()
+    {
+        var restrictionId = Guid.NewGuid();
+        var originatorId = Guid.NewGuid();
+        _service.SignOriginator(restrictionId, originatorId);
+
+        Assert.Throws<RequiresSignatureNotSignableException>(
+            () => _service.SignOriginator(restrictionId, originatorId));
     }
 
     [Fact]

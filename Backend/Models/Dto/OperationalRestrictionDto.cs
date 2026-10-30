@@ -13,7 +13,9 @@ public class OperationalRestrictionDto
     public DateTime EndDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime ArchivedAt { get; set; }
+    public string? RestrictionDescription { get; set; }
     public Guid? OriginalOperationalRestrictionId { get; set; }
+    public SignatureDto? OriginatorSignature { get; set; }
 
     public static OperationalRestrictionDto FromDalEntity(OperationalRestriction operationalRestriction) =>
       new()
@@ -26,6 +28,7 @@ public class OperationalRestrictionDto
           EndDate = operationalRestriction.EndDate,
           CreatedAt = operationalRestriction.CreatedAt,
           ArchivedAt = operationalRestriction.ArchivedAt,
+          RestrictionDescription = operationalRestriction.RestrictionDescription,
           OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId
       };
 }

@@ -18,4 +18,5 @@ public class OperationalRestriction
     public DateTime CreatedAt { get; set; }
     public DateTime ArchivedAt { get; set; }
     public Guid? OriginalOperationalRestrictionId { get; set; }
+    public string? RestrictionDescription { get; set; }
 }
