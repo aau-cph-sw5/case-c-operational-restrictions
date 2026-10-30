@@ -1,5 +1,5 @@
-using Backend.Models.Enums;
 using Backend.Models.Entities;
+using Backend.Models.Enums;
 namespace Backend.Models.DTOs;
 
 
@@ -8,44 +8,50 @@ namespace Backend.Models.DTOs;
 // Prevents exposing internal database entities directly to the client
 public class OperationalRestrictionDto
 {
-  public Guid RestrictionId { get; set; }
-  // before named: status --> now named: state
-  public RestrictionState State { get; set; } = RestrictionState.Empty;
+    public Guid RestrictionId { get; set; }
+    // before named: status --> now named: state
+    public RestrictionState State { get; set; } = RestrictionState.Empty;
 
-  public String RestrictionDescription { get; set; } = string.Empty;
+    public String RestrictionDescription { get; set; } = string.Empty;
 
-  public Guid OriginatorUserId { get; set; }
+    public Guid OriginatorUserId { get; set; }
 
-  public DateTime StartDate { get; set; } = DateTime.Now;
+    public DateTime StartDate { get; set; } = DateTime.Now;
 
-  public DateTime? EndDate { get; set; } = DateTime.Now;
+    public DateTime? EndDate { get; set; } = DateTime.Now;
 
-  public Guid CreatedBy { get; set; }
-  
-  public DateTime CreatedAt { get; set; }
-  
-  public DateTime? ArchivedAt { get; set; }
-  
-  public Guid? OriginalOperationalRestrictionId { get; set; }
+    public Guid CreatedBy { get; set; }
 
-  public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction) =>
-    new()
-    {
-      RestrictionId = operationalRestriction.RestrictionId,
-      OriginatorUserId = operationalRestriction.OriginatorUserId,
-      RestrictionDescription = operationalRestriction.RestrictionDescription,
-      CreatedBy = operationalRestriction.CreatedBy,
-      State = operationalRestriction.State,
-      StartDate = operationalRestriction.StartDate,
-      EndDate = operationalRestriction.EndDate,
-      CreatedAt = operationalRestriction.CreatedAt,
-      ArchivedAt = operationalRestriction.ArchivedAt,
-      OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId
-    };
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? ArchivedAt { get; set; }
+
+    public Guid? OriginalOperationalRestrictionId { get; set; }
+
+    public Guid ReviewerId { get; set; }
+
+    public String ReviewDescription { get; set; } = string.Empty;
+
+    public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction) =>
+      new()
+      {
+          RestrictionId = operationalRestriction.RestrictionId,
+          OriginatorUserId = operationalRestriction.OriginatorUserId,
+          RestrictionDescription = operationalRestriction.RestrictionDescription,
+          CreatedBy = operationalRestriction.CreatedBy,
+          State = operationalRestriction.State,
+          StartDate = operationalRestriction.StartDate,
+          EndDate = operationalRestriction.EndDate,
+          CreatedAt = operationalRestriction.CreatedAt,
+          ArchivedAt = operationalRestriction.ArchivedAt,
+          OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId,
+          ReviewerId = operationalRestriction.ReviewerId,
+          ReviewDescription = operationalRestriction.ReviewDescription
+      };
 }
 /*
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 
 namespace Backend.Models.DTOs;
 

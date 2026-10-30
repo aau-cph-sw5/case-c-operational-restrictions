@@ -4,12 +4,16 @@ using System.Text;
 using Backend.Configuration;
 using Backend.Data;
 using Backend.Lifecycle;
+using Backend.Models.DTOs;
+using Backend.Models.Entities;
 using Backend.Services;
 using Backend.Services.Auth;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
+using Nelibur.ObjectMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +27,8 @@ builder.Services.AddScoped<IExampleService, ExampleService>();
 builder.Services.AddScoped<RestrictionLifecycleService>();
 builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
 builder.Services.AddScoped<IOperationalRestrictionRepository, OperationalRestrictionRepository>();
+builder.Services.AddScoped<IRestrictionTransitionEventRepository, RestrictionTransitionEventRepository>();
+builder.Services.AddScoped<SignatureService>();
 
 // Register Guards
 builder.Services.AddSingleton<IRestrictionGuard, StartDateIsFoundGuard>();
@@ -44,6 +50,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+TinyMapper.Bind<User, UserDto>();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();

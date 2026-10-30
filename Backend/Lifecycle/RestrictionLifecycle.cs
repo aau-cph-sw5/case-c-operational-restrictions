@@ -32,7 +32,7 @@ public static class RestrictionLifecycle
         RestrictionTransition> Transitions =
         new Dictionary<RestrictionAction, RestrictionTransition>
 
-        
+
         {
             // Draft state 
             [RestrictionAction.CreateDraft] = new(

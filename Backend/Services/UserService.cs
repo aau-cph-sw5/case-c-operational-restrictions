@@ -1,5 +1,5 @@
-using Backend.Models.Entities;
 using Backend.Models.DTOs;
+using Backend.Models.Entities;
 
 namespace Backend.Services;
 
@@ -26,7 +26,7 @@ public class UserService : IUserService
         Console.WriteLine("UserService: Logout request received");
         throw new NotImplementedException(); //to do implement
     }
-    
+
 
     public UserDto CreateUser(CreateUserDto userData)
     {

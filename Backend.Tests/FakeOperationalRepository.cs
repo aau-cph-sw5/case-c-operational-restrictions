@@ -1,6 +1,7 @@
+using System.Linq.Expressions;
+
 using Backend.Data;
 using Backend.Models.Entities;
-using System.Linq.Expressions;
 
 namespace Backend.Tests;
 //in-memory stand-in for the real repository so the OperationalRestrictionServiceTests 

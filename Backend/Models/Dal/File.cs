@@ -13,6 +13,6 @@ public class File
 
     public Guid RestrictionId { get; set; } = Guid.Empty;
 
-    public DateTime CreatedAt { get; set; }= DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
 }

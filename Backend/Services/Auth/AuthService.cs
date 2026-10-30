@@ -3,6 +3,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
 
+using Nelibur.ObjectMapper;
+
 namespace Backend.Services.Auth;
 
 public class AuthService
@@ -18,7 +20,7 @@ public class AuthService
         //Laver en placeholder user mens der ikke er en databse
         _placeholderUser = new User
         {
-            UserId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
             Name = "Placeholder User",
             Email = "placeholder@example.com",
             PasswordHash = _passwordHasher.Hash("Password123!")
@@ -62,19 +64,19 @@ public class AuthService
         }
 
         var subject = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (!Guid.TryParse(subject, out var userId) || userId != _placeholderUser.UserId)
+        if (!Guid.TryParse(subject, out var userId) || userId != _placeholderUser.Id)
         {
             return null;
         }
 
-        return MapToDto(_placeholderUser);
+        return TinyMapper.Map<UserDto>(_placeholderUser);
     }
 
     private static UserDto MapToDto(User user)
     {
         return new UserDto
         {
-            Id = user.UserId,
+            Id = user.Id,
             Name = user.Name,
             Email = user.Email
         };

@@ -72,27 +72,32 @@ public sealed class OriginatorSignatureIsFound : IRestrictionGuard<OperationalRe
     }
 }
 
+// A restriction can only be returned for changes when the reviewer is
+// recorded and has written what needs to change.
 public sealed class ReturnedForChanges : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "ReturnedForChanges";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        data.State = RestrictionState.PendingDutyOperationsManagerApproval;
-        return true;
-    }   
+        return data.ReviewerId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(data.ReviewDescription);
+    }
 }
 
+// A restriction can only be refused when the reviewer is recorded and has
+// written why it is refused.
 public sealed class CancelledRefused : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "CancelledRefused";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        data.State = RestrictionState.PendingDutyOperationsManagerApproval;
-        return true; 
+        return data.ReviewerId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(data.ReviewDescription);
     }
 }
+
 //To do after Signatures are added to DTO
 public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261022224040_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20261029174532_AddRestrictionTransitionEvents")]
+    partial class AddRestrictionTransitionEvents
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -118,23 +118,52 @@ namespace Backend.Migrations
                     b.ToTable("OperationalRestrictions");
                 });
 
-            modelBuilder.Entity("Backend.Models.Entities.Signature", b =>
+            modelBuilder.Entity("Backend.Models.Entities.RestrictionTransitionEvent", b =>
                 {
-                    b.Property<Guid>("SignatureId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int>("Action")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("FromState")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsSigned")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid?>("OperationalRestrictionRestrictionId")
+                    b.Property<Guid>("OriginalRestrictionId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("RestrictionId")
+                    b.Property<Guid>("RestrictionVersionId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("ToState")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RestrictionTransitionEvents");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.Signature", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OperationalRestrictionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequiresSignatureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SignedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("SigneeId")
                         .HasColumnType("uuid");
@@ -142,34 +171,25 @@ namespace Backend.Migrations
                     b.Property<int>("SigneeRole")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
+                    b.HasKey("Id");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("SignatureId");
-
-                    b.HasIndex("OperationalRestrictionRestrictionId");
+                    b.HasIndex("OperationalRestrictionId");
 
                     b.ToTable("Signature");
                 });
 
             modelBuilder.Entity("Backend.Models.Entities.User", b =>
                 {
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<bool>("InCharge")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -179,25 +199,13 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ReportsTo")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Role")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("UserStatus")
                         .HasColumnType("integer");
 
                     b.Property<int>("WorkingStatus")
                         .HasColumnType("integer");
 
-                    b.HasKey("UserId");
+                    b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -216,7 +224,9 @@ namespace Backend.Migrations
                 {
                     b.HasOne("Backend.Models.Entities.OperationalRestriction", null)
                         .WithMany("SignatureSheet")
-                        .HasForeignKey("OperationalRestrictionRestrictionId");
+                        .HasForeignKey("OperationalRestrictionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Backend.Models.Entities.OperationalRestriction", b =>
