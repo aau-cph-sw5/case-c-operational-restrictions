@@ -122,7 +122,7 @@ public static class RestrictionLifecycle
                     "OperatorsAreAssigned"
                 }),
 
-            // Cancellation Transitions - Group 1:
+            // Cancellation Transitions:
 
             [RestrictionAction.OriginatorStartCancellation] = new(
                 RestrictionAction.OriginatorStartCancellation,

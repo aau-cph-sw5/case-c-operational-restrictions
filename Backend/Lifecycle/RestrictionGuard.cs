@@ -129,7 +129,7 @@ public sealed class OperatorsAreAssigned : IRestrictionGuard<OperationalRestrict
 
 // Cancellation guards - group 1:
 
-public sealed class OriginatorCancellationSignatureIsFound : IRestrictionGuard
+public sealed class OriginatorCancellationSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "OriginatorCancellationSignatureIsFound";
 
@@ -141,7 +141,7 @@ public sealed class OriginatorCancellationSignatureIsFound : IRestrictionGuard
     }
 }
 
-public sealed class DutyOperationsManagerCancellationSignatureIsFound : IRestrictionGuard
+public sealed class DutyOperationsManagerCancellationSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "DutyOperationsManagerCancellationSignatureIsFound";
 
@@ -152,7 +152,7 @@ public sealed class DutyOperationsManagerCancellationSignatureIsFound : IRestric
     }
 }
 
-public sealed class ControlRoomCancellationSignatureIsFound : IRestrictionGuard
+public sealed class ControlRoomCancellationSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "ControlRoomCancellationSignatureIsFound";
 
@@ -163,7 +163,7 @@ public sealed class ControlRoomCancellationSignatureIsFound : IRestrictionGuard
     }
 }
 
-public sealed class OperatorCancellationSignaturesAreFound : IRestrictionGuard
+public sealed class OperatorCancellationSignaturesAreFound : IRestrictionGuard<OperationalRestrictionDto>
 {
     public string Name => "OperatorCancellationSignaturesAreFound";
 
