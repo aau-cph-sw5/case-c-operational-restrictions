@@ -39,7 +39,10 @@ function titleFor(dto: NotificationDto): string {
   }
 }
 
-function actionFor(dto: NotificationDto, required: boolean): string | undefined {
+function actionFor(
+  dto: NotificationDto,
+  required: boolean,
+): string | undefined {
   if (!required) return undefined;
   return dto.type === "SignatureRequired" ? "Underskriv nu" : "Se detaljer";
 }

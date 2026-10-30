@@ -2,9 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { toNotificationViewModel } from "../services/notificationMapper";
 import type { NotificationDto } from "../types/notificationDto";
 
-function makeDto(
-  overrides: Partial<NotificationDto>,
-): NotificationDto {
+function makeDto(overrides: Partial<NotificationDto>): NotificationDto {
   return {
     id: "id-1",
     operationalRestrictionId: null,

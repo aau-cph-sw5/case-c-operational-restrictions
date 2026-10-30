@@ -14,29 +14,29 @@ namespace Backend.Controllers;
 [Route("api/[controller]")]
 public class NotificationsController : ApiControllerBase
 {
-  private readonly INotificationService _notificationService;
+    private readonly INotificationService _notificationService;
 
-  public NotificationsController(INotificationService notificationService)
-  {
-    _notificationService = notificationService;
-  }
+    public NotificationsController(INotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
 
-  /// <summary>
-  /// Returns all notifications addressed to the logged-in user, newest first.
-  /// </summary>
-  /// <remarks>
-  /// Sample request:
-  ///
-  ///     GET /api/notifications
-  /// </remarks>
-  /// <response code="200">Returns the user's notifications, or an empty list if there are none</response>
-  /// <response code="401">Returns when the request is not authenticated</response>
-  [HttpGet]
-  [ProducesResponseType(typeof(List<NotificationDto>), StatusCodes.Status200OK)]
-  public async Task<ActionResult<List<NotificationDto>>> GetNotifications()
-  {
-    var notifications = await _notificationService.GetNotificationsForUserAsync(CurrentUserId);
+    /// <summary>
+    /// Returns all notifications addressed to the logged-in user, newest first.
+    /// </summary>
+    /// <remarks>
+    /// Sample request:
+    ///
+    ///     GET /api/notifications
+    /// </remarks>
+    /// <response code="200">Returns the user's notifications, or an empty list if there are none</response>
+    /// <response code="401">Returns when the request is not authenticated</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(List<NotificationDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<NotificationDto>>> GetNotifications()
+    {
+        var notifications = await _notificationService.GetNotificationsForUserAsync(CurrentUserId);
 
-    return Ok(notifications.Select(NotificationDto.FromDalEntity).ToList());
-  }
+        return Ok(notifications.Select(NotificationDto.FromDalEntity).ToList());
+    }
 }

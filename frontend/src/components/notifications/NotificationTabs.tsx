@@ -1,4 +1,3 @@
-
 export type NotificationTab = "all" | "unread" | "required";
 
 interface NotificationTabsProps {
@@ -28,9 +27,7 @@ export function NotificationTabs({
         <button
           key={tab.id}
           type="button"
-          className={`notification-tab ${
-            activeTab === tab.id ? "active" : ""
-          }`}
+          className={`notification-tab ${activeTab === tab.id ? "active" : ""}`}
           aria-pressed={activeTab === tab.id}
           onClick={() => onTabChange(tab.id)}
         >

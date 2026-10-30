@@ -2,9 +2,7 @@
 // TypeScript interfaces and types defining domain models, state, and API contracts (matching backend DTOs)
 // Dates are Date objects; the ISO strings from the JSON body are parsed in notificationApi.
 export type NotificationType =
-  | "SignatureRequired"
-  | "ChangesRequested"
-  | "SystemInfo";
+  "SignatureRequired" | "ChangesRequested" | "SystemInfo";
 
 export interface NotificationDto {
   id: string;

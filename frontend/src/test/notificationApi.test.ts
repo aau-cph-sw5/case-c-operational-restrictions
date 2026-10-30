@@ -17,9 +17,9 @@ describe("notificationApi", () => {
   it("calls GET /api/notifications with the stored token as bearer", async () => {
     const token = "test-token";
     vi.spyOn(tokenStorage, "getStoredToken").mockReturnValue(token);
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify([]), { status: 200 }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify([]), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     await getNotifications();
@@ -47,9 +47,11 @@ describe("notificationApi", () => {
     vi.spyOn(tokenStorage, "getStoredToken").mockReturnValue("test-token");
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(responseBody), { status: 200 }),
-      ),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify(responseBody), { status: 200 }),
+        ),
     );
 
     const result = await getNotifications();

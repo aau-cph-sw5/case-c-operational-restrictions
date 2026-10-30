@@ -7,5 +7,5 @@ namespace Backend.Services;
 // become Undeliverable instead of being lost.
 public interface INotificationSender
 {
-  Task<NotificationSendResult> SendAsync(Notification notification, CancellationToken cancellationToken);
+    Task<NotificationSendResult> SendAsync(Notification notification, CancellationToken cancellationToken);
 }

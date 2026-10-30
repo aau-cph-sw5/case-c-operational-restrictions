@@ -1,4 +1,3 @@
-
 import type { Notification } from "./NotificationCard";
 
 interface NotificationDetailsProps {
@@ -52,27 +51,23 @@ export function NotificationDetails({
           ×
         </button>
 
-        <p className="notification-category">
-          {notification.category}
-        </p>
+        <p className="notification-category">{notification.category}</p>
 
-            <h2
-            id="notification-details-title"
-            style={{
-                paddingRight: "45px",
-                color: "#172033",
-                fontSize: "24px",
-                fontWeight: 700,
-                marginTop: "20px",
-                marginBottom: "20px",
-            }}
-            >
-            {notification.title}
-            </h2>
+        <h2
+          id="notification-details-title"
+          style={{
+            paddingRight: "45px",
+            color: "#172033",
+            fontSize: "24px",
+            fontWeight: 700,
+            marginTop: "20px",
+            marginBottom: "20px",
+          }}
+        >
+          {notification.title}
+        </h2>
 
-        <p>
-          {notification.message.replace(/\s*\.\.\.$/, ".")}
-        </p>
+        <p>{notification.message.replace(/\s*\.\.\.$/, ".")}</p>
 
         <p>
           <strong>Tidspunkt:</strong> {notification.time}
@@ -83,9 +78,7 @@ export function NotificationDetails({
         </p>
 
         {notification.required && (
-          <p>
-            Der kræves en handling på denne notifikation.
-          </p>
+          <p>Der kræves en handling på denne notifikation.</p>
         )}
 
         {notification.required && onSign && (

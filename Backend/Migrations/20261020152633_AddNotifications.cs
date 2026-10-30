@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -8,6 +9,15 @@ namespace Backend.Migrations
     /// <inheritdoc />
     public partial class AddNotifications : Migration
     {
+        private static readonly string[] DeliveryStatusNextAttemptAtColumns = { "Status", "NextAttemptAt" };
+
+        private static readonly string[] RecipientCreatedAtColumns = { "RecipientUserId", "CreatedAt" };
+
+        private static readonly string[] RecipientReadAtColumns = { "RecipientUserId", "ReadAt" };
+
+        private static readonly string[] RecipientActionResolvedColumns =
+            { "RecipientUserId", "RequiresAction", "ResolvedAt" };
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -74,7 +84,7 @@ namespace Backend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_NotificationDeliveries_Status_NextAttemptAt",
                 table: "NotificationDeliveries",
-                columns: new[] { "Status", "NextAttemptAt" });
+                columns: DeliveryStatusNextAttemptAtColumns);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_OperationalRestrictionId",
@@ -84,17 +94,17 @@ namespace Backend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_CreatedAt",
                 table: "Notifications",
-                columns: new[] { "RecipientUserId", "CreatedAt" });
+                columns: RecipientCreatedAtColumns);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_ReadAt",
                 table: "Notifications",
-                columns: new[] { "RecipientUserId", "ReadAt" });
+                columns: RecipientReadAtColumns);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_RequiresAction_ResolvedAt",
                 table: "Notifications",
-                columns: new[] { "RecipientUserId", "RequiresAction", "ResolvedAt" });
+                columns: RecipientActionResolvedColumns);
         }
 
         /// <inheritdoc />

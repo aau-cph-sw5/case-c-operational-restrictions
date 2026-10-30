@@ -1,6 +1,6 @@
 using Backend.Data;
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
 using Backend.Services;
 
 using Microsoft.EntityFrameworkCore;

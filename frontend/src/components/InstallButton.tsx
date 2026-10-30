@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { usePwaInstall } from "../hooks/usePwaInstall";
 
@@ -8,7 +7,7 @@ export function InstallButton() {
 
   const [showInstructions, setShowInstructions] = useState(false);
   const [isMobile, setIsMobile] = useState(
-    () => window.matchMedia("(max-width: 699px)").matches
+    () => window.matchMedia("(max-width: 699px)").matches,
   );
 
   useEffect(() => {

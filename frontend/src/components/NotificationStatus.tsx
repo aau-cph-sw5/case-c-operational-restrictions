@@ -1,4 +1,3 @@
-
 // COMPONENT:
 // Reusable UI building block for displaying notification delivery status
 
@@ -12,8 +11,6 @@ const statusLabels = {
   failed: "Failed",
 };
 
-export function NotificationStatus({
-  status,
-}: NotificationStatusProps) {
+export function NotificationStatus({ status }: NotificationStatusProps) {
   return <span>{statusLabels[status]}</span>;
 }

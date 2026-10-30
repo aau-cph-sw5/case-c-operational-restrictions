@@ -1,8 +1,10 @@
 
 using Backend.Data;
 using Backend.Models.Entities;
-using Backend.Models.Enum;
+using Backend.Models.Enums;
+
 using Microsoft.EntityFrameworkCore;
+
 using Xunit;
 
 namespace Backend.Tests;
@@ -33,7 +35,7 @@ public class NotificationDatabaseTests
             Name = "Integration Test User",
             Email = $"test-{userId}@example.test",
             PasswordHash = "test-only-hash",
-            Role = Role.Originator
+            Role = UserRole.Originator
         });
 
         db.Notifications.Add(new Notification

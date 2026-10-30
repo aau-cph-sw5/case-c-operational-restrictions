@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   NotificationCard,
@@ -16,8 +15,7 @@ export function NotificationPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] =
-    useState<NotificationTab>("all");
+  const [activeTab, setActiveTab] = useState<NotificationTab>("all");
   const [selectedNotification, setSelectedNotification] =
     useState<Notification | null>(null);
 
@@ -26,8 +24,7 @@ export function NotificationPage() {
 
     getNotifications()
       .then((result) => {
-        if (!cancelled)
-          setNotifications(result.map(toNotificationViewModel));
+        if (!cancelled) setNotifications(result.map(toNotificationViewModel));
       })
       .catch((err: unknown) => {
         if (!cancelled)
@@ -66,9 +63,7 @@ export function NotificationPage() {
 
     setNotifications((current) =>
       current.map((item) =>
-        item.id === notification.id
-          ? updatedNotification
-          : item,
+        item.id === notification.id ? updatedNotification : item,
       ),
     );
 
@@ -471,10 +466,7 @@ export function NotificationPage() {
         />
       </section>
 
-      <section
-        className="notification-list"
-        aria-label="Notifikationer"
-      >
+      <section className="notification-list" aria-label="Notifikationer">
         {error !== null ? (
           <p>{error}</p>
         ) : isLoading ? (

@@ -1,4 +1,3 @@
-
 import { NotificationStatus } from "../NotificationStatus";
 
 export interface Notification {
@@ -22,8 +21,7 @@ export function NotificationCard({
   notification,
   onOpen,
 }: NotificationCardProps) {
-  const isSystemInfo =
-    notification.category.toLowerCase().includes("system");
+  const isSystemInfo = notification.category.toLowerCase().includes("system");
 
   const iconType = notification.required
     ? "required"
@@ -57,13 +55,9 @@ export function NotificationCard({
           !
         </span>
 
-        <span className="notification-category">
-          {notification.category}
-        </span>
+        <span className="notification-category">{notification.category}</span>
 
-        <time className="notification-time">
-          {notification.time}
-        </time>
+        <time className="notification-time">{notification.time}</time>
 
         {notification.unread && (
           <span
@@ -76,9 +70,7 @@ export function NotificationCard({
 
       <h2>{notification.title}</h2>
 
-      <p className="notification-message">
-        {notification.message}
-      </p>
+      <p className="notification-message">{notification.message}</p>
 
       <button
         type="button"
