@@ -103,11 +103,10 @@ public class RestrictionSigningTests : IAsyncDisposable
     }
 
     [Theory]
-    [InlineData(true, false, "Valid description")]
-    [InlineData(false, true, "Valid description")]
-    [InlineData(false, false, "")]
-    [InlineData(false, false, "   ")]
-    public async Task IncompleteRestrictionCannotBeSigned(bool defaultStartDate, bool defaultEndDate, string description)
+    [InlineData(true, "Valid description")]
+    [InlineData(false, "")]
+    [InlineData(false, "   ")]
+    public async Task IncompleteRestrictionCannotBeSigned(bool defaultStartDate, string description)
     {
         var restriction = new OperationalRestriction
         {
@@ -116,7 +115,6 @@ public class RestrictionSigningTests : IAsyncDisposable
             CreatedBy = Guid.NewGuid(),
             Status = RestrictionStatus.Draft,
             StartDate = defaultStartDate ? default : DateTime.UtcNow.Date,
-            EndDate = defaultEndDate ? default : DateTime.UtcNow.Date.AddDays(1),
             CreatedAt = DateTime.UtcNow,
             RestrictionDescription = description
         };
@@ -133,6 +131,33 @@ public class RestrictionSigningTests : IAsyncDisposable
             .AsNoTracking()
             .SingleAsync(item => item.Id == restriction.Id);
         Assert.Equal(RestrictionStatus.Draft, persisted.Status);
+    }
+
+    [Fact]
+    public async Task RestrictionWithoutEndDateCanBeSigned()
+    {
+        var restriction = new OperationalRestriction
+        {
+            Id = Guid.NewGuid(),
+            Originator = Guid.NewGuid(),
+            CreatedBy = Guid.NewGuid(),
+            Status = RestrictionStatus.Draft,
+            StartDate = DateTime.UtcNow.Date,
+            CreatedAt = DateTime.UtcNow,
+            RestrictionDescription = "Test restriction"
+        };
+        _dbContext.OperationalRestrictions.Add(restriction);
+        await _dbContext.SaveChangesAsync();
+
+        var controller = CreateController(restriction.Originator);
+
+        var actionResult = await controller.Sign(restriction.Id);
+
+        Assert.IsType<OkObjectResult>(actionResult);
+        var persisted = await _dbContext.OperationalRestrictions
+            .AsNoTracking()
+            .SingleAsync(item => item.Id == restriction.Id);
+        Assert.Equal(RestrictionStatus.PendingApproval, persisted.Status);
     }
 
     [Fact]

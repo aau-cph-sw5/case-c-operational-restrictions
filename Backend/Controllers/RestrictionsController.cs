@@ -66,7 +66,7 @@ public class RestrictionsController : ApiControllerBase
 
         if (IsMissingRequiredSignatureData(restriction))
         {
-            return BadRequest(new { error = "StartDate, EndDate, and RestrictionDescription must be populated before signing." });
+            return BadRequest(new { error = "StartDate and RestrictionDescription must be populated before signing." });
         }
 
         return null;
@@ -75,7 +75,6 @@ public class RestrictionsController : ApiControllerBase
     private static bool IsMissingRequiredSignatureData(OperationalRestrictionDto restriction)
     {
         return restriction.StartDate == default
-            || restriction.EndDate == default
             || string.IsNullOrWhiteSpace(restriction.RestrictionDescription);
     }
 
