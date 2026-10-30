@@ -44,6 +44,22 @@ public interface IOperationalRestrictionService
           Guid id,
           Guid actorId);
 
+    Task<OperationalRestriction> StartCancellationAsync(
+          Guid id,
+          Guid actorId);
+
+    Task<OperationalRestriction> ApproveCancellationAsync(
+          Guid id,
+          Guid approverId);
+
+    Task<OperationalRestriction> ControlRoomCancellationAsync(
+          Guid id,
+          Guid actorId);
+
+    Task<OperationalRestriction> OperatorsArchiveAsync(
+          Guid id,
+          Guid actorId);
+
     Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id);
 
     Task<List<OperationalRestriction>> GetActiveRestrictionsAsync();

@@ -23,7 +23,11 @@ public class RestrictionLifecycleServiceTests
                 new ControlRoomSupervisorSignatureIsFound(),
                 new OperatorsAreAssigned(),
                 new ReturnedForChanges(),
-                new CancelledRefused()
+                new CancelledRefused(),
+                new OriginatorCancellationSignatureIsFound(),
+                new DutyOperationsManagerCancellationSignatureIsFound(),
+                new ControlRoomCancellationSignatureIsFound(),
+                new OperatorCancellationSignaturesAreFound()
             });
     }
 
@@ -302,6 +306,138 @@ public class RestrictionLifecycleServiceTests
         Assert.Contains("Cannot transition from PendingControlRoomSupervisorApproval", exception.Message);
     }
 
+    [Fact]
+    public void EnsureCanTransitionFromActiveToPendingCancellation()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.Active);
+
+        // Act & Assert
+        _sut.EnsureCanTransition(
+            RestrictionState.Active,
+            RestrictionAction.OriginatorStartCancellation,
+            data);
+    }
+
+    [Fact]
+    public void EnsureCanTransitionFromPendingCancellationToOutOfForce()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.PendingCancellation);
+
+        // Act & Assert
+        _sut.EnsureCanTransition(
+            RestrictionState.PendingCancellation,
+            RestrictionAction.DutyOperationsManagerApproveCancellation,
+            data);
+    }
+
+    [Fact]
+    public void EnsureCanTransitionFromOutOfForceToAwaitingOperatorSignOut()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.OutOfForce);
+
+        // Act & Assert
+        _sut.EnsureCanTransition(
+            RestrictionState.OutOfForce,
+            RestrictionAction.ControlRoomCancellation,
+            data);
+    }
+
+    [Fact]
+    public void EnsureCanTransitionFromAwaitingOperatorSignOutToArchived()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.AwaitingOperatorSignOut);
+
+        // Act & Assert
+        _sut.EnsureCanTransition(
+            RestrictionState.AwaitingOperatorSignOut,
+            RestrictionAction.OperatorsArchive,
+            data);
+    }
+
+    [Fact]
+    public void EnsureCannotStartCancellationFromDraft()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.Draft);
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            _sut.EnsureCanTransition(
+                RestrictionState.Draft,
+                RestrictionAction.OriginatorStartCancellation,
+                data));
+
+        Assert.Contains("Cannot transition from Draft", exception.Message);
+    }
+
+    [Fact]
+    public void EnsureCannotSkipDutyOperationsManagerCancellationApproval()
+    {
+        // Arrange - only the originator has started the cancellation
+        var data = CreateValidDto(RestrictionState.PendingCancellation);
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            _sut.EnsureCanTransition(
+                RestrictionState.PendingCancellation,
+                RestrictionAction.ControlRoomCancellation,
+                data));
+
+        Assert.Contains("Cannot transition from PendingCancellation", exception.Message);
+    }
+
+    [Fact]
+    public void EnsureCannotArchiveFromPendingCancellation()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.PendingCancellation);
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            _sut.EnsureCanTransition(
+                RestrictionState.PendingCancellation,
+                RestrictionAction.OperatorsArchive,
+                data));
+
+        Assert.Contains("Cannot transition from PendingCancellation", exception.Message);
+    }
+
+    [Fact]
+    public void EnsureCannotArchiveFromOutOfForce()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.OutOfForce);
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            _sut.EnsureCanTransition(
+                RestrictionState.OutOfForce,
+                RestrictionAction.OperatorsArchive,
+                data));
+
+        Assert.Contains("Cannot transition from OutOfForce", exception.Message);
+    }
+
+    [Fact]
+    public void EnsureCannotRestartCancellationAfterArchived()
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.Archived);
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            _sut.EnsureCanTransition(
+                RestrictionState.Archived,
+                RestrictionAction.OriginatorStartCancellation,
+                data));
+
+        Assert.Contains("Cannot transition from Archived", exception.Message);
+    }
+
     // ========== GetNextState Tests ==========
 
     [Fact]
@@ -362,5 +498,53 @@ public class RestrictionLifecycleServiceTests
 
         // Assert
         Assert.Equal(RestrictionState.Draft, nextState);
+    }
+
+    [Fact]
+    public void GetNextStateFromActiveToPendingCancellationReturnsCorrectState()
+    {
+        // Act
+        var nextState = _sut.GetNextState(
+            RestrictionState.Active,
+            RestrictionAction.OriginatorStartCancellation);
+
+        // Assert
+        Assert.Equal(RestrictionState.PendingCancellation, nextState);
+    }
+
+    [Fact]
+    public void GetNextStateFromPendingCancellationToOutOfForceReturnsCorrectState()
+    {
+        // Act
+        var nextState = _sut.GetNextState(
+            RestrictionState.PendingCancellation,
+            RestrictionAction.DutyOperationsManagerApproveCancellation);
+
+        // Assert
+        Assert.Equal(RestrictionState.OutOfForce, nextState);
+    }
+
+    [Fact]
+    public void GetNextStateFromOutOfForceToAwaitingOperatorSignOutReturnsCorrectState()
+    {
+        // Act
+        var nextState = _sut.GetNextState(
+            RestrictionState.OutOfForce,
+            RestrictionAction.ControlRoomCancellation);
+
+        // Assert
+        Assert.Equal(RestrictionState.AwaitingOperatorSignOut, nextState);
+    }
+
+    [Fact]
+    public void GetNextStateFromAwaitingOperatorSignOutToArchivedReturnsCorrectState()
+    {
+        // Act
+        var nextState = _sut.GetNextState(
+            RestrictionState.AwaitingOperatorSignOut,
+            RestrictionAction.OperatorsArchive);
+
+        // Assert
+        Assert.Equal(RestrictionState.Archived, nextState);
     }
 }

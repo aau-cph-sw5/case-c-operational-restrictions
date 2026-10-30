@@ -142,6 +142,43 @@ public class OperationalRestrictionService
         return TransitionAsync(id, RestrictionAction.Resubmit, actorId);
     }
 
+    // Cancellation transitions (MET-C-018): the originator starts a
+    // cancellation of an Active restriction, duty operations manager and
+    // control room approve it in sequence, and the operators archive it.
+    // Signature guards are enforced by the lifecycle; the signature data
+    // itself is recorded once SignatureType is added to the DTO.
+
+    public Task<OperationalRestriction> StartCancellationAsync(
+        Guid id,
+        Guid actorId)
+    {
+        return TransitionAsync(
+            id, RestrictionAction.OriginatorStartCancellation, actorId);
+    }
+
+    public Task<OperationalRestriction> ApproveCancellationAsync(
+        Guid id,
+        Guid approverId)
+    {
+        return TransitionAsync(
+            id, RestrictionAction.DutyOperationsManagerApproveCancellation, approverId);
+    }
+
+    public Task<OperationalRestriction> ControlRoomCancellationAsync(
+        Guid id,
+        Guid actorId)
+    {
+        return TransitionAsync(
+            id, RestrictionAction.ControlRoomCancellation, actorId);
+    }
+
+    public Task<OperationalRestriction> OperatorsArchiveAsync(
+        Guid id,
+        Guid actorId)
+    {
+        return TransitionAsync(id, RestrictionAction.OperatorsArchive, actorId);
+    }
+
     public async Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id)
     {
         var restriction = await _repository.GetByIdAsync(id)

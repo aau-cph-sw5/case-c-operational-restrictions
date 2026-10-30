@@ -25,7 +25,11 @@ public class OperationalRestrictionServiceTests
             new ControlRoomSupervisorSignatureIsFound(),
             new OperatorsAreAssigned(),
             new ReturnedForChanges(),
-            new CancelledRefused()
+            new CancelledRefused(),
+            new OriginatorCancellationSignatureIsFound(),
+            new DutyOperationsManagerCancellationSignatureIsFound(),
+            new ControlRoomCancellationSignatureIsFound(),
+            new OperatorCancellationSignaturesAreFound()
             });
 
         return new OperationalRestrictionService(
@@ -45,6 +49,24 @@ public class OperationalRestrictionServiceTests
                 description,
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddHours(8)));
+    }
+
+    // Drives a restriction through the approval chain up to Active,
+    // returning the active version and the original restriction id.
+    private static async Task<(OperationalRestriction Active, Guid OriginalRestrictionId)>
+        DriveToActiveAsync(
+            OperationalRestrictionService service,
+            Guid originator,
+            Guid dutyOperationsManager,
+            Guid controlRoomSupervisor)
+    {
+        var draft = await CreateDraftAsync(service, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
+        var approved = await service.ApproveRestrictionAsync(submitted.RestrictionId, dutyOperationsManager);
+        var pendingSupervisor = await service.SubmitForControlRoomSupervisorApprovalAsync(approved.RestrictionId, dutyOperationsManager);
+        var active = await service.ActivateRestrictionAsync(pendingSupervisor.RestrictionId, controlRoomSupervisor);
+
+        return (active, draft.RestrictionId);
     }
 
     [Fact]
@@ -314,6 +336,100 @@ public class OperationalRestrictionServiceTests
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.ActivateRestrictionAsync(draft.RestrictionId, Guid.NewGuid()));
+        Assert.Single(repo.Restrictions);
+    }
+
+    [Fact]
+    public async Task RestrictionCanBeCancelledFromActiveToArchived()
+    {
+        // Arrange
+        var repo = new FakeOperationalRestrictionRepository();
+        var events = new FakeRestrictionTransitionEventRepository();
+        var service = CreateService(repo, events);
+
+        var originator = Guid.NewGuid();
+        var dutyOperationsManager = Guid.NewGuid();
+        var controlRoomSupervisor = Guid.NewGuid();
+        var operatorUser = Guid.NewGuid();
+
+        var (active, originalRestrictionId) = await DriveToActiveAsync(
+            service, originator, dutyOperationsManager, controlRoomSupervisor);
+
+        // Act
+        var pendingCancellation = await service.StartCancellationAsync(active.RestrictionId, originator);
+        var outOfForce = await service.ApproveCancellationAsync(pendingCancellation.RestrictionId, dutyOperationsManager);
+        var awaitingOperatorSignOut = await service.ControlRoomCancellationAsync(outOfForce.RestrictionId, controlRoomSupervisor);
+        var archived = await service.OperatorsArchiveAsync(awaitingOperatorSignOut.RestrictionId, operatorUser);
+
+        // Assert
+        Assert.Equal(RestrictionState.PendingCancellation, pendingCancellation.State);
+        Assert.Equal(RestrictionState.OutOfForce, outOfForce.State);
+        Assert.Equal(RestrictionState.AwaitingOperatorSignOut, awaitingOperatorSignOut.State);
+        Assert.Equal(RestrictionState.Archived, archived.State);
+
+        Assert.Equal(operatorUser, archived.CreatedBy);
+        Assert.Equal(active.Version + 4, archived.Version);
+        Assert.Equal(9, repo.Restrictions.Count);
+
+        // Every cancellation step emits an audit event with actor and states
+        var cancellationEvents = events.Events.Where(
+            e => e.Action == RestrictionAction.OriginatorStartCancellation
+                || e.Action == RestrictionAction.DutyOperationsManagerApproveCancellation
+                || e.Action == RestrictionAction.ControlRoomCancellation
+                || e.Action == RestrictionAction.OperatorsArchive)
+            .ToList();
+
+        Assert.Equal(4, cancellationEvents.Count);
+        Assert.All(cancellationEvents, e =>
+            Assert.Equal(originalRestrictionId, e.OriginalRestrictionId));
+
+        Assert.Equal(RestrictionState.Active, cancellationEvents[0].FromState);
+        Assert.Equal(originator, cancellationEvents[0].ActorId);
+        Assert.Equal(RestrictionState.PendingCancellation, cancellationEvents[0].ToState);
+
+        Assert.Equal(RestrictionState.PendingCancellation, cancellationEvents[1].FromState);
+        Assert.Equal(dutyOperationsManager, cancellationEvents[1].ActorId);
+        Assert.Equal(RestrictionState.OutOfForce, cancellationEvents[1].ToState);
+
+        Assert.Equal(RestrictionState.OutOfForce, cancellationEvents[2].FromState);
+        Assert.Equal(controlRoomSupervisor, cancellationEvents[2].ActorId);
+        Assert.Equal(RestrictionState.AwaitingOperatorSignOut, cancellationEvents[2].ToState);
+
+        Assert.Equal(RestrictionState.AwaitingOperatorSignOut, cancellationEvents[3].FromState);
+        Assert.Equal(operatorUser, cancellationEvents[3].ActorId);
+        Assert.Equal(RestrictionState.Archived, cancellationEvents[3].ToState);
+    }
+
+    [Fact]
+    public async Task CancellationCannotSkipSteps()
+    {
+        // Arrange
+        var repo = new FakeOperationalRestrictionRepository();
+        var service = CreateService(repo);
+
+        var originator = Guid.NewGuid();
+        var dutyOperationsManager = Guid.NewGuid();
+        var controlRoomSupervisor = Guid.NewGuid();
+        var (active, _) = await DriveToActiveAsync(service, originator, dutyOperationsManager, controlRoomSupervisor);
+        var pendingCancellation = await service.StartCancellationAsync(active.RestrictionId, originator);
+
+        // Act & Assert - control room cannot cancel before duty operations
+        // manager has approved the cancellation
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.ControlRoomCancellationAsync(pendingCancellation.RestrictionId, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task CancellationCannotStartFromNonActiveState()
+    {
+        // Arrange
+        var repo = new FakeOperationalRestrictionRepository();
+        var service = CreateService(repo);
+        var draft = await CreateDraftAsync(service, Guid.NewGuid());
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.StartCancellationAsync(draft.RestrictionId, Guid.NewGuid()));
         Assert.Single(repo.Restrictions);
     }
 
