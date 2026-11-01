@@ -171,7 +171,10 @@ public class SignatureService(
 
         //I fremtiden skal den bruge GetUserById
         var signee = _users.Single(user => user.Id == signerUserId);
-        var signeeRole = _userRoleAssignments.Single(ur => ur.User == signee);
+        var signeeRoles = _userRoleAssignments
+            .Where(ur => ur.User == signee)
+            .Select(ur => ur.Role)
+            .ToList();
 
         var signature = new Signature
         {
@@ -179,7 +182,7 @@ public class SignatureService(
             RequiresSignatureId = requiredSignature.Id,
             OperationalRestrictionId = requiredSignature.OperationalRestrictionId,
             SigneeId = signerUserId,
-            SigneeRole = signeeRole.Role,
+            SigneeRoles = signeeRoles,
             SignedAt = DateTime.UtcNow
         };
         //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
