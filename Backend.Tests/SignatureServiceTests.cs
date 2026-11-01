@@ -40,9 +40,33 @@ public class SignatureServiceTests
 
         Assert.Equal(required.SigneeId, signature.SigneeId);
         Assert.Equal(restrictionVersionId, signature.OperationalRestrictionId);
-        Assert.NotEqual(default, signature.SigneeRole);
+        Assert.NotEmpty(signature.SigneeRoles);
         Assert.True(signature.SignedAt >= before);
     }
+
+    [Fact]
+    public void SignWithUserHavingMultipleRolesRecordsAllRoles()
+    {
+        var required = _service.CreateRequiredSignatures(Guid.NewGuid()).First();
+
+        var users = GetStaticList<User>("_users");
+        var roles = GetStaticList<Role>("_roles");
+        var assignments = GetStaticList<UserRoleAssignment>("_userRoleAssignments");
+
+        var signee = users.Single(u => u.Id == required.SigneeId);
+        var extraRole = roles.First(r => !assignments.Any(a => a.User == signee && a.Role == r));
+        assignments.Add(new UserRoleAssignment { User = signee, Role = extraRole });
+
+        var signature = _service.Sign(required.Id, required.SigneeId);
+
+        Assert.Equal(2, signature.SigneeRoles.Count);
+        Assert.Contains(signature.SigneeRoles, r => r.Name == extraRole.Name);
+    }
+
+    private static List<T> GetStaticList<T>(string fieldName) =>
+        (List<T>)typeof(SignatureService)
+            .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Static)!
+            .GetValue(null)!;
 
     [Fact]
     public void SignByAnotherUserThrows()

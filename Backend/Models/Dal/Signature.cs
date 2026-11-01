@@ -9,7 +9,7 @@ public sealed class Signature
     public required Guid RequiresSignatureId { get; init; }
     public required Guid OperationalRestrictionId { get; init; }
     public required Guid SigneeId { get; init; }
-    // The signee's role at the time of signing, so later role changes do not rewrite history.
-    public required UserRole SigneeRole { get; init; }
+    // The signee's roles at the time of signing, so later role changes do not rewrite history.
+    public required IReadOnlyList<Role> SigneeRoles { get; init; }
     public required DateTime SignedAt { get; init; } = DateTime.UtcNow;
 }
