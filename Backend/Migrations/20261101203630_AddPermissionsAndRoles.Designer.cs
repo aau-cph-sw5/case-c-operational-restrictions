@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261026072017_AddPermissionsAndRoles")]
+    [Migration("20261101203630_AddPermissionsAndRoles")]
     partial class AddPermissionsAndRoles
     {
         /// <inheritdoc />

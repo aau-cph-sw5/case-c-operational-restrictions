@@ -15,8 +15,6 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
-
     public UserWorkingStatus WorkingStatus { get; set; }
 
     public bool InCharge { get; set; }

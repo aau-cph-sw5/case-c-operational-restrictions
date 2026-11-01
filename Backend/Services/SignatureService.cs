@@ -61,7 +61,7 @@ public class SignatureService(
             InCharge = true
         }
     ];
-    
+
     private static readonly List<Role> _roles =
     [
         new Role
@@ -74,7 +74,7 @@ public class SignatureService(
         },
         new Role
         {
-            Name = "ControlroomSupervisor"
+            Name = "ControlRoomSupervisor"
         },
         new Role
         {
@@ -97,7 +97,7 @@ public class SignatureService(
         new UserRoleAssignment
         {
             User = _users.Find(u => u.Id == Guid.Parse("44444444-4444-4444-4444-444444444444"))!,
-            Role = _roles.Find(r => r.Name == "ControlroomSupervisor")!
+            Role = _roles.Find(r => r.Name == "ControlRoomSupervisor")!
         },
         new UserRoleAssignment
         {
