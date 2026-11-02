@@ -277,13 +277,27 @@ public class OperationalRestrictionService
         Action<OperationalRestriction> applyChanges)
     {
         var now = DateTime.UtcNow;
+        var newRestrictionId = Guid.NewGuid();
 
+        // Signatures and files are one-to-many child rows, so each version gets
+        // its own copies; reusing the original instances would re-insert them
+        // with their existing keys.
         var newVersion = new OperationalRestriction
         {
-            RestrictionId = Guid.NewGuid(),
+            RestrictionId = newRestrictionId,
             OriginatorUserId = original.OriginatorUserId,
             CreatedBy = original.CreatedBy,
-            SignatureSheet = new List<Signature>(original.SignatureSheet),
+            SignatureSheet = original.SignatureSheet
+                .Select(s => new Signature
+                {
+                    Id = Guid.NewGuid(),
+                    RequiresSignatureId = s.RequiresSignatureId,
+                    OperationalRestrictionId = newRestrictionId,
+                    SigneeId = s.SigneeId,
+                    SigneeRole = s.SigneeRole,
+                    SignedAt = s.SignedAt
+                })
+                .ToList(),
             State = original.State,
             StartDate = original.StartDate,
             EndDate = original.EndDate,
@@ -291,7 +305,16 @@ public class OperationalRestrictionService
             ArchivedAt = original.ArchivedAt,
             RetentionUntil = original.RetentionUntil,
             RestrictionDescription = original.RestrictionDescription,
-            Files = new List<Backend.Models.Entities.File>(original.Files),
+            Files = original.Files
+                .Select(f => new Backend.Models.Entities.File
+                {
+                    FileId = Guid.NewGuid(),
+                    FileName = f.FileName,
+                    StoragePath = f.StoragePath,
+                    RestrictionId = newRestrictionId,
+                    CreatedAt = f.CreatedAt
+                })
+                .ToList(),
             Version = original.Version + 1,
             ReviewerId = original.ReviewerId,
             ApprovedForSigning = original.ApprovedForSigning,

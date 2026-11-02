@@ -30,6 +30,9 @@ public class OperationalRestrictionRepository : IOperationalRestrictionRepositor
     public async Task<OperationalRestriction?> GetByIdAsync(Guid id)
     {
         return await _context.OperationalRestrictions.AsNoTracking()
+            .Include(r => r.SignatureSheet)
+            .Include(r => r.Files)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(r => r.RestrictionId == id);
     }
 
