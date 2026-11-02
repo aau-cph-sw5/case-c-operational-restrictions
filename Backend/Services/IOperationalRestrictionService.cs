@@ -11,41 +11,41 @@ public interface IOperationalRestrictionService
           CreateRestrictionRequest data);
     Task<List<OperationalRestrictionDto>> GetAllAsync();
 
-    Task<OperationalRestriction> EditRestrictionAsync(
+    Task<OperationalRestrictionDto> EditRestrictionAsync(
           Guid id,
           OperationalRestrictionDto updateRestrictionDto);
 
-    Task<OperationalRestriction> SubmitForApprovalAsync(
+    Task<OperationalRestrictionDto> SubmitForApprovalAsync(
           Guid id,
           Guid actorId);
-    Task<OperationalRestriction> ApproveRestrictionAsync(
+    Task<OperationalRestrictionDto> ApproveRestrictionAsync(
           Guid id,
           Guid approverId);
 
-    Task<OperationalRestriction> SubmitForControlRoomSupervisorApprovalAsync(
+    Task<OperationalRestrictionDto> SubmitForControlRoomSupervisorApprovalAsync(
           Guid id,
           Guid actorId);
 
-    Task<OperationalRestriction> ActivateRestrictionAsync(
+    Task<OperationalRestrictionDto> ActivateRestrictionAsync(
           Guid id,
           Guid approverId);
 
-    Task<OperationalRestriction> DenyRestrictionAsync(
+    Task<OperationalRestrictionDto> DenyRestrictionAsync(
           Guid id,
           Guid approverId,
           string reason);
 
-    Task<OperationalRestriction> ReturnForChangesAsync(
+    Task<OperationalRestrictionDto> ReturnForChangesAsync(
           Guid id,
           Guid reviewerId,
           string reason);
 
-    Task<OperationalRestriction> ResubmitRestrictionAsync(
+    Task<OperationalRestrictionDto> ResubmitRestrictionAsync(
           Guid id,
           Guid actorId);
 
     Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id);
 
-    Task<List<OperationalRestriction>> GetActiveRestrictionsAsync();
+    Task<List<OperationalRestrictionDto>> GetActiveRestrictionsAsync();
 
 }

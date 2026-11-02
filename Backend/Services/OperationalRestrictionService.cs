@@ -64,7 +64,7 @@ public class OperationalRestrictionService
         return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
     }
 
-    public Task<OperationalRestriction> SubmitForApprovalAsync(
+    public Task<OperationalRestrictionDto> SubmitForApprovalAsync(
         Guid id,
         Guid actorId)
     {
@@ -74,28 +74,30 @@ public class OperationalRestrictionService
 
     // Versioned audit trail per MET-C-021: edits insert a new version row
     // instead of updating in place.
-    public async Task<OperationalRestriction> EditRestrictionAsync(
+    public async Task<OperationalRestrictionDto> EditRestrictionAsync(
     Guid id,
     OperationalRestrictionDto updateRestrictionDto)
     {
         var original = await GetRestrictionOrThrowAsync(id);
 
         // TODO : restrict editing to Draft/ReturnedForChanges states.
-        return await SaveAsNewVersionAsync(original, v =>
+        var newVersion = await SaveAsNewVersionAsync(original, v =>
         {
             v.RestrictionDescription = updateRestrictionDto.RestrictionDescription;
             v.CreatedBy = updateRestrictionDto.CreatedBy;
         });
+
+        return OperationalRestrictionDto.FromOperationalRestrictionToDto(newVersion);
     }
 
-    public Task<OperationalRestriction> ApproveRestrictionAsync(
+    public Task<OperationalRestrictionDto> ApproveRestrictionAsync(
         Guid id,
         Guid approverId)
     {
         return TransitionAsync(id, RestrictionAction.Approved, approverId);
     }
 
-    public Task<OperationalRestriction> SubmitForControlRoomSupervisorApprovalAsync(
+    public Task<OperationalRestrictionDto> SubmitForControlRoomSupervisorApprovalAsync(
         Guid id,
         Guid actorId)
     {
@@ -103,14 +105,14 @@ public class OperationalRestrictionService
             id, RestrictionAction.PendingControlRoomSupervisorApproval, actorId);
     }
 
-    public Task<OperationalRestriction> ActivateRestrictionAsync(
+    public Task<OperationalRestrictionDto> ActivateRestrictionAsync(
         Guid id,
         Guid approverId)
     {
         return TransitionAsync(id, RestrictionAction.Active, approverId);
     }
 
-    public Task<OperationalRestriction> DenyRestrictionAsync(
+    public Task<OperationalRestrictionDto> DenyRestrictionAsync(
         Guid id,
         Guid approverId,
         string reason)
@@ -126,7 +128,7 @@ public class OperationalRestrictionService
             });
     }
 
-    public Task<OperationalRestriction> ReturnForChangesAsync(
+    public Task<OperationalRestrictionDto> ReturnForChangesAsync(
         Guid id,
         Guid reviewerId,
         string reason)
@@ -142,7 +144,7 @@ public class OperationalRestrictionService
             });
     }
 
-    public Task<OperationalRestriction> ResubmitRestrictionAsync(
+    public Task<OperationalRestrictionDto> ResubmitRestrictionAsync(
         Guid id,
         Guid actorId)
     {
@@ -166,11 +168,15 @@ public class OperationalRestrictionService
     }
 
 
-    public async Task<List<OperationalRestriction>>
+    public async Task<List<OperationalRestrictionDto>>
         GetActiveRestrictionsAsync()
     {
-        return await _repository.GetAllAsync(
+        var restrictions = await _repository.GetAllAsync(
             r => r.State == RestrictionState.Active);
+
+        return restrictions
+            .Select(OperationalRestrictionDto.FromOperationalRestrictionToDto)
+            .ToList();
     }
 
     private async Task<OperationalRestriction> GetRestrictionOrThrowAsync(
@@ -185,7 +191,7 @@ public class OperationalRestrictionService
     // comes from RestrictionLifecycle, guards are evaluated against the version
     // the transition would produce (stored data plus the changes it applies),
     // and every transition is recorded as an audit event.
-    private async Task<OperationalRestriction> TransitionAsync(
+    private async Task<OperationalRestrictionDto> TransitionAsync(
         Guid id,
         RestrictionAction action,
         Guid actorId,
@@ -217,7 +223,7 @@ public class OperationalRestrictionService
 
         await transaction.CommitAsync();
 
-        return newVersion;
+        return OperationalRestrictionDto.FromOperationalRestrictionToDto(newVersion);
     }
 
     // Transitioning an older version would fork the history, so only the

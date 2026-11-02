@@ -115,7 +115,8 @@ public class OperationalRestrictionServiceTests
         Assert.NotEqual(created.RestrictionId, submitted.RestrictionId);
         Assert.Equal(created.RestrictionId, submitted.OriginalOperationalRestrictionId);
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, submitted.State);
-        Assert.Equal(1, submitted.Version);
+        Assert.Equal(1, repo.Restrictions.Single(
+            r => r.RestrictionId == submitted.RestrictionId).Version);
 
         Assert.False(repo.UpdateWasCalled);
     }
@@ -151,7 +152,8 @@ public class OperationalRestrictionServiceTests
         Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, pendingSupervisor.State);
         Assert.Equal(RestrictionState.Active, active.State);
 
-        Assert.Equal(7, active.Version);
+        Assert.Equal(7, repo.Restrictions.Single(
+            r => r.RestrictionId == active.RestrictionId).Version);
         Assert.Equal(controlRoomSupervisor, active.CreatedBy);
         Assert.Equal(8, repo.Restrictions.Count);
     }
