@@ -28,6 +28,7 @@ builder.Services.AddScoped<RestrictionLifecycleService>();
 builder.Services.AddScoped<IOperationalRestrictionService, OperationalRestrictionService>();
 builder.Services.AddScoped<IOperationalRestrictionRepository, OperationalRestrictionRepository>();
 builder.Services.AddScoped<IRestrictionTransitionEventRepository, RestrictionTransitionEventRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<SignatureService>();
 
 // Register Guards

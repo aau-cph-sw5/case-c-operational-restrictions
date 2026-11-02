@@ -14,15 +14,18 @@ public class OperationalRestrictionService
     private readonly RestrictionLifecycleService _lifecycleService;
     private readonly IOperationalRestrictionRepository _repository;
     private readonly IRestrictionTransitionEventRepository _transitionEventRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public OperationalRestrictionService(
         RestrictionLifecycleService lifecycleService,
         IOperationalRestrictionRepository repository,
-        IRestrictionTransitionEventRepository transitionEventRepository)
+        IRestrictionTransitionEventRepository transitionEventRepository,
+        IUnitOfWork unitOfWork)
     {
         _lifecycleService = lifecycleService;
         _repository = repository;
         _transitionEventRepository = transitionEventRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<OperationalRestrictionDto> CreateRestrictionAsync(
@@ -49,10 +52,14 @@ public class OperationalRestrictionService
             OriginalOperationalRestrictionId = null
         };
 
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+
         await _repository.AddAsync(restriction);
 
         await RecordTransitionAsync(
             restriction, RestrictionAction.CreateDraft, null, data.CreatedBy);
+
+        await transaction.CommitAsync();
 
         return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
     }
@@ -202,9 +209,13 @@ public class OperationalRestrictionService
             action,
             OperationalRestrictionDto.FromOperationalRestrictionToDto(newVersion));
 
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+
         await _repository.AddAsync(newVersion);
 
         await RecordTransitionAsync(newVersion, action, restriction.State, actorId);
+
+        await transaction.CommitAsync();
 
         return newVersion;
     }

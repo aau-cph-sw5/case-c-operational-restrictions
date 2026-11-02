@@ -31,7 +31,8 @@ public class OperationalRestrictionServiceTests
         return new OperationalRestrictionService(
             lifecycle,
             repository,
-            eventRepository ?? new FakeRestrictionTransitionEventRepository());
+            eventRepository ?? new FakeRestrictionTransitionEventRepository(),
+            new FakeUnitOfWork());
     }
 
     private static Task<OperationalRestrictionDto> CreateDraftAsync(

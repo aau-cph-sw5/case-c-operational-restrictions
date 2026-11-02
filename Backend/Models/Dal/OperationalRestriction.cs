@@ -15,15 +15,15 @@ public class OperationalRestriction
 
     public RestrictionState State { get; set; } = RestrictionState.Empty;
 
-    public DateTime StartDate { get; set; } = DateTime.Now;
+    public DateTime StartDate { get; set; }
 
-    public DateTime? EndDate { get; set; } = DateTime.Now;
+    public DateTime? EndDate { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; }
 
-    public DateTime? ArchivedAt { get; set; } = DateTime.Now;
+    public DateTime? ArchivedAt { get; set; }
 
-    public DateTime? RetentionUntil { get; set; } = DateTime.Now;
+    public DateTime? RetentionUntil { get; set; }
 
     public string RestrictionDescription { get; set; } = string.Empty;
 
@@ -39,7 +39,7 @@ public class OperationalRestriction
 
     public List<Guid> AssignedOperatorsIds { get; set; } = new List<Guid>();
 
-    public DateTime? UpdatedAt { get; set; } = DateTime.MinValue;
+    public DateTime? UpdatedAt { get; set; }
 
     public Guid? OriginalOperationalRestrictionId { get; set; }
 
