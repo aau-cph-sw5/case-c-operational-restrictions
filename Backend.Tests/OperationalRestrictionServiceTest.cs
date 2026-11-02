@@ -18,7 +18,7 @@ public class OperationalRestrictionServiceTests
             new IRestrictionGuard[]
             {
             new StartDateIsFoundGuard(),
-            new OperationalRestictionIdIsFound(),
+            new OperationalRestrictionIdIsFound(),
             new DescriptionTextIsFound(),
             new OriginatorSignatureIsFound(),
             new DutyOperationsManagerSignatureIsFound(),

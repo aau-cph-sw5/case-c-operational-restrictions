@@ -41,9 +41,9 @@ public sealed class StartDateIsFoundGuard : IRestrictionGuard
     }
 }
 
-public sealed class OperationalRestictionIdIsFound : IRestrictionGuard<OperationalRestrictionDto>
+public sealed class OperationalRestrictionIdIsFound : IRestrictionGuard<OperationalRestrictionDto>
 {
-    public string Name => "OperationalRestictionIdIsFound";
+    public string Name => "OperationalRestrictionIdIsFound";
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {

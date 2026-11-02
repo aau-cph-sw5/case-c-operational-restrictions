@@ -2,6 +2,6 @@ namespace Backend.Models.Enums;
 
 public enum SignatureType
 {
-    Implemantation,
+    Implementation,
     Closure
 }

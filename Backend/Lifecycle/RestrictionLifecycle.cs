@@ -54,7 +54,7 @@ public static class RestrictionLifecycle
                     "StartDateIsFound",
                     "DescriptionTextIsFound",
                     "OriginatorSignatureIsFound",
-                    "OperationalRestictionIdIsFound"
+                    "OperationalRestrictionIdIsFound"
                 }),
 
             // From PendingDutyOperationsManagerApproval State to ReturnedForChanges State
@@ -74,7 +74,7 @@ public static class RestrictionLifecycle
                 To: RestrictionState.Draft,
                 Guards: new[]
                 {
-                    "OperationalRestictionIdIsFound"
+                    "OperationalRestrictionIdIsFound"
                 }),
 
             // From PendingDutyOperationsManagerApproval State to CancelledRefused State
