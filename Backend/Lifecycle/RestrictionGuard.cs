@@ -57,7 +57,7 @@ public sealed class DescriptionTextIsFound : IRestrictionGuard<OperationalRestri
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        return !string.IsNullOrEmpty(data.RestrictionDescription);
+        return !string.IsNullOrWhiteSpace(data.RestrictionDescription);
     }
 }
 

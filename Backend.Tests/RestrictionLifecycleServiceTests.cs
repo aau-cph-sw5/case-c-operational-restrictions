@@ -166,6 +166,27 @@ public class RestrictionLifecycleServiceTests
             data);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t\n")]
+    public void SubmitForApprovalWithoutDescriptionIsRefused(string description)
+    {
+        // Arrange
+        var data = CreateValidDto(RestrictionState.Draft);
+        data.RestrictionDescription = description;
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanTransition(
+                RestrictionState.Draft,
+                RestrictionAction.PendingDutyOperationsManagerApproval,
+                data));
+
+        // Assert
+        Assert.Contains("DescriptionTextIsFound", exception.Message);
+    }
+
     // ========== PendingDutyOperationsManagerApproval State Transitions ==========
 
     [Fact]
