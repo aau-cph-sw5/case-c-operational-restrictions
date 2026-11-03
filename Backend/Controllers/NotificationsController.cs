@@ -45,17 +45,17 @@ public class NotificationsController : ApiControllerBase
     [HttpPatch("{id:guid}/read")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-     public async Task<IActionResult> MarkAsRead(Guid id)
+    public async Task<IActionResult> MarkAsRead(Guid id)
     {
-       var success = await _notificationService.MarkAsReadAsync(id, CurrentUserId);
+        var success = await _notificationService.MarkAsReadAsync(id, CurrentUserId);
 
-       if (!success)
-       {
-        return NotFound();
+        if (!success)
+        {
+            return NotFound();
         }
 
         return NoContent();
-}
+    }
 
 
 
