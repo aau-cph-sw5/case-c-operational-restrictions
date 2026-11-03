@@ -58,33 +58,32 @@ export function NotificationPage() {
     return true;
   });
 
-async function openNotification(notification: Notification) {
-  if (!notification.unread) {
-    setSelectedNotification(notification);
-    return;
+  async function openNotification(notification: Notification) {
+    if (!notification.unread) {
+      setSelectedNotification(notification);
+      return;
+    }
+
+    try {
+      await markNotificationAsRead(notification.id);
+
+      const updatedNotification = {
+        ...notification,
+        unread: false,
+      };
+
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id ? updatedNotification : item,
+        ),
+      );
+
+      setSelectedNotification(updatedNotification);
+    } catch (err) {
+      console.error("Kunne ikke markere notifikationen som læst:", err);
+      setSelectedNotification(notification);
+    }
   }
-
-  try {
-    await markNotificationAsRead(notification.id);
-
-    const updatedNotification = {
-      ...notification,
-      unread: false,
-    };
-
-    setNotifications((current) =>
-      current.map((item) =>
-        item.id === notification.id ? updatedNotification : item,
-      ),
-    );
-
-    setSelectedNotification(updatedNotification);
-  } catch (err) {
-    console.error("Kunne ikke markere notifikationen som læst:", err);
-    setSelectedNotification(notification);
-  }
-}
-
 
   function closeDetails() {
     setSelectedNotification(null);
