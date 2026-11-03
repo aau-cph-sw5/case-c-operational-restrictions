@@ -19,32 +19,32 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
           script: |
-                # Download and run Docker install script
-                curl -fsSL https://get.docker.com -o get-docker.sh
-                sudo sh get-docker.sh
+            # Download and run Docker install script
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
 
-                # Add user to docker group
-                sudo usermod -aG docker ${{ secrets.SERVER_USER }}
-                
-                # Verify Docker installation
-                echo "=== Checking Docker installation ==="
-                DOCKER_VERSION=$(docker --version 2>&1)
-                if ! echo "$DOCKER_VERSION" | grep -q "Docker version"; then
-                  echo "ERROR: Docker is not installed correctly. Got: $DOCKER_VERSION"
-                  exit 1
-                fi
-                echo "Docker: $DOCKER_VERSION"
+            # Add user to docker group
+            sudo usermod -aG docker ${{ secrets.SERVER_USER }}
 
-                # Verify Docker Compose installation
-                echo "=== Checking Docker Compose installation ==="
-                COMPOSE_VERSION=$(docker compose version 2>&1)
-                if ! echo "$COMPOSE_VERSION" | grep -q "Docker Compose version"; then
-                  echo "ERROR: Docker Compose is not installed correctly. Got: $COMPOSE_VERSION"
-                  exit 1
-                fi
-                echo "Docker Compose: $COMPOSE_VERSION"
+            # Verify Docker installation
+            echo "=== Checking Docker installation ==="
+            DOCKER_VERSION=$(docker --version 2>&1)
+            if ! echo "$DOCKER_VERSION" | grep -q "Docker version"; then
+              echo "ERROR: Docker is not installed correctly. Got: $DOCKER_VERSION"
+              exit 1
+            fi
+            echo "Docker: $DOCKER_VERSION"
 
-                echo "Docker and Docker Compose installed successfully!"
+            # Verify Docker Compose installation
+            echo "=== Checking Docker Compose installation ==="
+            COMPOSE_VERSION=$(docker compose version 2>&1)
+            if ! echo "$COMPOSE_VERSION" | grep -q "Docker Compose version"; then
+              echo "ERROR: Docker Compose is not installed correctly. Got: $COMPOSE_VERSION"
+              exit 1
+            fi
+            echo "Docker Compose: $COMPOSE_VERSION"
+
+            echo "Docker and Docker Compose installed successfully!"
 
       - name: Configure Server and Traefik Network
         uses: appleboy/ssh-action@v1
@@ -54,32 +54,32 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
           script: |
-                # Update OS 
-                while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do echo 'Waiting for apt lock...'; sleep 5; done
-                sudo apt update && sudo apt upgrade -y
+            # Update OS 
+            while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do echo 'Waiting for apt lock...'; sleep 5; done
+            sudo apt update && sudo apt upgrade -y
 
-                # Create external network for Traefik
-                docker network inspect traefik-net >/dev/null 2>&1 || docker network create traefik-net
+            # Create external network for Traefik
+            docker network inspect traefik-net >/dev/null 2>&1 || docker network create traefik-net
 
-                 # Verify network installation for Traefik
-                echo "=== Checking network installation ==="
-                NETWORK=$(docker network ls | grep traefik-net)
-                if ! echo "$NETWORK" | grep -q "traefik-net"; then
-                  echo "ERROR: Traefik network is not installed correctly."
-                  exit 1
-                fi
-                echo "Traefik network: $NETWORK"
+             # Verify network installation for Traefik
+            echo "=== Checking network installation ==="
+            NETWORK=$(docker network ls | grep traefik-net)
+            if ! echo "$NETWORK" | grep -q "traefik-net"; then
+              echo "ERROR: Traefik network is not installed correctly."
+              exit 1
+            fi
+            echo "Traefik network: $NETWORK"
 
-                # Create directory with correct permissions 
-                sudo mkdir -p /opt/stacks/traefik
-                
-                # Create acme.json and set strict Let's Encrypt permissions
-                sudo touch /opt/stacks/traefik/acme.json
-                sudo chmod 600 /opt/stacks/traefik/acme.json
-                
-                # Ensure correct ownership
-                sudo chown -R $USER:$USER /opt/stacks
-                
+            # Create directory with correct permissions 
+            sudo mkdir -p /opt/stacks/traefik
+
+            # Create acme.json and set strict Let's Encrypt permissions
+            sudo touch /opt/stacks/traefik/acme.json
+            sudo chmod 600 /opt/stacks/traefik/acme.json
+
+            # Ensure correct ownership
+            sudo chown -R $USER:$USER /opt/stacks
+
       - name: Deploy Traefik Compose File
         uses: appleboy/scp-action@v1
         with:
@@ -103,9 +103,9 @@ jobs:
           envs: ACME_EMAIL_SECRET
           script: |
             cd /opt/stacks/traefik
-            
+
             # Write the email secret to a .env file for docker compose to consume
             echo "ACME_EMAIL=$ACME_EMAIL_SECRET" > .env
-            
+
             docker compose -f traefik-compose.yml up -d
             echo "Traefik proxy is now running!"

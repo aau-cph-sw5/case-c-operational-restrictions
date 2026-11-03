@@ -3,8 +3,8 @@ services:
     build:
       target: runtime # Overrides 'dev' target from base file
     container_name: metro-backend-${BRANCH_NAME:-dev}
-    restart: unless-stopped 
-    ports: !reset []   # Removes "8080:8080" binding from base file
+    restart: unless-stopped
+    ports: !reset [] # Removes "8080:8080" binding from base file
     volumes: !reset [] # Removes local source code mounts from base file
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
@@ -17,7 +17,7 @@ services:
       # Routes internal traffic directly to the container's 8080 port
       - "traefik.http.services.backend-${BRANCH_NAME:-dev}.loadbalancer.server.port=8080"
     networks:
-      - default 
+      - default
       - traefik-net
 
   frontend:
@@ -25,7 +25,7 @@ services:
       target: runtime # Overrides 'dev' target to serve via Nginx
     container_name: metro-frontend-${BRANCH_NAME:-dev}
     restart: unless-stopped
-    ports: !reset []   # Removes "5173:5173" binding
+    ports: !reset [] # Removes "5173:5173" binding
     volumes: !reset [] # Removes local node_modules/source mounts
     labels:
       - "traefik.enable=true"
