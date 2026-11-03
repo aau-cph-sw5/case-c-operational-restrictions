@@ -8,7 +8,10 @@ import {
   type NotificationTab,
 } from "../components/notifications/NotificationTabs";
 import { NotificationDetails } from "../components/notifications/NotificationDetails";
-import { getNotifications } from "../services/notificationApi";
+import {
+  getNotifications,
+  markNotificationAsRead,
+} from "../services/notificationApi";
 import { toNotificationViewModel } from "../services/notificationMapper";
 
 export function NotificationPage() {
@@ -55,7 +58,15 @@ export function NotificationPage() {
     return true;
   });
 
-  function openNotification(notification: Notification) {
+async function openNotification(notification: Notification) {
+  if (!notification.unread) {
+    setSelectedNotification(notification);
+    return;
+  }
+
+  try {
+    await markNotificationAsRead(notification.id);
+
     const updatedNotification = {
       ...notification,
       unread: false,
@@ -68,7 +79,12 @@ export function NotificationPage() {
     );
 
     setSelectedNotification(updatedNotification);
+  } catch (err) {
+    console.error("Kunne ikke markere notifikationen som læst:", err);
+    setSelectedNotification(notification);
   }
+}
+
 
   function closeDetails() {
     setSelectedNotification(null);

@@ -93,4 +93,28 @@ public class NotificationService(
           .OrderByDescending(x => x.CreatedAt)
           .ToListAsync();
     }
+
+   /// <summary>
+   /// Marks a notification as read for the specified recipient.
+   /// </summary>
+   public async Task<bool> MarkAsReadAsync(Guid notificationId, Guid recipientUserId)
+   {
+      var notification = await _appDbContext.Notifications
+        .FirstOrDefaultAsync(x =>
+            x.Id == notificationId &&
+            x.RecipientUserId == recipientUserId);
+
+      if (notification == null)
+       {
+        return false;
+       }
+
+      if (notification.ReadAt == null)
+       {
+        notification.ReadAt = DateTime.UtcNow;
+        await _appDbContext.SaveChangesAsync();
+       }
+
+    return true;
+  }
 }

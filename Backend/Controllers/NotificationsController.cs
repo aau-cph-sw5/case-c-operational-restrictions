@@ -39,4 +39,24 @@ public class NotificationsController : ApiControllerBase
 
         return Ok(notifications.Select(NotificationDto.FromDalEntity).ToList());
     }
+    /// <summary>
+    /// Marks a notification as read for the logged-in user.
+    /// </summary>
+    [HttpPatch("{id:guid}/read")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+     public async Task<IActionResult> MarkAsRead(Guid id)
+    {
+       var success = await _notificationService.MarkAsReadAsync(id, CurrentUserId);
+
+       if (!success)
+       {
+        return NotFound();
+        }
+
+        return NoContent();
+}
+
+
+
 }

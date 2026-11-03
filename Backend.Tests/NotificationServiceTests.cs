@@ -69,6 +69,99 @@ public class NotificationServiceTests : IDisposable
         Assert.Empty(result);
     }
 
+    [Fact]
+    public async Task MarkAsReadAsyncUpdatesReadAt()
+    {
+        // Arrange: Create a test notification
+        var userId = Guid.NewGuid();
+        var notificationId = SeedNotification(
+            Guid.NewGuid(),
+            userId,
+            DateTime.UtcNow
+        );
+
+        var service = new NotificationService(_db);
+
+        // Act: Mark the notification as read
+        var result = await service.MarkAsReadAsync(notificationId, userId);
+
+        // Assert: Verify the notification was marked as read
+        var notification = await _db.Notifications
+         .FirstAsync(x => x.Id == notificationId);
+
+        Assert.True(result);
+        Assert.NotNull(notification.ReadAt);
+    }
+    [Fact]
+    public async Task MarkAsReadAsyncCannotMarkAnotherUsersNotification()
+    {
+        // Arrange
+        var ownerId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+
+        var notificationId = SeedNotification(
+            Guid.NewGuid(),
+            ownerId,
+            DateTime.UtcNow
+        );
+
+        var service = new NotificationService(_db);
+
+        // Act
+        var result = await service.MarkAsReadAsync(notificationId, otherUserId);
+
+        // Assert
+        var notification = await _db.Notifications
+            .FirstAsync(x => x.Id == notificationId);
+
+        Assert.False(result);
+        Assert.Null(notification.ReadAt);
+    }
+    [Fact]
+    public async Task MarkAsReadAsyncDoesNotChangeExistingReadAt()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var notificationId = SeedNotification(
+            Guid.NewGuid(),
+            userId,
+            DateTime.UtcNow
+        );
+
+        var originalReadAt = new DateTime(
+            2026, 11, 1, 12, 0, 0, DateTimeKind.Utc
+        );
+
+        var notification = await _db.Notifications
+            .FirstAsync(x => x.Id == notificationId);
+
+        notification.ReadAt = originalReadAt;
+        await _db.SaveChangesAsync();
+
+        var service = new NotificationService(_db);
+
+        // Act
+        var result = await service.MarkAsReadAsync(notificationId, userId);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(originalReadAt, notification.ReadAt);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private Guid SeedNotification(Guid id, Guid recipientUserId, DateTime createdAt)
     {
         _db.Notifications.Add(new Notification
