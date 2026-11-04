@@ -101,6 +101,43 @@ describe("RestrictionDetailPage", () => {
     expect(screen.getByText(/speed limit 40 km\/h/i)).toBeInTheDocument();
   });
 
+  it("shows the saved requested-changes comment to the originator after loading", async () => {
+    mocks.getRestrictionById.mockResolvedValue({
+      ...draft,
+      comment: "Please add the affected track section.",
+    });
+    renderPage();
+
+    const notice = await screen.findByTestId("requested-changes-notice");
+    expect(notice).toHaveTextContent("Please add the affected track section.");
+  });
+
+  it("does not show a requested-changes notice for a draft without a comment", async () => {
+    renderPage();
+    await screen.findByText("restriction-1");
+
+    expect(
+      screen.queryByTestId("requested-changes-notice"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not show the requested-changes notice to a non-originator", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      ...originator,
+      id: "someone-else",
+    });
+    mocks.getRestrictionById.mockResolvedValue({
+      ...draft,
+      comment: "Please add the affected track section.",
+    });
+    renderPage();
+    await screen.findByText("restriction-1");
+
+    expect(
+      screen.queryByTestId("requested-changes-notice"),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows the Unsigned Draft badge when there are no signatures", async () => {
     renderPage();
 

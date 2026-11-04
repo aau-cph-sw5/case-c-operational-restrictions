@@ -43,6 +43,7 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
     id: String(raw.id),
     originatorUserId: String(raw.originatorUserId),
     status: normalizeStatus(raw.status),
+    comment: typeof raw.comment === "string" ? raw.comment : null,
     startDate: String(raw.startDate),
     endDate: raw.endDate ? String(raw.endDate) : null,
     restrictionDescription: String(

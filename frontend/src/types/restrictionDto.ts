@@ -23,6 +23,7 @@ export interface RestrictionDto {
   id: string;
   originatorUserId: string;
   status: RestrictionStatus;
+  comment?: string | null;
   startDate: string;
   endDate: string | null;
   restrictionDescription: string;

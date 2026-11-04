@@ -5,6 +5,8 @@ export const restrictionTexts = {
   screenLabel: "DRIFTSRESTRIKTION",
   idLabel: "Restriktions-ID",
   statusLabel: "Status",
+  requestedChanges: "Der er anmodet om ændringer.",
+  requestedChangesComment: "Kommentar fra godkender",
   startDate: "Startdato",
   endDate: "Slutdato",
   noEndDate: "–",
