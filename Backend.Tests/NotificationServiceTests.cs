@@ -1,6 +1,7 @@
 using Backend.Data;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+using Backend.Models.Requests;
 using Backend.Services;
 
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,55 @@ public class NotificationServiceTests : IDisposable
         var result = await service.GetNotificationsForUserAsync(Guid.NewGuid());
 
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task AddNotificationRecordsCreatedAuditEntry()
+    {
+        var recipient = Guid.NewGuid();
+        var restrictionId = Guid.NewGuid();
+        var service = new NotificationService(_db);
+
+        var notificationId = service.AddNotification(
+            new CreateNotificationRequest(recipient, NotificationType.SignatureRequired, true, restrictionId));
+        await _db.SaveChangesAsync();
+
+        var entry = Assert.Single(_db.NotificationAuditEntries);
+        Assert.Equal(notificationId, entry.NotificationId);
+        Assert.Equal(recipient, entry.RecipientUserId);
+        Assert.Equal(restrictionId, entry.OperationalRestrictionId);
+        Assert.Equal(NotificationAuditEventType.Created, entry.EventType);
+    }
+
+    [Fact]
+    public async Task ResolveActionRequiredAsyncRecordsResolvedAuditEntry()
+    {
+        var recipient = Guid.NewGuid();
+        var restrictionId = Guid.NewGuid();
+        var service = new NotificationService(_db);
+        var notificationId = service.AddNotification(
+            new CreateNotificationRequest(recipient, NotificationType.SignatureRequired, true, restrictionId));
+        await _db.SaveChangesAsync();
+
+        await service.ResolveActionRequiredAsync(restrictionId, recipient);
+        await _db.SaveChangesAsync();
+
+        var entry = Assert.Single(_db.NotificationAuditEntries, x => x.EventType == NotificationAuditEventType.Resolved);
+        Assert.Equal(notificationId, entry.NotificationId);
+        Assert.Equal(restrictionId, entry.OperationalRestrictionId);
+    }
+
+    [Fact]
+    public async Task NotificationAuditEntriesCannotBeDeleted()
+    {
+        var service = new NotificationService(_db);
+        service.AddNotification(
+            new CreateNotificationRequest(Guid.NewGuid(), NotificationType.SignatureRequired, true, Guid.NewGuid()));
+        await _db.SaveChangesAsync();
+
+        _db.NotificationAuditEntries.Remove(_db.NotificationAuditEntries.Single());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _db.SaveChangesAsync());
     }
 
     private Guid SeedNotification(Guid id, Guid recipientUserId, DateTime createdAt)

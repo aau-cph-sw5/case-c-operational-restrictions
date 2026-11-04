@@ -68,6 +68,39 @@ namespace Backend.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("Backend.Models.Entities.NotificationAuditEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("text");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("OperationalRestrictionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RecipientUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationId");
+
+                    b.HasIndex("OperationalRestrictionId", "OccurredAt");
+
+                    b.ToTable("NotificationAuditEntries");
+                });
+
             modelBuilder.Entity("Backend.Models.Entities.NotificationDelivery", b =>
                 {
                     b.Property<Guid>("Id")
@@ -185,6 +218,15 @@ namespace Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("OperationalRestriction");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.NotificationAuditEntry", b =>
+                {
+                    b.HasOne("Backend.Models.Entities.Notification", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Backend.Models.Entities.NotificationDelivery", b =>

@@ -58,6 +58,7 @@ public class NotificationService(
         };
 
         _appDbContext.Add(notification);
+        AddAuditEntry(notification, NotificationAuditEventType.Created, now);
 
         return notification.Id;
     }
@@ -79,6 +80,7 @@ public class NotificationService(
         foreach (var notification in openNotifications)
         {
             notification.ResolvedAt = now;
+            AddAuditEntry(notification, NotificationAuditEventType.Resolved, now);
         }
     }
 
@@ -92,5 +94,19 @@ public class NotificationService(
           .Where(x => x.RecipientUserId == recipientUserId)
           .OrderByDescending(x => x.CreatedAt)
           .ToListAsync();
+    }
+
+    // Adds an append-only audit entry (C-021). Saved by the caller together with the change it records.
+    private void AddAuditEntry(Notification notification, NotificationAuditEventType eventType, DateTime occurredAt)
+    {
+        _appDbContext.Add(new NotificationAuditEntry
+        {
+            Id = Guid.NewGuid(),
+            NotificationId = notification.Id,
+            RecipientUserId = notification.RecipientUserId,
+            OperationalRestrictionId = notification.OperationalRestrictionId,
+            EventType = eventType,
+            OccurredAt = occurredAt
+        });
     }
 }

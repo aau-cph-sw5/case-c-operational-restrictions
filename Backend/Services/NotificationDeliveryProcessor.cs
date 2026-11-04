@@ -79,6 +79,7 @@ public partial class NotificationDeliveryProcessor(
             delivery.SentAt = now;
             delivery.NextAttemptAt = null;
             delivery.LastError = null;
+            AddAuditEntry(delivery, NotificationAuditEventType.Delivered, now);
             return;
         }
 
@@ -88,12 +89,29 @@ public partial class NotificationDeliveryProcessor(
         {
             delivery.Status = DeliveryStatus.Failed;
             delivery.NextAttemptAt = now + GetRetryDelay(delivery.AttemptCount);
+            AddAuditEntry(delivery, NotificationAuditEventType.DeliveryFailed, now);
             return;
         }
 
         delivery.Status = DeliveryStatus.Undeliverable;
         delivery.NextAttemptAt = null;
+        AddAuditEntry(delivery, NotificationAuditEventType.Undeliverable, now);
         Log.Undeliverable(_logger, delivery.Id, delivery.AttemptCount, delivery.LastError);
+    }
+
+    // Adds an append-only audit entry (C-021); saved with the delivery result in ProcessDueDeliveriesAsync.
+    private void AddAuditEntry(NotificationDelivery delivery, NotificationAuditEventType eventType, DateTime occurredAt)
+    {
+        _appDbContext.Add(new NotificationAuditEntry
+        {
+            Id = Guid.NewGuid(),
+            NotificationId = delivery.NotificationId,
+            RecipientUserId = delivery.Notification.RecipientUserId,
+            OperationalRestrictionId = delivery.Notification.OperationalRestrictionId,
+            EventType = eventType,
+            OccurredAt = occurredAt,
+            Details = delivery.LastError
+        });
     }
 
     private static partial class Log
