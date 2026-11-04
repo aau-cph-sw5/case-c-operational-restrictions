@@ -5,6 +5,7 @@ using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
 using Backend.Services;
+using Backend.Models.Requests;
 
 namespace Backend.Tests;
 
@@ -12,7 +13,10 @@ public class SignatureServiceTests
 {
     // The service keeps its data in static lists, so every test uses its own restriction id.
     // xUnit creates a new test class instance per test, so each test gets a fresh service.
-    private readonly SignatureService _service = new(null!);
+    private readonly SignatureService _service = new(
+        null!,
+        new FakeNotificationService()
+    );
 
     [Fact]
     public void SignatureHasNoPublicSetters()
@@ -84,5 +88,51 @@ public class SignatureServiceTests
 
         Assert.Equal(4, required.Count);
         Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
+    }
+
+    [Fact]
+    public void CreateRequiredSignaturesCreatesNotificationsForEachSigner()
+    {
+        var notificationService = new FakeNotificationService();
+        var service = new SignatureService(null!, notificationService);
+        var restrictionId = Guid.NewGuid();
+
+        var requiredSignatures = service.CreateRequiredSignatures(restrictionId);
+
+        Assert.Equal(requiredSignatures.Count, notificationService.Notifications.Count);
+
+        foreach (var requiredSignature in requiredSignatures)
+        {
+            Assert.Contains(notificationService.Notifications, notification =>
+                notification.RecipientUserId == requiredSignature.SigneeId &&
+                notification.Type == NotificationType.SignatureRequired &&
+                notification.RequiresAction &&
+                notification.OperationalRestrictionId == restrictionId
+            );
+        }
+    }
+}
+
+public class FakeNotificationService : INotificationService
+{
+    public List<CreateNotificationRequest> Notifications { get; } = [];
+
+    public Guid AddNotification(CreateNotificationRequest request)
+    {
+        Notifications.Add(request);
+        return Guid.NewGuid();
+    }
+
+    public Task ResolveActionRequiredAsync(
+        Guid operationalRestrictionId,
+        Guid recipientUserId)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task<List<Notification>> GetNotificationsForUserAsync(
+        Guid recipientUserId)
+    {
+        return Task.FromResult(new List<Notification>());
     }
 }
