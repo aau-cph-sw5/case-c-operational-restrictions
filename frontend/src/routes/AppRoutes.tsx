@@ -6,6 +6,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { RestrictionDetailPage } from "../pages/RestrictionDetailPage";
 import { ProtectedRoute } from "../hooks/ProtectedRoute";
 import { InstallButton } from "../components/InstallButton";
+import { OverviewPage } from "../pages/OverviewPage";
 
 export function AppRoutes() {
   return (
@@ -13,12 +14,9 @@ export function AppRoutes() {
       <InstallButton />
       <Routes>
         <Route path="/" element={<LoginPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/home" element={<App />} />
+        <Route path="/overview" element={<OverviewPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/home" element={<App />} />
-          <Route path="/restrictions/:id" element={<RestrictionDetailPage />} />
-        </Route>
       </Routes>
     </>
   );
