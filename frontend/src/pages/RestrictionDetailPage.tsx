@@ -185,6 +185,8 @@ export function RestrictionDetailPage() {
   const isOriginator =
     currentUser !== null && currentUser.id === restriction.originatorUserId;
   const canSign = isDraft && isOriginator;
+  const hasRequestedChanges =
+    isDraft && isOriginator && Boolean(restriction.comment?.trim());
 
   const knownUsers = currentUser ? { [currentUser.id]: currentUser.name } : {};
 
@@ -200,6 +202,21 @@ export function RestrictionDetailPage() {
           <CheckCircle2 className="size-5 text-[#37AB87]" aria-hidden />
           <AlertDescription className="text-base text-[#1E745B]">
             {navNotification}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {hasRequestedChanges && (
+        <Alert
+          data-testid="requested-changes-notice"
+          className="border-[#EF7D00] bg-[#FEF3C7] font-['Inter_Variable','Inter',sans-serif] text-base text-[#EF7D00]"
+        >
+          <OctagonAlert aria-hidden />
+          <AlertDescription className="text-base">
+            <p className="font-bold">{t.requestedChanges}</p>
+            <p>
+              {t.requestedChangesComment}: {restriction.comment}
+            </p>
           </AlertDescription>
         </Alert>
       )}
