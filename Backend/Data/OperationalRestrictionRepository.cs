@@ -1,7 +1,5 @@
 using System.Linq.Expressions;
-
 using Backend.Models.Entities;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data;

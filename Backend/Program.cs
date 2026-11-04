@@ -42,9 +42,6 @@ builder.Services.AddSingleton<IRestrictionGuard, OperatorsAreAssigned>();
 builder.Services.AddSingleton<IRestrictionGuard, ReturnedForChanges>();
 builder.Services.AddSingleton<IRestrictionGuard, CancelledRefused>();
 
-// Register User Service
-builder.Services.AddScoped<IUserService, UserService>();
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

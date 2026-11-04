@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;

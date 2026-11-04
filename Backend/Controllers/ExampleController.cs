@@ -1,5 +1,4 @@
 using Backend.Services;
-
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
