@@ -2,14 +2,17 @@ using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+using Backend.Models.Requests;
 
 namespace Backend.Services;
 
 public class SignatureService(
-    AppDbContext appDbContext
+    AppDbContext appDbContext,
+    INotificationService notificationService
 )
 {
     private readonly AppDbContext _appDbContext = appDbContext;
+    private readonly INotificationService _notificationService = notificationService;
     //Temporary before db
     private static readonly List<User> _users =
     [
@@ -96,6 +99,17 @@ public class SignatureService(
         //her skal de tilføjes til db i fremtiden
         _requiredSignatures.AddRange(createdSignatures);
 
+        foreach (var requiredSignature in createdSignatures)
+        {
+            _notificationService.AddNotification(
+                new CreateNotificationRequest(
+                    RecipientUserId: requiredSignature.SigneeId,
+                    Type: NotificationType.SignatureRequired,
+                    RequiresAction: true,
+                    OperationalRestrictionId: requiredSignature.OperationalRestrictionId
+                )
+            );
+        }
         return createdSignatures;
     }
 
