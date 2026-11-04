@@ -53,7 +53,11 @@ function apiError(status: number): RestrictionApiError {
   return Object.assign(new Error(`HTTP ${status}`), { status });
 }
 
-function renderPage(initialEntry: string | { pathname: string; state?: unknown } = "/restrictions/restriction-1") {
+function renderPage(
+  initialEntry:
+    | string
+    | { pathname: string; state?: unknown } = "/restrictions/restriction-1",
+) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
@@ -112,7 +116,9 @@ describe("RestrictionDetailPage", () => {
     renderPage();
     await screen.findByText("restriction-1");
 
-    expect(screen.queryByTestId("requested-changes-notice")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requested-changes-notice"),
+    ).not.toBeInTheDocument();
   });
 
   it("does not show the requested-changes notice to a non-originator", async () => {
@@ -127,7 +133,9 @@ describe("RestrictionDetailPage", () => {
     renderPage();
     await screen.findByText("restriction-1");
 
-    expect(screen.queryByTestId("requested-changes-notice")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requested-changes-notice"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the Unsigned Draft badge when there are no signatures", async () => {
@@ -290,8 +298,8 @@ describe("RestrictionDetailPage", () => {
     });
     await screen.findByText("restriction-1");
 
-    expect(
-      screen.getByTestId("navigation-notification"),
-    ).toHaveTextContent("Driftsrestriktion oprettet som kladde.");
+    expect(screen.getByTestId("navigation-notification")).toHaveTextContent(
+      "Driftsrestriktion oprettet som kladde.",
+    );
   });
 });

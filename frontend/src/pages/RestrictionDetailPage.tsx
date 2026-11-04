@@ -95,10 +95,18 @@ export function RestrictionDetailPage() {
   const [signError, setSignError] = useState<string | null>(null);
 
   const navNotification =
-    (location.state as { notification?: string; successMessage?: string } | null)
-      ?.notification ??
-    (location.state as { notification?: string; successMessage?: string } | null)
-      ?.successMessage;
+    (
+      location.state as {
+        notification?: string;
+        successMessage?: string;
+      } | null
+    )?.notification ??
+    (
+      location.state as {
+        notification?: string;
+        successMessage?: string;
+      } | null
+    )?.successMessage;
 
   useEffect(() => {
     if (!id) {
@@ -254,7 +262,9 @@ export function RestrictionDetailPage() {
 
         <RestrictionInfoCard label={t.endDate}>
           <p data-testid="end-local">
-            {restriction.endDate ? formatLocal(restriction.endDate) : t.noEndDate}
+            {restriction.endDate
+              ? formatLocal(restriction.endDate)
+              : t.noEndDate}
           </p>
           {restriction.endDate && (
             <p
