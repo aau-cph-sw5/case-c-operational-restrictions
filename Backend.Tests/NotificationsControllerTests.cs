@@ -49,6 +49,9 @@ public class StubNotificationService : INotificationService
 
         return Task.FromResult(MarkAsReadResult);
     }
+
+    public Task UpdateAllNotificationsAsync() =>
+        throw new NotSupportedException();
 }
 
 public class NotificationsControllerTests

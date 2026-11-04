@@ -34,7 +34,7 @@ public class NotificationServiceTests : IDisposable
         SeedNotification(Guid.NewGuid(), other, DateTime.UtcNow);
         var expected = SeedNotification(Guid.NewGuid(), user, DateTime.UtcNow);
 
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         var result = await service.GetNotificationsForUserAsync(user);
 
@@ -50,7 +50,7 @@ public class NotificationServiceTests : IDisposable
         var oldest = SeedNotification(Guid.NewGuid(), user, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
         var newest = SeedNotification(Guid.NewGuid(), user, new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc));
 
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         var result = await service.GetNotificationsForUserAsync(user);
 
@@ -62,7 +62,7 @@ public class NotificationServiceTests : IDisposable
     [Fact]
     public async Task GetNotificationsForUserAsyncReturnsEmptyListForUnknownUser()
     {
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         var result = await service.GetNotificationsForUserAsync(Guid.NewGuid());
 
@@ -80,7 +80,7 @@ public class NotificationServiceTests : IDisposable
             DateTime.UtcNow
         );
 
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         // Act: Mark the notification as read
         var result = await service.MarkAsReadAsync(notificationId, userId);
@@ -105,7 +105,7 @@ public class NotificationServiceTests : IDisposable
             DateTime.UtcNow
         );
 
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         // Act
         var result = await service.MarkAsReadAsync(notificationId, otherUserId);
@@ -138,7 +138,7 @@ public class NotificationServiceTests : IDisposable
         notification.ReadAt = originalReadAt;
         await _db.SaveChangesAsync();
 
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         // Act
         var result = await service.MarkAsReadAsync(notificationId, userId);

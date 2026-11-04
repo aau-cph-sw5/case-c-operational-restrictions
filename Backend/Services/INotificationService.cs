@@ -12,4 +12,6 @@ public interface INotificationService
     Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId);
 
     Task<bool> MarkAsReadAsync(Guid notificationId, Guid recipientUserId);
+
+    Task UpdateAllNotificationsAsync();
 }
