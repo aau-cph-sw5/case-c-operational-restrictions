@@ -3,6 +3,7 @@ using System.Security.Claims;
 
 using Backend.Controllers;
 using Backend.Data;
+using Backend.Lifecycle;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
@@ -20,7 +21,25 @@ public class RestrictionControllerTests
     public RestrictionControllerTests()
     {
         var appDbContext = TestDatabase.CreateSeededContext();
-        _service = new OperationalRestrictionService(appDbContext, new SignatureService(appDbContext));
+        var lifecycle = new RestrictionLifecycleService(
+            new IRestrictionGuard[]
+            {
+                new StartDateIsFoundGuard(),
+                new OperationalRestrictionIdIsFound(),
+                new DescriptionTextIsFound(),
+                new OriginatorSignatureIsFound(),
+                new DutyOperationsManagerSignatureIsFound(),
+                new ControlRoomSupervisorSignatureIsFound(),
+                new OperatorsAreAssigned(),
+                new ReturnedForChanges(),
+                new CancelledRefused()
+            });
+
+        _service = new OperationalRestrictionService(
+            lifecycle,
+            new OperationalRestrictionRepository(appDbContext),
+            new RestrictionTransitionEventRepository(appDbContext),
+            new UnitOfWork(appDbContext));
     }
 
     [Fact]
@@ -43,7 +62,7 @@ public class RestrictionControllerTests
         var created = Assert.IsType<CreatedAtActionResult>(result.Result);
         var restriction = Assert.IsType<OperationalRestrictionDto>(created.Value);
         Assert.Equal(DbSeeder.AnnaId, restriction.OriginatorUserId);
-        Assert.Equal(RestrictionStatus.Draft, restriction.Status);
+        Assert.Equal(RestrictionState.Draft, restriction.State);
         Assert.Equal("Test Title", restriction.Title);
         Assert.Equal("REF-001", restriction.Reference);
         Assert.Equal("Situation details", restriction.SituationDescription);
@@ -108,7 +127,7 @@ public class RestrictionControllerTests
     {
         var draft = await CreateDraftAsync(DbSeeder.AnnaId);
 
-        var result = await CreateControllerFor(DbSeeder.AnnaId).GetById(draft.Id);
+        var result = await CreateControllerFor(DbSeeder.AnnaId).GetById(draft.RestrictionId);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -118,7 +137,7 @@ public class RestrictionControllerTests
     {
         var draft = await CreateDraftAsync(DbSeeder.AnnaId);
 
-        var result = await CreateControllerFor(DbSeeder.LarsId).GetById(draft.Id);
+        var result = await CreateControllerFor(DbSeeder.LarsId).GetById(draft.RestrictionId);
 
         Assert.IsType<NotFoundObjectResult>(result.Result);
     }
@@ -132,7 +151,7 @@ public class RestrictionControllerTests
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var restrictions = Assert.IsType<List<OperationalRestrictionDto>>(ok.Value);
-        Assert.DoesNotContain(restrictions, x => x.Status == RestrictionStatus.Draft && x.OriginatorUserId != DbSeeder.LarsId);
+        Assert.DoesNotContain(restrictions, x => x.State == RestrictionState.Draft && x.OriginatorUserId != DbSeeder.LarsId);
     }
 
     private RestrictionsController CreateControllerFor(Guid userId)

@@ -68,14 +68,14 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await ReadAsync<OperationalRestrictionDto>(response);
         Assert.Equal(DbSeeder.AnnaId, created.OriginatorUserId);
-        Assert.Equal(RestrictionStatus.Draft, created.Status);
+        Assert.Equal(RestrictionState.Draft, created.State);
         Assert.Equal("Sporafspærring Nørreport", created.Title);
         Assert.Equal("REF-2026-001", created.Reference);
         Assert.Equal("Situation details", created.SituationDescription);
         Assert.Equal("Restriction details", created.RestrictionDescription);
         Assert.Equal("Cancellation details", created.CancellationDescription);
 
-        var fetched = await client.GetAsync($"/api/restrictions/{created.Id}");
+        var fetched = await client.GetAsync($"/api/restrictions/{created.RestrictionId}");
         Assert.Equal(HttpStatusCode.OK, fetched.StatusCode);
     }
 
@@ -164,7 +164,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     {
         var draft = await CreateDraftAsAsync(DbSeeder.AnnaId);
 
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restrictions/{draft.Id}");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restrictions/{draft.RestrictionId}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -187,9 +187,9 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var restrictions = await ReadAsync<List<OperationalRestrictionDto>>(response);
-        Assert.Contains(restrictions, x => x.Status != RestrictionStatus.Draft);
-        Assert.Contains(restrictions, x => x.Status == RestrictionStatus.Draft && x.OriginatorUserId == DbSeeder.LarsId);
-        Assert.DoesNotContain(restrictions, x => x.Status == RestrictionStatus.Draft && x.OriginatorUserId != DbSeeder.LarsId);
+        Assert.Contains(restrictions, x => x.State != RestrictionState.Draft);
+        Assert.Contains(restrictions, x => x.State == RestrictionState.Draft && x.OriginatorUserId == DbSeeder.LarsId);
+        Assert.DoesNotContain(restrictions, x => x.State == RestrictionState.Draft && x.OriginatorUserId != DbSeeder.LarsId);
     }
 
     private HttpClient CreateClientFor(Guid userId)

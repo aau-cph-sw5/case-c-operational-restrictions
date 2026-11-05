@@ -71,10 +71,11 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
       : [];
 
   return {
-    id: String(raw.id),
-    originatorUserId: String(raw.originatorUserId),
-    status: normalizeStatus(raw.status),
-    startDate: String(raw.startDate),
+    id: String(raw.id ?? raw.restrictionId ?? ""),
+    originatorUserId: String(raw.originatorUserId ?? ""),
+    status: normalizeStatus(raw.status ?? raw.state),
+    title: raw.title ? String(raw.title) : undefined,
+    startDate: String(raw.startDate ?? ""),
     endDate: raw.endDate ? String(raw.endDate) : null,
     restrictionDescription: String(
       raw.restrictionDescription ?? raw.description ?? "",

@@ -21,6 +21,7 @@ export interface SignatureDto {
 
 export interface RestrictionDto {
   id: string;
+  title?: string;
   originatorUserId: string;
   status: RestrictionStatus;
   startDate: string;

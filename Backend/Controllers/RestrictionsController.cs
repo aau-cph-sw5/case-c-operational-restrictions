@@ -32,7 +32,7 @@ public class RestrictionsController : ApiControllerBase
         {
             var restriction = await _operationalRestrictionService.CreateRestrictionAsync(request with { CreatedBy = CurrentUserId });
 
-            return CreatedAtAction(nameof(GetById), new { id = restriction.Id }, restriction);
+            return CreatedAtAction(nameof(GetById), new { id = restriction.RestrictionId }, restriction);
         }
         catch (InvalidRestrictionPeriodException exception)
         {

@@ -70,14 +70,14 @@ public static class DbSeeder
     private static async Task SeedRestrictionsAsync(AppDbContext appDbContext)
     {
         var restrictions = CreateRestrictions();
-        var restrictionIds = restrictions.Select(x => x.Id).ToList();
+        var restrictionIds = restrictions.Select(x => x.RestrictionId).ToList();
 
         var existingIds = await appDbContext.OperationalRestrictions
-            .Where(x => restrictionIds.Contains(x.Id))
-            .Select(x => x.Id)
+            .Where(x => restrictionIds.Contains(x.RestrictionId))
+            .Select(x => x.RestrictionId)
             .ToListAsync();
 
-        var missingRestrictions = restrictions.Where(x => !existingIds.Contains(x.Id)).ToList();
+        var missingRestrictions = restrictions.Where(x => !existingIds.Contains(x.RestrictionId)).ToList();
         if (missingRestrictions.Count == 0)
             return;
 
@@ -108,24 +108,24 @@ public static class DbSeeder
 
         return
         [
-            CreateRestriction("5eed0000-0000-0000-0000-000000000001", PlaceholderUserId, RestrictionStatus.Draft, today.AddDays(7), today.AddDays(14), "Sporarbejde ved Nørreport", "REF-2026-001"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000002", PlaceholderUserId, RestrictionStatus.Draft, today.AddDays(20), today.AddDays(21), "Hastighedsbegrænsning M1", "REF-2026-002"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000003", PlaceholderUserId, RestrictionStatus.PendingApproval, today.AddDays(3), today.AddDays(10), "Afspærring af perron 2", "REF-2026-003"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000004", PlaceholderUserId, RestrictionStatus.Active, today.AddDays(-2), today.AddDays(5), "Sporskiftefejl ved Kongens Nytorv", "REF-2026-004"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000005", AnnaId, RestrictionStatus.Draft, today.AddDays(10), today.AddDays(12), "Signalinspektion vest", "REF-2026-005"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000006", AnnaId, RestrictionStatus.Approved, today.AddDays(1), today.AddDays(30), "Vedligeholdelse af kørestrøm", "REF-2026-006"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000007", AnnaId, RestrictionStatus.Active, today.AddDays(-10), today.AddDays(2), "Ventilationsarbejde i tunnel", "REF-2026-007"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000008", AnnaId, RestrictionStatus.Cancelled, today.AddDays(-5), today.AddDays(5), "Aflyst perronlukning", "REF-2026-008"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000009", LarsId, RestrictionStatus.Draft, today.AddDays(4), today.AddDays(6), "Belægningsarbejde forplads", "REF-2026-009"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000010", LarsId, RestrictionStatus.PendingApproval, today.AddDays(8), today.AddDays(9), "Testkørsel af nyt materiel", "REF-2026-010"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000011", LarsId, RestrictionStatus.Archived, today.AddDays(-60), today.AddDays(-30), "Vinterforberedelse 2025", "REF-2025-099"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000012", OliviaId, RestrictionStatus.Draft, today.AddDays(2), today.AddDays(3), "Rensning af drænkanaler", null),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000013", OliviaId, RestrictionStatus.PendingApproval, today.AddDays(5), today.AddDays(19), "Belysningsudskiftning perron", "REF-2026-013"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000014", DanId, RestrictionStatus.Active, today.AddDays(-1), today.AddDays(1), "Akut sporkontrol", "REF-2026-014"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000015", CamillaId, RestrictionStatus.Approved, today.AddDays(14), today.AddDays(28), "Ombygning af nødsystemer", "REF-2026-015"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000016", CamillaId, RestrictionStatus.Archived, today.AddDays(-120), today.AddDays(-90), "Sommerkøreplan tilpasning", "REF-2025-050"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000017", OscarId, RestrictionStatus.Draft, today.AddDays(30), today.AddDays(31), "Inspektion af nødudgange", null),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000018", SofieId, RestrictionStatus.Cancelled, today.AddDays(6), today.AddDays(8), "Aflyst sporjustering M2", "REF-2026-018")
+            CreateRestriction("5eed0000-0000-0000-0000-000000000001", PlaceholderUserId, RestrictionState.Draft, today.AddDays(7), today.AddDays(14), "Sporarbejde ved Nørreport", "REF-2026-001"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000002", PlaceholderUserId, RestrictionState.Draft, today.AddDays(20), today.AddDays(21), "Hastighedsbegrænsning M1", "REF-2026-002"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000003", PlaceholderUserId, RestrictionState.PendingDutyOperationsManagerApproval, today.AddDays(3), today.AddDays(10), "Afspærring af perron 2", "REF-2026-003"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000004", PlaceholderUserId, RestrictionState.Active, today.AddDays(-2), today.AddDays(5), "Sporskiftefejl ved Kongens Nytorv", "REF-2026-004"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000005", AnnaId, RestrictionState.Draft, today.AddDays(10), today.AddDays(12), "Signalinspektion vest", "REF-2026-005"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000006", AnnaId, RestrictionState.Approved, today.AddDays(1), today.AddDays(30), "Vedligeholdelse af kørestrøm", "REF-2026-006"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000007", AnnaId, RestrictionState.Active, today.AddDays(-10), today.AddDays(2), "Ventilationsarbejde i tunnel", "REF-2026-007"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000008", AnnaId, RestrictionState.CancelledRefused, today.AddDays(-5), today.AddDays(5), "Aflyst perronlukning", "REF-2026-008"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000009", LarsId, RestrictionState.Draft, today.AddDays(4), today.AddDays(6), "Belægningsarbejde forplads", "REF-2026-009"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000010", LarsId, RestrictionState.PendingDutyOperationsManagerApproval, today.AddDays(8), today.AddDays(9), "Testkørsel af nyt materiel", "REF-2026-010"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000011", LarsId, RestrictionState.Archived, today.AddDays(-60), today.AddDays(-30), "Vinterforberedelse 2025", "REF-2025-099"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000012", OliviaId, RestrictionState.Draft, today.AddDays(2), today.AddDays(3), "Rensning af drænkanaler", null),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000013", OliviaId, RestrictionState.PendingDutyOperationsManagerApproval, today.AddDays(5), today.AddDays(19), "Belysningsudskiftning perron", "REF-2026-013"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000014", DanId, RestrictionState.Active, today.AddDays(-1), today.AddDays(1), "Akut sporkontrol", "REF-2026-014"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000015", CamillaId, RestrictionState.Approved, today.AddDays(14), today.AddDays(28), "Ombygning af nødsystemer", "REF-2026-015"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000016", CamillaId, RestrictionState.Archived, today.AddDays(-120), today.AddDays(-90), "Sommerkøreplan tilpasning", "REF-2025-050"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000017", OscarId, RestrictionState.Draft, today.AddDays(30), today.AddDays(31), "Inspektion af nødudgange", null),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000018", SofieId, RestrictionState.CancelledRefused, today.AddDays(6), today.AddDays(8), "Aflyst sporjustering M2", "REF-2026-018")
         ];
     }
 
@@ -151,7 +151,7 @@ public static class DbSeeder
     private static OperationalRestriction CreateRestriction(
         string id,
         Guid originatorId,
-        RestrictionStatus status,
+        RestrictionState state,
         DateTime startDate,
         DateTime endDate,
         string title,
@@ -159,10 +159,10 @@ public static class DbSeeder
     {
         return new OperationalRestriction
         {
-            Id = Guid.Parse(id),
-            Originator = originatorId,
+            RestrictionId = Guid.Parse(id),
+            OriginatorUserId = originatorId,
             CreatedBy = originatorId,
-            Status = status,
+            State = state,
             StartDate = startDate,
             EndDate = endDate,
             CreatedAt = DateTime.UtcNow,
