@@ -16,16 +16,18 @@ public class OperationalRestriction
     public RestrictionState State { get; set; } = RestrictionState.Empty;
 
     public DateTime StartDate { get; set; }
-
     public DateTime? EndDate { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime? ArchivedAt { get; set; }
 
     public DateTime? RetentionUntil { get; set; }
 
+    public string Title { get; set; } = string.Empty;
+    public string? Reference { get; set; }
+    public string SituationDescription { get; set; } = string.Empty;
     public string RestrictionDescription { get; set; } = string.Empty;
+    public string CancellationDescription { get; set; } = string.Empty;
 
     public List<File> Files { get; set; } = new List<File>();
 
@@ -42,5 +44,4 @@ public class OperationalRestriction
     public DateTime? UpdatedAt { get; set; }
 
     public Guid? OriginalOperationalRestrictionId { get; set; }
-
 }

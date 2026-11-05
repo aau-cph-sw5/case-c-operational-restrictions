@@ -69,6 +69,10 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("uuid[]");
 
+                    b.Property<string>("CancellationDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -84,6 +88,9 @@ namespace Backend.Migrations
                     b.Property<Guid>("OriginatorUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
                     b.Property<string>("RestrictionDescription")
                         .IsRequired()
                         .HasColumnType("text");
@@ -98,11 +105,19 @@ namespace Backend.Migrations
                     b.Property<Guid>("ReviewerId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("SituationDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("State")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

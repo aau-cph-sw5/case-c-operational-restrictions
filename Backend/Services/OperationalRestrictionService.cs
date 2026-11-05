@@ -28,11 +28,32 @@ public class OperationalRestrictionService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<OperationalRestrictionDto> CreateRestrictionAsync(
-        CreateRestrictionRequest data)
+    /// <summary>
+    /// Creates the first version of a new operational restriction as a draft.
+    /// The creator is also recorded as the originator.
+    /// </summary>
+    public async Task<OperationalRestrictionDto> CreateRestrictionAsync(CreateRestrictionRequest data)
     {
-        if (data.EndDate <= data.StartDate)
-            throw new InvalidRestrictionPeriodException(data.StartDate, data.EndDate);
+        if (string.IsNullOrWhiteSpace(data.Title))
+            throw new MissingRequiredRestrictionFieldException(nameof(data.Title));
+
+        if (!data.StartDate.HasValue || data.StartDate.Value == default)
+            throw new MissingRequiredRestrictionFieldException(nameof(data.StartDate));
+
+        if (string.IsNullOrWhiteSpace(data.SituationDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(data.SituationDescription));
+
+        if (string.IsNullOrWhiteSpace(data.RestrictionDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(data.RestrictionDescription));
+
+        if (string.IsNullOrWhiteSpace(data.CancellationDescription))
+            throw new MissingRequiredRestrictionFieldException(nameof(data.CancellationDescription));
+
+        var startUtc = ToUtc(data.StartDate.Value);
+        DateTime? endUtc = data.EndDate.HasValue ? ToUtc(data.EndDate.Value) : null;
+
+        if (endUtc.HasValue && endUtc.Value <= startUtc)
+            throw new InvalidRestrictionPeriodException(startUtc, endUtc.Value);
 
         var initialState = _lifecycleService.EnsureCanCreate(data);
 
@@ -43,10 +64,14 @@ public class OperationalRestrictionService
             RestrictionId = Guid.NewGuid(),
             OriginatorUserId = data.CreatedBy,
             CreatedBy = data.CreatedBy,
-            StartDate = data.StartDate,
-            EndDate = data.EndDate,
+            Title = data.Title,
+            Reference = data.Reference,
+            SituationDescription = data.SituationDescription,
             RestrictionDescription = data.RestrictionDescription,
+            CancellationDescription = data.CancellationDescription,
             State = initialState,
+            StartDate = startUtc,
+            EndDate = endUtc,
             CreatedAt = now,
             UpdatedAt = now,
             OriginalOperationalRestrictionId = null
@@ -64,6 +89,34 @@ public class OperationalRestrictionService
         return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
     }
 
+    /// <summary>
+    /// Retrieves an operational restriction by its ID. Throws an exception if not found.
+    /// Drafts are private to their originator, so another user's draft is treated as not found.
+    /// </summary>
+    public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id, Guid currentUserId)
+    {
+        var restriction = await _repository.GetByIdAsync(id);
+
+        if (restriction == null || (restriction.State == RestrictionState.Draft && restriction.OriginatorUserId != currentUserId))
+            throw new OperationalRestrictionNotFoundException(id);
+
+        return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
+    }
+
+    /// <summary>
+    /// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
+    /// Drafts are only included for their originator.
+    /// </summary>
+    public async Task<List<OperationalRestrictionDto>> GetAllAsync(Guid currentUserId)
+    {
+        var restrictions = await _repository.GetAllAsync(
+            x => x.State != RestrictionState.Draft || x.OriginatorUserId == currentUserId);
+
+        return restrictions
+            .Select(OperationalRestrictionDto.FromOperationalRestrictionToDto)
+            .ToList();
+    }
+
     public Task<OperationalRestrictionDto> SubmitForApprovalAsync(
         Guid id,
         Guid actorId)
@@ -75,8 +128,8 @@ public class OperationalRestrictionService
     // Versioned audit trail per MET-C-021: edits insert a new version row
     // instead of updating in place.
     public async Task<OperationalRestrictionDto> EditRestrictionAsync(
-    Guid id,
-    OperationalRestrictionDto updateRestrictionDto)
+        Guid id,
+        OperationalRestrictionDto updateRestrictionDto)
     {
         var original = await GetRestrictionOrThrowAsync(id);
 
@@ -167,9 +220,7 @@ public class OperationalRestrictionService
             .ToList();
     }
 
-
-    public async Task<List<OperationalRestrictionDto>>
-        GetActiveRestrictionsAsync()
+    public async Task<List<OperationalRestrictionDto>> GetActiveRestrictionsAsync()
     {
         var restrictions = await _repository.GetAllAsync(
             r => r.State == RestrictionState.Active);
@@ -263,8 +314,6 @@ public class OperationalRestrictionService
         });
     }
 
-
-
     // Versioned audit trail per MET-C-021: writes insert a new version row
     // instead of updating in place.
     private async Task<OperationalRestriction> SaveAsNewVersionAsync(
@@ -293,6 +342,11 @@ public class OperationalRestrictionService
             RestrictionId = newRestrictionId,
             OriginatorUserId = original.OriginatorUserId,
             CreatedBy = original.CreatedBy,
+            Title = original.Title,
+            Reference = original.Reference,
+            SituationDescription = original.SituationDescription,
+            RestrictionDescription = original.RestrictionDescription,
+            CancellationDescription = original.CancellationDescription,
             SignatureSheet = original.SignatureSheet
                 .Select(s => new Signature
                 {
@@ -310,7 +364,6 @@ public class OperationalRestrictionService
             CreatedAt = now,
             ArchivedAt = original.ArchivedAt,
             RetentionUntil = original.RetentionUntil,
-            RestrictionDescription = original.RestrictionDescription,
             Files = original.Files
                 .Select(f => new Backend.Models.Entities.File
                 {
@@ -336,4 +389,11 @@ public class OperationalRestrictionService
         return newVersion;
     }
 
+    private static DateTime ToUtc(DateTime dateTime) =>
+        dateTime.Kind switch
+        {
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => dateTime.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+        };
 }

@@ -67,10 +67,13 @@ public class RestrictionLifecycleServiceTests
         // Arrange
         var data = new CreateRestrictionRequest
         (
-            Guid.NewGuid(),
-            "Maintenance work",
-            DateTime.Now,
-            DateTime.Now
+            CreatedBy: Guid.NewGuid(),
+            Title: "Maintenance work",
+            StartDate: DateTime.Now,
+            EndDate: DateTime.Now.AddHours(2),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Maintenance work",
+            CancellationDescription: "Cancellation details"
         );
 
         // Act & Assert
@@ -83,10 +86,13 @@ public class RestrictionLifecycleServiceTests
         // Arrange - StartDate missing (default)
         var data = new CreateRestrictionRequest
         (
-            Guid.NewGuid(),
-            "Maintenance work",
-            default,
-            DateTime.Now
+            CreatedBy: Guid.NewGuid(),
+            Title: "Maintenance work",
+            StartDate: null,
+            EndDate: DateTime.Now.AddHours(2),
+            SituationDescription: "Situation details",
+            RestrictionDescription: "Maintenance work",
+            CancellationDescription: "Cancellation details"
         );
 
         // Act
@@ -103,7 +109,7 @@ public class RestrictionLifecycleServiceTests
     {
         return new OperationalRestrictionDto
         {
-            RestrictionId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             OriginatorUserId = Guid.NewGuid(),
             RestrictionDescription = "Test restriction",
             StartDate = DateTime.Now,

@@ -9,7 +9,13 @@ public interface IOperationalRestrictionService
 
     Task<OperationalRestrictionDto> CreateRestrictionAsync(
           CreateRestrictionRequest data);
+
+    Task<OperationalRestrictionDto> GetByIdAsync(Guid id, Guid currentUserId);
+    Task<List<OperationalRestrictionDto>> GetAllAsync(Guid currentUserId);
+
+    Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id);
     Task<List<OperationalRestrictionDto>> GetAllAsync();
+    Task<List<OperationalRestrictionDto>> GetActiveRestrictionsAsync();
 
     Task<OperationalRestrictionDto> EditRestrictionAsync(
           Guid id,
@@ -43,9 +49,4 @@ public interface IOperationalRestrictionService
     Task<OperationalRestrictionDto> ResubmitRestrictionAsync(
           Guid id,
           Guid actorId);
-
-    Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id);
-
-    Task<List<OperationalRestrictionDto>> GetActiveRestrictionsAsync();
-
 }

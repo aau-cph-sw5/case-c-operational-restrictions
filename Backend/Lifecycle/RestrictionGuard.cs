@@ -12,7 +12,7 @@ public sealed class StartDateIsFoundGuard : IRestrictionGuard
     {
         return data switch
         {
-            CreateRestrictionRequest r => r.StartDate != default,
+            CreateRestrictionRequest r => r.StartDate.HasValue && r.StartDate.Value != default,
             OperationalRestrictionDto d => d.StartDate != default,
             _ => false
         };
@@ -25,7 +25,7 @@ public sealed class OperationalRestrictionIdIsFound : IRestrictionGuard<Operatio
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        return data.RestrictionId != Guid.Empty;
+        return data.Id != Guid.Empty;
     }
 }
 
