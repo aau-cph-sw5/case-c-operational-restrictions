@@ -12,7 +12,15 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<User> Users => Set<User>();
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OperationalRestriction>()
+            .HasKey(r => r.RestrictionId);
+    }
 
     public DbSet<OperationalRestriction> OperationalRestrictions => Set<OperationalRestriction>();
+    public DbSet<RestrictionTransitionEvent> RestrictionTransitionEvents => Set<RestrictionTransitionEvent>();
+    public DbSet<User> Users => Set<User>();
+
+
 }

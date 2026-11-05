@@ -1,58 +1,15 @@
+using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
 
 namespace Backend.Services;
 
-public class SignatureService
+public class SignatureService(
+    AppDbContext appDbContext
+)
 {
-    private sealed record SignatureUser(
-        Guid Id,
-        string Name,
-        string Email,
-        string PasswordHash,
-        UserRole Role,
-        UserWorkingStatus WorkingStatus);
-
-    private static readonly List<SignatureUser> _users =
-    [
-        new SignatureUser(
-            Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            "Anna Jensen",
-            "anna.jensen@example.com",
-            "seed-password-hash-1",
-            UserRole.DutyOperationsManager,
-            UserWorkingStatus.AtWork),
-        new SignatureUser(
-            Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            "Lars Nielsen",
-            "lars.nielsen@example.com",
-            "seed-password-hash-2",
-            UserRole.Operator,
-            UserWorkingStatus.AtWork),
-        new SignatureUser(
-            Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            "Sofie Hansen",
-            "sofie.hansen@example.com",
-            "seed-password-hash-3",
-            UserRole.Operator,
-            UserWorkingStatus.OffWork),
-        new SignatureUser(
-            Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            "Mikkel Pedersen",
-            "mikkel.pedersen@example.com",
-            "seed-password-hash-4",
-            UserRole.ControlroomSupervisor,
-            UserWorkingStatus.OnHoliday),
-        new SignatureUser(
-            Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            "Camilla Andersen",
-            "camilla.andersen@example.com",
-            "seed-password-hash-5",
-            UserRole.Betriebsleiter,
-            UserWorkingStatus.AtWork)
-    ];
-
+    private readonly AppDbContext _appDbContext = appDbContext;
     //Midlertidigt mens der ikke er database
     private static readonly List<RequiresSignature> _requiredSignatures = [];
     //Midlertidigt mens der ikke er database
@@ -70,7 +27,7 @@ public class SignatureService
 
     public List<RequiresSignature> CreateRequiredSignatures(Guid operationalRestrictionId)
     {
-        var createdSignatures = _users
+        var createdSignatures = _appDbContext.Users
             .Where(user => user.WorkingStatus != UserWorkingStatus.OnHoliday)
             .Select(user => new RequiresSignature
             {
@@ -115,8 +72,7 @@ public class SignatureService
         if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.PendingSignature)
             throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
-        //I fremtiden skal den bruge GetUserById
-        var signee = _users.Single(user => user.Id == signerUserId);
+        var signee = _appDbContext.Users.Single(user => user.Id == signerUserId);
 
         var signature = new Signature
         {
