@@ -26,33 +26,43 @@ public class OperationalRestrictionDto
     public Guid CreatedBy { get; set; }
 
     public DateTime CreatedAt { get; set; }
-
     public DateTime? ArchivedAt { get; set; }
 
     public Guid? OriginalOperationalRestrictionId { get; set; }
+    public SignatureDto? OriginatorSignature { get; set; }
+    public List<SignatureDto> Signatures { get; set; } = new();
 
     public Guid ReviewerId { get; set; }
 
     public string ReviewDescription { get; set; } = string.Empty;
 
-    public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction) =>
-      new()
-      {
-          Id = operationalRestriction.RestrictionId,
-          OriginatorUserId = operationalRestriction.OriginatorUserId,
-          Title = operationalRestriction.Title,
-          Reference = operationalRestriction.Reference,
-          SituationDescription = operationalRestriction.SituationDescription,
-          RestrictionDescription = operationalRestriction.RestrictionDescription,
-          CancellationDescription = operationalRestriction.CancellationDescription,
-          CreatedBy = operationalRestriction.CreatedBy,
-          State = operationalRestriction.State,
-          StartDate = operationalRestriction.StartDate,
-          EndDate = operationalRestriction.EndDate,
-          CreatedAt = operationalRestriction.CreatedAt,
-          ArchivedAt = operationalRestriction.ArchivedAt,
-          OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId,
-          ReviewerId = operationalRestriction.ReviewerId,
-          ReviewDescription = operationalRestriction.ReviewDescription
-      };
+    public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction)
+    {
+        var signatures = operationalRestriction.SignatureSheet?
+            .Select(SignatureDto.FromDalEntity)
+            .ToList() ?? new List<SignatureDto>();
+        var originatorSignature = signatures.FirstOrDefault(s => s.SigneeRole == UserRole.Originator);
+
+        return new()
+        {
+            Id = operationalRestriction.RestrictionId,
+            OriginatorUserId = operationalRestriction.OriginatorUserId,
+            Title = operationalRestriction.Title,
+            Reference = operationalRestriction.Reference,
+            SituationDescription = operationalRestriction.SituationDescription,
+            RestrictionDescription = operationalRestriction.RestrictionDescription,
+            CancellationDescription = operationalRestriction.CancellationDescription,
+            CreatedBy = operationalRestriction.CreatedBy,
+            State = operationalRestriction.State,
+            StartDate = operationalRestriction.StartDate,
+            EndDate = operationalRestriction.EndDate,
+            CreatedAt = operationalRestriction.CreatedAt,
+            ArchivedAt = operationalRestriction.ArchivedAt,
+            OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId,
+            ReviewerId = operationalRestriction.ReviewerId,
+            ReviewDescription = operationalRestriction.ReviewDescription,
+            Signatures = signatures,
+            OriginatorSignature = originatorSignature
+        };
+    }
 }

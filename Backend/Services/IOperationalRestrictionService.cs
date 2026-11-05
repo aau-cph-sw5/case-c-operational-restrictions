@@ -11,10 +11,13 @@ public interface IOperationalRestrictionService
           CreateRestrictionRequest data);
 
     Task<OperationalRestrictionDto> GetByIdAsync(Guid id, Guid currentUserId);
+    Task<OperationalRestrictionDto> GetByIdAsync(Guid id);
     Task<List<OperationalRestrictionDto>> GetAllAsync(Guid currentUserId);
 
     Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id);
     Task<List<OperationalRestrictionDto>> GetAllAsync();
+    Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId);
+
     Task<List<OperationalRestrictionDto>> GetActiveRestrictionsAsync();
 
     Task<OperationalRestrictionDto> EditRestrictionAsync(

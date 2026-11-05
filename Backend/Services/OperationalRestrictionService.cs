@@ -15,17 +15,20 @@ public class OperationalRestrictionService
     private readonly IOperationalRestrictionRepository _repository;
     private readonly IRestrictionTransitionEventRepository _transitionEventRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly SignatureService? _signatureService;
 
     public OperationalRestrictionService(
         RestrictionLifecycleService lifecycleService,
         IOperationalRestrictionRepository repository,
         IRestrictionTransitionEventRepository transitionEventRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        SignatureService? signatureService = null)
     {
         _lifecycleService = lifecycleService;
         _repository = repository;
         _transitionEventRepository = transitionEventRepository;
         _unitOfWork = unitOfWork;
+        _signatureService = signatureService;
     }
 
     /// <summary>
@@ -92,15 +95,87 @@ public class OperationalRestrictionService
     /// <summary>
     /// Retrieves an operational restriction by its ID. Throws an exception if not found.
     /// Drafts are private to their originator, so another user's draft is treated as not found.
+    /// Resolves to the latest version of the restriction if newer versions exist.
     /// </summary>
     public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id, Guid currentUserId)
     {
-        var restriction = await _repository.GetByIdAsync(id);
+        var restriction = await GetLatestRestrictionOrThrowAsync(id);
 
-        if (restriction == null || (restriction.State == RestrictionState.Draft && restriction.OriginatorUserId != currentUserId))
+        if (restriction.State == RestrictionState.Draft && restriction.OriginatorUserId != currentUserId)
             throw new OperationalRestrictionNotFoundException(id);
 
-        return OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
+        var restrictionDto = OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
+        var originatorSignature = _signatureService?.GetOriginatorSignature(restriction.RestrictionId);
+        if (originatorSignature != null && restrictionDto.OriginatorSignature == null)
+            restrictionDto.OriginatorSignature = SignatureDto.FromDalEntity(originatorSignature);
+
+        return restrictionDto;
+    }
+
+    public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id)
+    {
+        var restriction = await GetLatestRestrictionOrThrowAsync(id);
+
+        var restrictionDto = OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
+        var originatorSignature = _signatureService?.GetOriginatorSignature(restriction.RestrictionId);
+        if (originatorSignature != null && restrictionDto.OriginatorSignature == null)
+            restrictionDto.OriginatorSignature = SignatureDto.FromDalEntity(originatorSignature);
+
+        return restrictionDto;
+    }
+
+    private async Task<OperationalRestriction> GetLatestRestrictionOrThrowAsync(Guid id)
+    {
+        var restriction = await _repository.GetByIdAsync(id)
+            ?? throw new OperationalRestrictionNotFoundException(id);
+
+        var originalId = restriction.OriginalOperationalRestrictionId ?? restriction.RestrictionId;
+        var versions = await _repository.GetAllAsync(
+            r => r.RestrictionId == originalId || r.OriginalOperationalRestrictionId == originalId);
+
+        var latestVersion = versions.OrderByDescending(v => v.Version).FirstOrDefault();
+        if (latestVersion != null && latestVersion.RestrictionId != restriction.RestrictionId)
+        {
+            restriction = await _repository.GetByIdAsync(latestVersion.RestrictionId) ?? latestVersion;
+        }
+
+        return restriction;
+    }
+
+    public async Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId)
+    {
+        if (_signatureService == null)
+            throw new InvalidOperationException("SignatureService is not configured.");
+
+        var restriction = await _repository.GetByIdAsync(id)
+            ?? throw new OperationalRestrictionNotFoundException(id);
+
+        if (restriction.State != RestrictionState.Draft)
+            throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
+
+        Signature? signature = null;
+        try
+        {
+            signature = _signatureService.SignOriginator(id, signerId);
+
+            await TransitionAsync(
+                id,
+                RestrictionAction.PendingDutyOperationsManagerApproval,
+                signerId,
+                newVersion =>
+                {
+                    newVersion.SignatureSheet.Add(signature);
+                });
+
+            return signature;
+        }
+        catch
+        {
+            if (signature != null)
+                _signatureService.DiscardUnpersistedOriginatorSignature(signature);
+
+            throw;
+        }
     }
 
     /// <summary>

@@ -8,6 +8,14 @@ public class OperationalRestrictionNotFoundException : Exception
     }
 }
 
+public class OperationalRestrictionNotSignableException : Exception
+{
+    public OperationalRestrictionNotSignableException(Guid id, string status)
+        : base($"Operational restriction {id} cannot be signed because it is {status}")
+    {
+    }
+}
+
 public class RequiresSignatureNotFoundException : Exception
 {
     public RequiresSignatureNotFoundException(Guid id)
