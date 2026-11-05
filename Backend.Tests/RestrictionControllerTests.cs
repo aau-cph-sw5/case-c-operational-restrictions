@@ -127,7 +127,7 @@ public class RestrictionControllerTests
     {
         var draft = await CreateDraftAsync(DbSeeder.AnnaId);
 
-        var result = await CreateControllerFor(DbSeeder.AnnaId).GetById(draft.RestrictionId);
+        var result = await CreateControllerFor(DbSeeder.AnnaId).GetById(draft.Id);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -137,7 +137,7 @@ public class RestrictionControllerTests
     {
         var draft = await CreateDraftAsync(DbSeeder.AnnaId);
 
-        var result = await CreateControllerFor(DbSeeder.LarsId).GetById(draft.RestrictionId);
+        var result = await CreateControllerFor(DbSeeder.LarsId).GetById(draft.Id);
 
         Assert.IsType<NotFoundObjectResult>(result.Result);
     }

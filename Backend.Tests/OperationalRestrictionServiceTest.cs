@@ -65,7 +65,7 @@ public class OperationalRestrictionServiceTests
         // Act
         var editor = Guid.NewGuid();
         await service.EditRestrictionAsync(
-            created.RestrictionId,
+            created.Id,
             new OperationalRestrictionDto
             {
                 CreatedBy = editor,
@@ -76,15 +76,15 @@ public class OperationalRestrictionServiceTests
         Assert.Equal(2, repo.Restrictions.Count);
 
         var original = repo.Restrictions.Single(
-            r => r.RestrictionId == created.RestrictionId);
+            r => r.RestrictionId == created.Id);
         Assert.Null(original.OriginalOperationalRestrictionId);
         Assert.Equal(0, original.Version);
         Assert.Equal("Maintenance work", original.RestrictionDescription);
         Assert.Equal(creator, original.CreatedBy);
 
         var clone = repo.Restrictions.Single(
-            r => r.RestrictionId != created.RestrictionId);
-        Assert.Equal(created.RestrictionId, clone.OriginalOperationalRestrictionId);
+            r => r.RestrictionId != created.Id);
+        Assert.Equal(created.Id, clone.OriginalOperationalRestrictionId);
         Assert.Equal(1, clone.Version);
         Assert.Equal("Maintenance work (updated)", clone.RestrictionDescription);
         Assert.Equal(editor, clone.CreatedBy);
@@ -104,23 +104,23 @@ public class OperationalRestrictionServiceTests
 
         // Act
         var submitted = await service.SubmitForApprovalAsync(
-            created.RestrictionId,
+            created.Id,
             creator);
 
         // Assert
         Assert.Equal(2, repo.Restrictions.Count);
 
         var original = repo.Restrictions.Single(
-            r => r.RestrictionId == created.RestrictionId);
+            r => r.RestrictionId == created.Id);
         Assert.Equal(RestrictionState.Draft, original.State);
         Assert.Equal(0, original.Version);
         Assert.Null(original.OriginalOperationalRestrictionId);
 
-        Assert.NotEqual(created.RestrictionId, submitted.RestrictionId);
-        Assert.Equal(created.RestrictionId, submitted.OriginalOperationalRestrictionId);
+        Assert.NotEqual(created.Id, submitted.Id);
+        Assert.Equal(created.Id, submitted.OriginalOperationalRestrictionId);
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, submitted.State);
         Assert.Equal(1, repo.Restrictions.Single(
-            r => r.RestrictionId == submitted.RestrictionId).Version);
+            r => r.RestrictionId == submitted.Id).Version);
 
         Assert.False(repo.UpdateWasCalled);
     }
@@ -138,13 +138,13 @@ public class OperationalRestrictionServiceTests
 
         // Act
         var draft = await CreateDraftAsync(service, originator);
-        var submitted = await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
-        var returned = await service.ReturnForChangesAsync(submitted.RestrictionId, dutyOperationsManager, "Add track section");
-        var resubmittedDraft = await service.ResubmitRestrictionAsync(returned.RestrictionId, originator);
-        var submittedAgain = await service.SubmitForApprovalAsync(resubmittedDraft.RestrictionId, originator);
-        var approved = await service.ApproveRestrictionAsync(submittedAgain.RestrictionId, dutyOperationsManager);
-        var pendingSupervisor = await service.SubmitForControlRoomSupervisorApprovalAsync(approved.RestrictionId, dutyOperationsManager);
-        var active = await service.ActivateRestrictionAsync(pendingSupervisor.RestrictionId, controlRoomSupervisor);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
+        var returned = await service.ReturnForChangesAsync(submitted.Id, dutyOperationsManager, "Add track section");
+        var resubmittedDraft = await service.ResubmitRestrictionAsync(returned.Id, originator);
+        var submittedAgain = await service.SubmitForApprovalAsync(resubmittedDraft.Id, originator);
+        var approved = await service.ApproveRestrictionAsync(submittedAgain.Id, dutyOperationsManager);
+        var pendingSupervisor = await service.SubmitForControlRoomSupervisorApprovalAsync(approved.Id, dutyOperationsManager);
+        var active = await service.ActivateRestrictionAsync(pendingSupervisor.Id, controlRoomSupervisor);
 
         // Assert
         Assert.Equal(RestrictionState.Draft, draft.State);
@@ -157,7 +157,7 @@ public class OperationalRestrictionServiceTests
         Assert.Equal(RestrictionState.Active, active.State);
 
         Assert.Equal(7, repo.Restrictions.Single(
-            r => r.RestrictionId == active.RestrictionId).Version);
+            r => r.RestrictionId == active.Id).Version);
         Assert.Equal(controlRoomSupervisor, active.CreatedBy);
         Assert.Equal(8, repo.Restrictions.Count);
     }
@@ -170,11 +170,11 @@ public class OperationalRestrictionServiceTests
         var service = CreateService(repo);
         var originator = Guid.NewGuid();
         var draft = await CreateDraftAsync(service, originator);
-        var submitted = await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
 
         // Act
         var denied = await service.DenyRestrictionAsync(
-            submitted.RestrictionId, Guid.NewGuid(), "Wrong track section");
+            submitted.Id, Guid.NewGuid(), "Wrong track section");
 
         // Assert
         Assert.Equal(RestrictionState.CancelledRefused, denied.State);
@@ -190,11 +190,11 @@ public class OperationalRestrictionServiceTests
         var originator = Guid.NewGuid();
         var reviewer = Guid.NewGuid();
         var draft = await CreateDraftAsync(service, originator);
-        var submitted = await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
 
         // Act
         var returned = await service.ReturnForChangesAsync(
-            submitted.RestrictionId, reviewer, "Add track section");
+            submitted.Id, reviewer, "Add track section");
 
         // Assert
         Assert.Equal(RestrictionState.ReturnedForChanges, returned.State);
@@ -213,11 +213,11 @@ public class OperationalRestrictionServiceTests
         var service = CreateService(repo, events);
         var originator = Guid.NewGuid();
         var draft = await CreateDraftAsync(service, originator);
-        var submitted = await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
 
         // Act
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ReturnForChangesAsync(submitted.RestrictionId, Guid.NewGuid(), reason));
+            () => service.ReturnForChangesAsync(submitted.Id, Guid.NewGuid(), reason));
 
         // Assert
         Assert.Contains("ReturnedForChanges", exception.Message);
@@ -236,11 +236,11 @@ public class OperationalRestrictionServiceTests
         var service = CreateService(repo, events);
         var originator = Guid.NewGuid();
         var draft = await CreateDraftAsync(service, originator);
-        var submitted = await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
 
         // Act
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.DenyRestrictionAsync(submitted.RestrictionId, Guid.NewGuid(), reason));
+            () => service.DenyRestrictionAsync(submitted.Id, Guid.NewGuid(), reason));
 
         // Assert
         Assert.Contains("CancelledRefused", exception.Message);
@@ -261,33 +261,33 @@ public class OperationalRestrictionServiceTests
 
         // Act
         var draft = await CreateDraftAsync(service, originator);
-        var submitted = await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
-        var approved = await service.ApproveRestrictionAsync(submitted.RestrictionId, dutyOperationsManager);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
+        var approved = await service.ApproveRestrictionAsync(submitted.Id, dutyOperationsManager);
 
         // Assert
         Assert.Equal(3, events.Events.Count);
-        Assert.All(events.Events, e => Assert.Equal(draft.RestrictionId, e.OriginalRestrictionId));
+        Assert.All(events.Events, e => Assert.Equal(draft.Id, e.OriginalRestrictionId));
 
         var created = events.Events[0];
         Assert.Equal(RestrictionAction.CreateDraft, created.Action);
         Assert.Null(created.FromState);
         Assert.Equal(RestrictionState.Draft, created.ToState);
         Assert.Equal(originator, created.ActorId);
-        Assert.Equal(draft.RestrictionId, created.RestrictionVersionId);
+        Assert.Equal(draft.Id, created.RestrictionVersionId);
 
         var submittedEvent = events.Events[1];
         Assert.Equal(RestrictionAction.PendingDutyOperationsManagerApproval, submittedEvent.Action);
         Assert.Equal(RestrictionState.Draft, submittedEvent.FromState);
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, submittedEvent.ToState);
         Assert.Equal(originator, submittedEvent.ActorId);
-        Assert.Equal(submitted.RestrictionId, submittedEvent.RestrictionVersionId);
+        Assert.Equal(submitted.Id, submittedEvent.RestrictionVersionId);
 
         var approvedEvent = events.Events[2];
         Assert.Equal(RestrictionAction.Approved, approvedEvent.Action);
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, approvedEvent.FromState);
         Assert.Equal(RestrictionState.Approved, approvedEvent.ToState);
         Assert.Equal(dutyOperationsManager, approvedEvent.ActorId);
-        Assert.Equal(approved.RestrictionId, approvedEvent.RestrictionVersionId);
+        Assert.Equal(approved.Id, approvedEvent.RestrictionVersionId);
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public class OperationalRestrictionServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.ActivateRestrictionAsync(draft.RestrictionId, Guid.NewGuid()));
+            () => service.ActivateRestrictionAsync(draft.Id, Guid.NewGuid()));
         Assert.Single(repo.Restrictions);
     }
 
@@ -355,11 +355,11 @@ public class OperationalRestrictionServiceTests
         var service = CreateService(repo);
         var originator = Guid.NewGuid();
         var draft = await CreateDraftAsync(service, originator);
-        await service.SubmitForApprovalAsync(draft.RestrictionId, originator);
+        await service.SubmitForApprovalAsync(draft.Id, originator);
 
         // Act - the original draft version is no longer the latest
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.SubmitForApprovalAsync(draft.RestrictionId, originator));
+            () => service.SubmitForApprovalAsync(draft.Id, originator));
 
         // Assert
         Assert.Contains("outdated", exception.Message);

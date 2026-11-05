@@ -71,7 +71,7 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
       : [];
 
   return {
-    id: String(raw.id ?? raw.restrictionId ?? ""),
+    id: String(raw.id ?? ""),
     originatorUserId: String(raw.originatorUserId ?? ""),
     status: normalizeStatus(raw.status ?? raw.state),
     title: raw.title ? String(raw.title) : undefined,

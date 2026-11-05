@@ -44,7 +44,7 @@ public class OperationalRestrictionCreationTests
     {
         var created = await CreateDraftAsync(DbSeeder.AnnaId);
 
-        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.RestrictionId);
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id);
         Assert.Equal(RestrictionState.Draft, stored.State);
         Assert.Equal(DbSeeder.AnnaId, stored.OriginatorUserId);
         Assert.Equal(DbSeeder.AnnaId, stored.CreatedBy);
@@ -66,7 +66,7 @@ public class OperationalRestrictionCreationTests
 
         var created = await _service.CreateRestrictionAsync(request);
 
-        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.RestrictionId);
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id);
         Assert.Equal("Sporafspærring M1", stored.Title);
         Assert.Equal("REF-99", stored.Reference);
         Assert.Equal("Situation details", stored.SituationDescription);
@@ -95,7 +95,7 @@ public class OperationalRestrictionCreationTests
 
         var created = await _service.CreateRestrictionAsync(request);
 
-        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.RestrictionId);
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id);
         Assert.Null(stored.EndDate);
         Assert.Null(created.EndDate);
     }
@@ -214,9 +214,9 @@ public class OperationalRestrictionCreationTests
     {
         var draft = await CreateDraftAsync(DbSeeder.AnnaId);
 
-        var restriction = await _service.GetByIdAsync(draft.RestrictionId, DbSeeder.AnnaId);
+        var restriction = await _service.GetByIdAsync(draft.Id, DbSeeder.AnnaId);
 
-        Assert.Equal(draft.RestrictionId, restriction.RestrictionId);
+        Assert.Equal(draft.Id, restriction.Id);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public class OperationalRestrictionCreationTests
         var draft = await CreateDraftAsync(DbSeeder.AnnaId);
 
         await Assert.ThrowsAsync<OperationalRestrictionNotFoundException>(() =>
-            _service.GetByIdAsync(draft.RestrictionId, DbSeeder.LarsId));
+            _service.GetByIdAsync(draft.Id, DbSeeder.LarsId));
     }
 
     [Fact]
@@ -236,7 +236,7 @@ public class OperationalRestrictionCreationTests
 
         var restriction = await _service.GetByIdAsync(nonDraft.RestrictionId, DbSeeder.LarsId);
 
-        Assert.Equal(nonDraft.RestrictionId, restriction.RestrictionId);
+        Assert.Equal(nonDraft.RestrictionId, restriction.Id);
     }
 
     [Fact]

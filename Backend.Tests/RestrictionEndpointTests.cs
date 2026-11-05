@@ -75,7 +75,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         Assert.Equal("Restriction details", created.RestrictionDescription);
         Assert.Equal("Cancellation details", created.CancellationDescription);
 
-        var fetched = await client.GetAsync($"/api/restrictions/{created.RestrictionId}");
+        var fetched = await client.GetAsync($"/api/restrictions/{created.Id}");
         Assert.Equal(HttpStatusCode.OK, fetched.StatusCode);
     }
 
@@ -164,7 +164,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     {
         var draft = await CreateDraftAsAsync(DbSeeder.AnnaId);
 
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restrictions/{draft.RestrictionId}");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restrictions/{draft.Id}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

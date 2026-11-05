@@ -8,7 +8,7 @@ namespace Backend.Models.DTOs;
 // Prevents exposing internal database entities directly to the client
 public class OperationalRestrictionDto
 {
-    public Guid RestrictionId { get; set; }
+    public Guid Id { get; set; }
     public RestrictionState State { get; set; } = RestrictionState.Empty;
 
     public string Title { get; set; } = string.Empty;
@@ -38,7 +38,7 @@ public class OperationalRestrictionDto
     public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction) =>
       new()
       {
-          RestrictionId = operationalRestriction.RestrictionId,
+          Id = operationalRestriction.RestrictionId,
           OriginatorUserId = operationalRestriction.OriginatorUserId,
           Title = operationalRestriction.Title,
           Reference = operationalRestriction.Reference,

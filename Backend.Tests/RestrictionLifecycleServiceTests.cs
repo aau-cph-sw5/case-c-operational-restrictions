@@ -109,7 +109,7 @@ public class RestrictionLifecycleServiceTests
     {
         return new OperationalRestrictionDto
         {
-            RestrictionId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             OriginatorUserId = Guid.NewGuid(),
             RestrictionDescription = "Test restriction",
             StartDate = DateTime.Now,

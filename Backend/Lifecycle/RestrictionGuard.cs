@@ -25,7 +25,7 @@ public sealed class OperationalRestrictionIdIsFound : IRestrictionGuard<Operatio
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        return data.RestrictionId != Guid.Empty;
+        return data.Id != Guid.Empty;
     }
 }
 
