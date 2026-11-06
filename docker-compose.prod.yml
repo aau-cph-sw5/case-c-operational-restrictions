@@ -29,6 +29,7 @@ services:
     volumes: !reset [] # Removes local node_modules/source mounts
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
       - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.rule=Host(`${BRANCH_NAME:-dev}.${DOMAIN}`)"
       - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.entrypoints=websecure"
       - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.tls.certresolver=myresolver"

@@ -7,6 +7,7 @@ services:
       - "--api.insecure=false"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--accesslog=true"
       
       # Entrypoints for HTTP (80) and HTTPS (443)
       - "--entrypoints.web.address=:80"
