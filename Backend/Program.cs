@@ -120,14 +120,22 @@ app.MapGet("/api/hello", () => new
     timestamp = DateTime.UtcNow
 });
 
-// Apply EF migrations and seed data (Development only, and not while EF tools are running)
-if (app.Environment.IsDevelopment() &&
+// Apply EF migrations across all environments (skipped in Testing and when EF tools are running)
+if (!app.Environment.IsEnvironment("Testing") &&
     Assembly.GetEntryAssembly()?.GetName().Name != "ef")
 {
     using var scope = app.Services.CreateScope();
     var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await appDbContext.Database.MigrateAsync();
-    await DbSeeder.SeedAsync(appDbContext);
+    if (appDbContext.Database.IsRelational())
+    {
+        await appDbContext.Database.MigrateAsync();
+    }
+
+    // Only seed mock data in Development
+    if (app.Environment.IsDevelopment())
+    {
+        await DbSeeder.SeedAsync(appDbContext);
+    }
 }
 
 app.Run();
