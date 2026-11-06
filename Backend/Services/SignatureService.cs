@@ -111,6 +111,14 @@ public class SignatureService(
         return requiredSignature;
     }
 
+    public List<RequiresSignature> GetRequiresSignaturesByOperationalRestrictionId(Guid operationalRestrictionId)
+    {
+        //her skal de hentes fra db i fremtiden
+        return _requiredSignatures
+            .Where(required => required.OperationalRestrictionId == operationalRestrictionId)
+            .ToList();
+    }
+
 
     /// <summary>
     /// Creates an immutable signature for the given required signature.

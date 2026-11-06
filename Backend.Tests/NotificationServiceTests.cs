@@ -35,7 +35,7 @@ public class NotificationServiceTests : IDisposable
         SeedNotification(Guid.NewGuid(), other, DateTime.UtcNow);
         var expected = SeedNotification(Guid.NewGuid(), user, DateTime.UtcNow);
 
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         var result = await service.GetNotificationsForUserAsync(user);
 
@@ -51,7 +51,7 @@ public class NotificationServiceTests : IDisposable
         var oldest = SeedNotification(Guid.NewGuid(), user, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
         var newest = SeedNotification(Guid.NewGuid(), user, new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc));
 
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         var result = await service.GetNotificationsForUserAsync(user);
 
@@ -63,7 +63,7 @@ public class NotificationServiceTests : IDisposable
     [Fact]
     public async Task GetNotificationsForUserAsyncReturnsEmptyListForUnknownUser()
     {
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         var result = await service.GetNotificationsForUserAsync(Guid.NewGuid());
 
@@ -75,7 +75,7 @@ public class NotificationServiceTests : IDisposable
     {
         var recipient = Guid.NewGuid();
         var restrictionId = Guid.NewGuid();
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
 
         var notificationId = service.AddNotification(
             new CreateNotificationRequest(recipient, NotificationType.SignatureRequired, true, restrictionId));
@@ -93,7 +93,7 @@ public class NotificationServiceTests : IDisposable
     {
         var recipient = Guid.NewGuid();
         var restrictionId = Guid.NewGuid();
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
         var notificationId = service.AddNotification(
             new CreateNotificationRequest(recipient, NotificationType.SignatureRequired, true, restrictionId));
         await _db.SaveChangesAsync();
@@ -109,7 +109,7 @@ public class NotificationServiceTests : IDisposable
     [Fact]
     public async Task NotificationAuditEntriesCannotBeDeleted()
     {
-        var service = new NotificationService(_db);
+        var service = new NotificationService(_db, new SignatureService(_db));
         service.AddNotification(
             new CreateNotificationRequest(Guid.NewGuid(), NotificationType.SignatureRequired, true, Guid.NewGuid()));
         await _db.SaveChangesAsync();
@@ -117,6 +117,101 @@ public class NotificationServiceTests : IDisposable
         _db.NotificationAuditEntries.Remove(_db.NotificationAuditEntries.Single());
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => _db.SaveChangesAsync());
+    }
+
+    [Fact]
+    public async Task MarkAsReadAsyncRecordsReadAuditEntryOnlyOnce()
+    {
+        var userId = Guid.NewGuid();
+        var notificationId = SeedNotification(Guid.NewGuid(), userId, DateTime.UtcNow);
+        var service = new NotificationService(_db, new SignatureService(_db));
+
+        await service.MarkAsReadAsync(notificationId, userId);
+        await service.MarkAsReadAsync(notificationId, userId);
+
+        var entry = Assert.Single(_db.NotificationAuditEntries);
+        Assert.Equal(NotificationAuditEventType.Read, entry.EventType);
+        Assert.Equal(notificationId, entry.NotificationId);
+        Assert.Equal(userId, entry.RecipientUserId);
+    }
+
+    [Fact]
+    public async Task MarkAsReadAsyncUpdatesReadAt()
+    {
+        // Arrange: Create a test notification
+        var userId = Guid.NewGuid();
+        var notificationId = SeedNotification(
+            Guid.NewGuid(),
+            userId,
+            DateTime.UtcNow
+        );
+
+        var service = new NotificationService(_db, new SignatureService(_db));
+
+        // Act: Mark the notification as read
+        var result = await service.MarkAsReadAsync(notificationId, userId);
+
+        // Assert: Verify the notification was marked as read
+        var notification = await _db.Notifications
+         .FirstAsync(x => x.Id == notificationId);
+
+        Assert.True(result);
+        Assert.NotNull(notification.ReadAt);
+    }
+    [Fact]
+    public async Task MarkAsReadAsyncCannotMarkAnotherUsersNotification()
+    {
+        // Arrange
+        var ownerId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+
+        var notificationId = SeedNotification(
+            Guid.NewGuid(),
+            ownerId,
+            DateTime.UtcNow
+        );
+
+        var service = new NotificationService(_db, new SignatureService(_db));
+
+        // Act
+        var result = await service.MarkAsReadAsync(notificationId, otherUserId);
+
+        // Assert
+        var notification = await _db.Notifications
+            .FirstAsync(x => x.Id == notificationId);
+
+        Assert.False(result);
+        Assert.Null(notification.ReadAt);
+    }
+    [Fact]
+    public async Task MarkAsReadAsyncDoesNotChangeExistingReadAt()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var notificationId = SeedNotification(
+            Guid.NewGuid(),
+            userId,
+            DateTime.UtcNow
+        );
+
+        var originalReadAt = new DateTime(
+            2026, 11, 1, 12, 0, 0, DateTimeKind.Utc
+        );
+
+        var notification = await _db.Notifications
+            .FirstAsync(x => x.Id == notificationId);
+
+        notification.ReadAt = originalReadAt;
+        await _db.SaveChangesAsync();
+
+        var service = new NotificationService(_db, new SignatureService(_db));
+
+        // Act
+        var result = await service.MarkAsReadAsync(notificationId, userId);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal(originalReadAt, notification.ReadAt);
     }
 
     private Guid SeedNotification(Guid id, Guid recipientUserId, DateTime createdAt)

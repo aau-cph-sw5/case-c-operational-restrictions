@@ -10,4 +10,8 @@ public interface INotificationService
     Task ResolveActionRequiredAsync(Guid operationalRestrictionId, Guid recipientUserId);
 
     Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId);
+
+    Task<bool> MarkAsReadAsync(Guid notificationId, Guid recipientUserId);
+
+    Task UpdateAllNotificationsAsync();
 }

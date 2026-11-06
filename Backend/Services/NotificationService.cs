@@ -12,10 +12,12 @@ namespace Backend.Services;
 // service saves them in the same SaveChanges as the restriction's state change, so a state
 // change and its notifications are stored together or not at all.
 public class NotificationService(
-  AppDbContext appDbContext
+  AppDbContext appDbContext,
+  SignatureService signatureService
 ) : INotificationService
 {
     private readonly AppDbContext _appDbContext = appDbContext;
+    private readonly SignatureService _signatureService = signatureService;
 
     /// <summary>
     /// Adds a notification with a pending push delivery. The caller must call SaveChangesAsync.
@@ -86,14 +88,75 @@ public class NotificationService(
 
     /// <summary>
     /// Returns all notifications for a recipient, newest first, for the in-app inbox.
+    /// First resolves any open action-required notifications whose underlying action is now
+    /// complete, so the inbox always reflects the current state on load.
     /// </summary>
     public async Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId)
     {
+        await UpdateAllNotificationsAsync();
+        await _appDbContext.SaveChangesAsync();
+
         return await _appDbContext.Notifications
           .AsNoTracking()
           .Where(x => x.RecipientUserId == recipientUserId)
           .OrderByDescending(x => x.CreatedAt)
           .ToListAsync();
+    }
+
+    /// <summary>
+    /// Marks a notification as read for the specified recipient.
+    /// </summary>
+    public async Task<bool> MarkAsReadAsync(Guid notificationId, Guid recipientUserId)
+    {
+        var notification = await _appDbContext.Notifications
+          .FirstOrDefaultAsync(x =>
+              x.Id == notificationId &&
+              x.RecipientUserId == recipientUserId);
+
+        if (notification == null)
+        {
+            return false;
+        }
+
+        if (notification.ReadAt == null)
+        {
+            var now = DateTime.UtcNow;
+            notification.ReadAt = now;
+            AddAuditEntry(notification, NotificationAuditEventType.Read, now);
+            await _appDbContext.SaveChangesAsync();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Resolves all open action-required notifications whose underlying action is now complete.
+    /// For SignatureRequired notifications, checks whether a RequiresSignature for the same
+    /// restriction has been completed. The caller must call SaveChangesAsync.
+    /// </summary>
+    public async Task UpdateAllNotificationsAsync()
+    {
+        var openNotifications = await _appDbContext.Notifications
+          .Where(x => x.RequiresAction && x.ResolvedAt == null)
+          .ToListAsync();
+
+        var now = DateTime.UtcNow;
+        foreach (var notification in openNotifications)
+        {
+            if (notification.Type == NotificationType.SignatureRequired
+                && notification.OperationalRestrictionId != null)
+            {
+                var requiresSignatures = _signatureService
+                  .GetRequiresSignaturesByOperationalRestrictionId(notification.OperationalRestrictionId.Value);
+
+                if (requiresSignatures.Any(rs => rs.SigneeId == notification.RecipientUserId
+                    && rs.RequiresSignatureStatus == RequiresSignatureStatus.CompletedSignature))
+                {
+                    notification.ResolvedAt = now;
+                    AddAuditEntry(notification, NotificationAuditEventType.Resolved, now);
+                }
+            }
+        }
     }
 
     // Adds an append-only audit entry (C-021). Saved by the caller together with the change it records.

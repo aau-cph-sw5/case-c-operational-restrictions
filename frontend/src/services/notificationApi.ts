@@ -55,3 +55,24 @@ export async function getNotifications(): Promise<NotificationDto[]> {
 
   return parsed.map(toNotificationDto);
 }
+
+export async function markNotificationAsRead(
+  notificationId: string,
+): Promise<void> {
+  const token = getStoredToken();
+
+  if (token === null) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(`/api/notifications/${notificationId}/read`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+}
