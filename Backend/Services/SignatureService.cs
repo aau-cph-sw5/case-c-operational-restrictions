@@ -1,7 +1,10 @@
+using Backend.Authorization;
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
@@ -72,15 +75,13 @@ public class SignatureService(
         if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.PendingSignature)
             throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
-        var signee = _appDbContext.Users.Single(user => user.Id == signerUserId);
-
         var signature = new Signature
         {
             Id = Guid.NewGuid(),
             RequiresSignatureId = requiredSignature.Id,
             OperationalRestrictionId = requiredSignature.OperationalRestrictionId,
             SigneeId = signerUserId,
-            SigneeRole = signee.Role,
+            SigneeRole = string.Join(", ", GetRoleNames(signerUserId)),
             SignedAt = DateTime.UtcNow
         };
         //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
@@ -98,7 +99,7 @@ public class SignatureService(
         var existingSignature = _signatures.FirstOrDefault(signature =>
             signature.OperationalRestrictionId == operationalRestrictionId
             && signature.SigneeId == signerUserId
-            && signature.SigneeRole == UserRole.Originator);
+            && signature.SigneeRole == RoleNames.Originator);
 
         if (existingSignature != null)
         {
@@ -122,7 +123,7 @@ public class SignatureService(
             RequiresSignatureId = requiredSignature.Id,
             OperationalRestrictionId = operationalRestrictionId,
             SigneeId = signerUserId,
-            SigneeRole = UserRole.Originator,
+            SigneeRole = RoleNames.Originator,
             SignedAt = DateTime.UtcNow
         };
         _signatures.Add(signature);
@@ -135,7 +136,21 @@ public class SignatureService(
     {
         return _signatures.FirstOrDefault(signature =>
             signature.OperationalRestrictionId == operationalRestrictionId
-            && signature.SigneeRole == UserRole.Originator);
+            && signature.SigneeRole == RoleNames.Originator);
+    }
+
+    // The signer's current role names, resolved from the database so the
+    // recorded label matches the data-driven role assignments.
+    private List<string> GetRoleNames(Guid userId)
+    {
+        return _appDbContext.UserRoleAssignments
+            .Where(assignment => assignment.UserId == userId)
+            .Join(_appDbContext.Roles,
+                assignment => assignment.RoleId,
+                role => role.Id,
+                (assignment, role) => role.Name)
+            .OrderBy(name => name)
+            .ToList();
     }
 
     internal void DiscardUnpersistedOriginatorSignature(Signature signature)
