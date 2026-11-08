@@ -99,9 +99,9 @@ public class AuthService
     {
         var email = request.Email.Trim().ToLowerInvariant();
 
-         var user = await _db.Users.SingleOrDefaultAsync(
-        user => user.Email == email,
-        cancellationToken);
+        var user = await _db.Users.SingleOrDefaultAsync(
+       user => user.Email == email,
+       cancellationToken);
 
         if (user is null || !_passwordHasher.Verify(user.PasswordHash, request.Password))
         {

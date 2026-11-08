@@ -71,7 +71,8 @@ export function normalizeStatus(raw: unknown): RestrictionStatus {
 
   if (typeof raw === "string") {
     const normalized = raw.toLowerCase();
-    if (backendStatusAliases[normalized]) return backendStatusAliases[normalized];
+    if (backendStatusAliases[normalized])
+      return backendStatusAliases[normalized];
 
     const match = (Object.keys(statusLabels) as RestrictionStatus[]).find(
       (status) => status.toLowerCase() === normalized,
