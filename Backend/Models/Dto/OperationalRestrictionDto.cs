@@ -41,7 +41,7 @@ public class OperationalRestrictionDto
         var signatures = operationalRestriction.SignatureSheet?
             .Select(SignatureDto.FromDalEntity)
             .ToList() ?? new List<SignatureDto>();
-        var originatorSignature = signatures.FirstOrDefault(s => s.SigneeRole == UserRole.Originator);
+        var originatorSignature = signatures.FirstOrDefault(s => s.SigneeId == operationalRestriction.OriginatorUserId);
 
         return new()
         {
