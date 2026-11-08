@@ -1,5 +1,6 @@
 using Backend.Data;
 using Backend.Models.Entities;
+using Backend.Models.Enums;
 using Backend.Services.Auth;
 
 using Microsoft.AspNetCore.Hosting;
@@ -41,11 +42,17 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     }
 
     // Mints a real JWT for the given user id, the same way AuthService does on login.
-    public string CreateTokenFor(Guid userId)
+    public string CreateTokenFor(Guid userId, UserRole role = UserRole.Originator)
     {
         using var scope = Services.CreateScope();
         var jwtService = scope.ServiceProvider.GetRequiredService<JwtService>();
 
-        return jwtService.Mint(new User { Id = userId, Name = "Test User", Email = $"{userId}@example.com" }).AccessToken;
+        return jwtService.Mint(new User
+        {
+            Id = userId,
+            Name = "Test User",
+            Email = $"{userId}@example.com",
+            Role = role
+        }).AccessToken;
     }
 }

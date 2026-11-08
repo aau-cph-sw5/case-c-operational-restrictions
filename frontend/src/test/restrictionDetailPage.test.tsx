@@ -1,6 +1,7 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { normalizeStatus } from "../lib/restrictionStatus";
 import { RestrictionDetailPage } from "../pages/RestrictionDetailPage";
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import type { RestrictionDto } from "../types/restrictionDto";
@@ -104,7 +105,8 @@ describe("RestrictionDetailPage", () => {
   it("shows the saved requested-changes comment to the originator after loading", async () => {
     mocks.getRestrictionById.mockResolvedValue({
       ...draft,
-      comment: "Please add the affected track section.",
+      status: "ReturnedForChanges",
+      reviewDescription: "Please add the affected track section.",
     });
     renderPage();
 
@@ -112,7 +114,7 @@ describe("RestrictionDetailPage", () => {
     expect(notice).toHaveTextContent("Please add the affected track section.");
   });
 
-  it("does not show a requested-changes notice for a draft without a comment", async () => {
+  it("does not show a requested-changes notice for a draft", async () => {
     renderPage();
     await screen.findByText("restriction-1");
 
@@ -128,7 +130,8 @@ describe("RestrictionDetailPage", () => {
     });
     mocks.getRestrictionById.mockResolvedValue({
       ...draft,
-      comment: "Please add the affected track section.",
+      status: "ReturnedForChanges",
+      reviewDescription: "Please add the affected track section.",
     });
     renderPage();
     await screen.findByText("restriction-1");
@@ -136,6 +139,13 @@ describe("RestrictionDetailPage", () => {
     expect(
       screen.queryByTestId("requested-changes-notice"),
     ).not.toBeInTheDocument();
+  });
+
+  it("normalizes backend ReturnedForChanges enum values", () => {
+    expect(normalizeStatus(2)).toBe("ReturnedForChanges");
+    expect(normalizeStatus("ReturnedForChanges")).toBe("ReturnedForChanges");
+    expect(normalizeStatus(3)).toBe("Cancelled");
+    expect(normalizeStatus(4)).toBe("Approved");
   });
 
   it("shows the Unsigned Draft badge when there are no signatures", async () => {

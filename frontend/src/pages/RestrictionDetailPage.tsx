@@ -194,7 +194,9 @@ export function RestrictionDetailPage() {
     currentUser !== null && currentUser.id === restriction.originatorUserId;
   const canSign = isDraft && isOriginator;
   const hasRequestedChanges =
-    isDraft && isOriginator && Boolean(restriction.comment?.trim());
+    restriction.status === "ReturnedForChanges" &&
+    isOriginator &&
+    Boolean(restriction.reviewDescription?.trim());
 
   const knownUsers = currentUser ? { [currentUser.id]: currentUser.name } : {};
 
@@ -223,7 +225,7 @@ export function RestrictionDetailPage() {
           <AlertDescription className="text-base">
             <p className="font-bold">{t.requestedChanges}</p>
             <p>
-              {t.requestedChangesComment}: {restriction.comment}
+              {t.requestedChangesComment}: {restriction.reviewDescription}
             </p>
           </AlertDescription>
         </Alert>

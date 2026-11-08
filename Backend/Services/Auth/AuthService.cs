@@ -1,7 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 
+using Backend.Data;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
+
+using Microsoft.EntityFrameworkCore;
 
 using Nelibur.ObjectMapper;
 
@@ -9,12 +12,17 @@ namespace Backend.Services.Auth;
 
 public class AuthService
 {
+    private readonly AppDbContext _db;
     private readonly PasswordHasher _passwordHasher;
     private readonly JwtService _jwtService;
     private readonly User _placeholderUser;
 
-    public AuthService(PasswordHasher passwordHasher, JwtService jwtService)
+    public AuthService(
+        AppDbContext db,
+        PasswordHasher passwordHasher,
+        JwtService jwtService)
     {
+        _db = db;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
         //Laver en placeholder user mens der ikke er en databse
@@ -80,5 +88,31 @@ public class AuthService
             Name = user.Name,
             Email = user.Email
         };
+    }
+
+    public async Task<LoginResult> LoginAsync(
+        LoginRequestDto request,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var email = request.Email.Trim().ToLowerInvariant();
+
+         var user = await _db.Users.SingleOrDefaultAsync(
+        user => user.Email == email,
+        cancellationToken);
+
+        if (user is null || !_passwordHasher.Verify(user.PasswordHash, request.Password))
+        {
+            return LoginResult.Failure();
+        }
+
+        var token = _jwtService.Mint(user);
+
+        return LoginResult.Success(new LoginResponseDto
+        {
+            AccessToken = token.AccessToken,
+            ExpiresAtUtc = token.ExpiresAtUtc,
+            User = MapToDto(user)
+        });
     }
 }

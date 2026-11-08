@@ -117,6 +117,36 @@ public class RestrictionsController : ApiControllerBase
         return await SignRestrictionAsync(restriction.Id);
     }
 
+    [HttpPost("{id:guid}/request-changes")]
+    [Authorize(Roles = nameof(UserRole.DutyOperationsManager))]
+    public async Task<ActionResult<OperationalRestrictionDto>> RequestChanges(
+        Guid id,
+        RequestChangesRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Comment))
+        {
+            return BadRequest(new { error = "A review comment is required." });
+        }
+
+        try
+        {
+            var restriction = await _operationalRestrictionService.ReturnForChangesAsync(
+                id,
+                CurrentUserId,
+                request.Comment.Trim());
+
+            return Ok(restriction);
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+    }
+
     private IActionResult? ValidateSigningRequirements(OperationalRestrictionDto restriction)
     {
         if (CurrentUserId == Guid.Empty || restriction.OriginatorUserId != CurrentUserId)
