@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Backend.Data;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
+using Backend.Models.Enums;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -31,7 +32,8 @@ public class AuthService
             Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
             Name = "Placeholder User",
             Email = "placeholder@example.com",
-            PasswordHash = _passwordHasher.Hash("Password123!")
+            PasswordHash = _passwordHasher.Hash("Password123!"),
+            Role = UserRole.DutyOperationsManager
         };
     }
 

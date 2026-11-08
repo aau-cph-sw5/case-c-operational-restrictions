@@ -6,7 +6,7 @@ export const restrictionTexts = {
   idLabel: "Restriktions-ID",
   statusLabel: "Status",
   requestedChanges: "Der er anmodet om ændringer.",
-  requestedChangesComment: "Kommentar fra godkender",
+  requestedChangesComment: "Kommentar fra DOM",
   startDate: "Startdato",
   endDate: "Slutdato",
   noEndDate: "–",
@@ -37,4 +37,19 @@ export const restrictionTexts = {
   signConflict:
     "Restriktionen er ikke længere en kladde og kan ikke underskrives.",
   signFailed: "Underskrivningen mislykkedes. Prøv igen.",
+  requestChangesHeading: "Anmod om ændringer",
+  requestChangesLabel: "Kommentar til originator",
+  requestChangesHelper:
+    "Beskriv hvad originator skal rette, før restriktionen kan godkendes.",
+  requestChanges: "Anmod om ændringer",
+  requestingChanges: "Sender...",
+  requestChangesCommentRequired: "Skriv en kommentar til originator.",
+  requestChangesSuccess:
+    "Restriktionen er returneret til originator med din kommentar.",
+  requestChangesBadRequest: "En kommentar er påkrævet.",
+  requestChangesForbidden:
+    "Kun en Duty Operations Manager kan anmode om ændringer.",
+  requestChangesConflict:
+    "Restriktionen afventer ikke længere godkendelse eller er blevet ændret. Genindlæs siden.",
+  requestChangesFailed: "Anmodningen mislykkedes. Prøv igen.",
 } as const;
