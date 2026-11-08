@@ -8,6 +8,14 @@ public class OperationalRestrictionNotFoundException : Exception
     }
 }
 
+public class OperationalRestrictionNotSignableException : Exception
+{
+    public OperationalRestrictionNotSignableException(Guid id, string status)
+        : base($"Operational restriction {id} cannot be signed because it is {status}")
+    {
+    }
+}
+
 public class RequiresSignatureNotFoundException : Exception
 {
     public RequiresSignatureNotFoundException(Guid id)
@@ -20,6 +28,14 @@ public class InvalidRestrictionPeriodException : Exception
 {
     public InvalidRestrictionPeriodException(DateTime startDate, DateTime endDate)
         : base($"End date {endDate:O} must be after start date {startDate:O}")
+    {
+    }
+}
+
+public class MissingRequiredRestrictionFieldException : Exception
+{
+    public MissingRequiredRestrictionFieldException(string fieldName)
+        : base($"{fieldName} is required")
     {
     }
 }

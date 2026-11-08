@@ -7,7 +7,7 @@ services:
     ports: !reset []   # Removes "8080:8080" binding from base file
     volumes: !reset [] # Removes local source code mounts from base file
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
       - Jwt__SigningKey=${JWT_SIGNING_KEY}
     labels:
       - "traefik.enable=true"
@@ -29,6 +29,7 @@ services:
     volumes: !reset [] # Removes local node_modules/source mounts
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
       - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.rule=Host(`${BRANCH_NAME:-dev}.${DOMAIN}`)"
       - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.entrypoints=websecure"
       - "traefik.http.routers.frontend-${BRANCH_NAME:-dev}.tls.certresolver=myresolver"

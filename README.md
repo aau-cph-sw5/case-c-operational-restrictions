@@ -150,7 +150,7 @@ fixtures/      synthetic test data. Never anything Metro supplied.
 ## AI assistants
 
 > Record here which assistants this team used and for what, per [the semester policy](https://github.com/aau-cph-sw5/semester-docs/blob/main/docs/11-ai-use.md). Two lines is enough.
-
+  * GitHub Copilot was used for code autocompletion and creating base unit-tests.
 
 ## Local database
 
