@@ -44,7 +44,7 @@ public class OperationalRestrictionCreationTests
     {
         var created = await CreateDraftAsync(DbSeeder.AnnaId);
 
-        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id);
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(RestrictionState.Draft, stored.State);
         Assert.Equal(DbSeeder.AnnaId, stored.OriginatorUserId);
         Assert.Equal(DbSeeder.AnnaId, stored.CreatedBy);
@@ -66,7 +66,7 @@ public class OperationalRestrictionCreationTests
 
         var created = await _service.CreateRestrictionAsync(request);
 
-        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id);
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("Sporafspærring M1", stored.Title);
         Assert.Equal("REF-99", stored.Reference);
         Assert.Equal("Situation details", stored.SituationDescription);
@@ -95,7 +95,7 @@ public class OperationalRestrictionCreationTests
 
         var created = await _service.CreateRestrictionAsync(request);
 
-        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id);
+        var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Null(stored.EndDate);
         Assert.Null(created.EndDate);
     }
@@ -232,7 +232,7 @@ public class OperationalRestrictionCreationTests
     public async Task GetByIdReturnsNonDraftToAnyUser()
     {
         var nonDraft = await _appDbContext.OperationalRestrictions
-            .FirstAsync(x => x.State != RestrictionState.Draft && x.OriginatorUserId != DbSeeder.LarsId);
+            .FirstAsync(x => x.State != RestrictionState.Draft && x.OriginatorUserId != DbSeeder.LarsId, cancellationToken: TestContext.Current.CancellationToken);
 
         var restriction = await _service.GetByIdAsync(nonDraft.RestrictionId, DbSeeder.LarsId);
 
@@ -249,9 +249,9 @@ public class OperationalRestrictionCreationTests
     [Fact]
     public async Task GetAllReturnsAllNonDraftsAndOnlyOwnDrafts()
     {
-        var nonDraftCount = await _appDbContext.OperationalRestrictions.CountAsync(x => x.State != RestrictionState.Draft);
+        var nonDraftCount = await _appDbContext.OperationalRestrictions.CountAsync(x => x.State != RestrictionState.Draft, cancellationToken: TestContext.Current.CancellationToken);
         var ownDraftCount = await _appDbContext.OperationalRestrictions
-            .CountAsync(x => x.State == RestrictionState.Draft && x.OriginatorUserId == DbSeeder.AnnaId);
+            .CountAsync(x => x.State == RestrictionState.Draft && x.OriginatorUserId == DbSeeder.AnnaId, cancellationToken: TestContext.Current.CancellationToken);
 
         var restrictions = await _service.GetAllAsync(DbSeeder.AnnaId);
 
