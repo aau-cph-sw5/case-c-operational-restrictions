@@ -59,13 +59,13 @@ public class RestrictionSigningTests
         var signature = Assert.IsType<SignatureDto>(result.Value);
         var persistedRestriction = await _dbContext.OperationalRestrictions
             .AsNoTracking()
-            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId);
+            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
 
         // The original version remains Draft, while a new version is created in PendingDutyOperationsManagerApproval
         var latestVersion = await _dbContext.OperationalRestrictions
             .AsNoTracking()
             .OrderByDescending(r => r.Version)
-            .FirstAsync(item => item.OriginalOperationalRestrictionId == restriction.RestrictionId);
+            .FirstAsync(item => item.OriginalOperationalRestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(latestVersion.RestrictionId, signature.OperationalRestrictionId);
         Assert.Equal(restriction.OriginatorUserId, signature.SigneeId);
@@ -85,7 +85,7 @@ public class RestrictionSigningTests
         var result = Assert.IsType<ObjectResult>(actionResult);
         var persistedRestriction = await _dbContext.OperationalRestrictions
             .AsNoTracking()
-            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId);
+            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCodes.Status403Forbidden, result.StatusCode);
         Assert.Equal(RestrictionState.Draft, persistedRestriction.State);
@@ -115,7 +115,7 @@ public class RestrictionSigningTests
 
         var persistedRestriction = await _dbContext.OperationalRestrictions
             .AsNoTracking()
-            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId);
+            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<ConflictObjectResult>(actionResult);
         Assert.Equal(RestrictionState.Draft, persistedRestriction.State);
@@ -143,7 +143,7 @@ public class RestrictionSigningTests
             CancellationDescription = "Cancellation"
         };
         _dbContext.OperationalRestrictions.Add(restriction);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var controller = CreateController(restriction.OriginatorUserId);
         var actionResult = await controller.Sign(restriction.RestrictionId);
@@ -153,7 +153,7 @@ public class RestrictionSigningTests
 
         var persisted = await _dbContext.OperationalRestrictions
             .AsNoTracking()
-            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId);
+            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(RestrictionState.Draft, persisted.State);
     }
 
@@ -176,7 +176,7 @@ public class RestrictionSigningTests
             CancellationDescription = "Cancellation"
         };
         _dbContext.OperationalRestrictions.Add(restriction);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var controller = CreateController(restriction.OriginatorUserId);
 
@@ -185,7 +185,7 @@ public class RestrictionSigningTests
         Assert.IsType<OkObjectResult>(actionResult);
         var persisted = await _dbContext.OperationalRestrictions
             .AsNoTracking()
-            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId);
+            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(RestrictionState.Draft, persisted.State);
     }
 

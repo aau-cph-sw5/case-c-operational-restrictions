@@ -20,9 +20,13 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
 
     private readonly TestWebApplicationFactory _factory = new();
 
-    public Task InitializeAsync() => _factory.SeedAsync();
+    public async ValueTask InitializeAsync() => await _factory.SeedAsync();
 
-    public async Task DisposeAsync() => await _factory.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        await _factory.DisposeAsync();
+        GC.SuppressFinalize(this);
+    }
 
     public void Dispose()
     {
@@ -43,7 +47,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/restrictions");
+        var response = await client.GetAsync("/api/restrictions", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -63,7 +67,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
             situationDescription = "Situation details",
             restrictionDescription = "Restriction details",
             cancellationDescription = "Cancellation details"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await ReadAsync<OperationalRestrictionDto>(response);
@@ -75,7 +79,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         Assert.Equal("Restriction details", created.RestrictionDescription);
         Assert.Equal("Cancellation details", created.CancellationDescription);
 
-        var fetched = await client.GetAsync($"/api/restrictions/{created.Id}");
+        var fetched = await client.GetAsync($"/api/restrictions/{created.Id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, fetched.StatusCode);
     }
 
@@ -92,7 +96,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
             situationDescription = "Situation details",
             restrictionDescription = "Restriction details",
             cancellationDescription = "Cancellation details"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -110,7 +114,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
             situationDescription = "Situation details",
             restrictionDescription = "Restriction details",
             cancellationDescription = "Cancellation details"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -127,7 +131,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
             situationDescription = "Situation details",
             restrictionDescription = "Restriction details",
             cancellationDescription = "Cancellation details"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -154,7 +158,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
             situationDescription = situation,
             restrictionDescription = restriction,
             cancellationDescription = cancellation
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -164,7 +168,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     {
         var draft = await CreateDraftAsAsync(DbSeeder.AnnaId);
 
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restrictions/{draft.Id}");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync($"/api/restrictions/{draft.Id}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -173,7 +177,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     public async Task GetByIdOfNonDraftReturns200ForAnyUser()
     {
         // Seeded Approved restriction owned by Anna.
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restrictions/5eed0000-0000-0000-0000-000000000006");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restrictions/5eed0000-0000-0000-0000-000000000006", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -183,7 +187,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     {
         await CreateDraftAsAsync(DbSeeder.AnnaId);
 
-        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restrictions");
+        var response = await CreateClientFor(DbSeeder.LarsId).GetAsync("/api/restrictions", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var restrictions = await ReadAsync<List<OperationalRestrictionDto>>(response);
