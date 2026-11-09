@@ -1,7 +1,10 @@
 import { NotificationStatus } from "../NotificationStatus";
 
+import { useNavigate } from "react-router-dom";
+
 export interface Notification {
   id: string;
+  operationalRestrictionId: string | null;
   category: string;
   title: string;
   message: string;
@@ -21,6 +24,7 @@ export function NotificationCard({
   notification,
   onOpen,
 }: NotificationCardProps) {
+  const navigate = useNavigate();
   const isSystemInfo = notification.category.toLowerCase().includes("system");
 
   const iconType = notification.required
@@ -28,6 +32,23 @@ export function NotificationCard({
     : isSystemInfo
       ? "system"
       : "info";
+
+  function handleAction() {
+    if (
+      notification.action === "Se detaljer" &&
+      notification.operationalRestrictionId
+    ) {
+      navigate(
+        `/restrictions/${encodeURIComponent(
+          notification.operationalRestrictionId
+        )}`
+      );
+      return;
+    }
+
+    onOpen(notification);
+  }
+
 
   return (
     <article
@@ -77,7 +98,8 @@ export function NotificationCard({
         className={`notification-action ${
           notification.action === "Underskriv nu" ? "primary" : ""
         }`}
-        onClick={() => onOpen(notification)}
+      //  onClick={() => onOpen(notification)}
+        onClick={handleAction}
       >
         {notification.action ?? "Se besked"}
       </button>
