@@ -209,14 +209,26 @@ Commit the generated files in `Backend/Migrations/`.
 
 MIT, per Section 7 of the AAU and Metro Service collaboration framework.
 
-## Naming convention for Issues
+## Naming Convention for Issues
 
-Main issues, that already exist should be called MET-C-
+### Main Issues
+Existing main issues should be prefixed with `MET-C-` (e.g., `MET-C-[Number]`).
 
-New issues created at sprint planning should be called ADD-01-Title
+#### Sub-Issues
+If a main issue is split into sub-issues during sprint planning, the sub-issues should be prefixed with `SUB-C-`.
 
-At sprint planning if we split issues into sub issues that are split into sub issues should be called SUB
+**Example:**
+For the main issue `MET-C-01`, the sub-issues would be named:
+* `SUB-C-01-A-[Title]`
+* `SUB-C-01-B-[Title]`
 
-So for MET-C-01 the sub issue would be called SUB-C-01-A-Title and SUB-C-01-B-Title
+#### Internel issues
+For internal sub issues, like splitting into front and backend, should be prefixed with `INT-`.
+**Example:**
+* `INT-01-A-[Title]`
 
-For internal sub issues, like splitting into front and backend, should be called INT-01-A-Title
+### Additional Issues
+New issues can be created at any time. Any additional issues that do not fall into the Main, Sub, or Internal categories should be prefixed with `ADD-`.
+
+**Example:**
+* `ADD-[Number]-[Title]`
