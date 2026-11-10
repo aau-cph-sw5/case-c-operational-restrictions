@@ -62,9 +62,9 @@ docker compose down
    ```bash
    pnpm dev
    ```
-   
+
    (Or run individually in separate terminals: cd Backend && dotnet run and pnpm --filter frontend dev)
-   
+
    *Frontend runs on [http://localhost:5173](http://localhost:5173).*
 
    *Backend runs on [http://localhost:8080](http://localhost:8080).*
@@ -114,16 +114,16 @@ Once the autonomous deployment workflows run, they will push the branch to the s
 
 **4. SERVER_FINGERPRINT Debuging**
 
-The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD: 
-```bash 
+The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD:
+```bash
 ssh-keyscan -p 22 SERVER_IP 2>nul | ssh-keygen -lf -
 ```
-Example 
-```bash 
+Example
+```bash
 ssh-keyscan -p 22 150.230.151.68 2>nul | ssh-keygen -lf -
 
 ```
-The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519). 
+The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519).
 
 You can also isntead do the following:
 1. Go to your repository **Settings** -> **Secrets and variables** -> **Actions**.
@@ -189,7 +189,7 @@ pnpm db:seed
 Inspect the data:
 ```bash
 docker compose exec postgres psql -U metro -d metro
-``` 
+```
 
 ### Schema changes
 ```bash
@@ -209,4 +209,26 @@ Commit the generated files in `Backend/Migrations/`.
 
 MIT, per Section 7 of the AAU and Metro Service collaboration framework.
 
+## Naming Convention for Issues
 
+### Main Issues
+Existing main issues should be prefixed with `MET-C-` (e.g., `MET-C-[Number]`).
+
+#### Sub-Issues
+If a main issue is split into sub-issues during sprint planning, the sub-issues should be prefixed with `SUB-C-`.
+
+**Example:**
+For the main issue `MET-C-01`, the sub-issues would be named:
+* `SUB-C-01-A-[Title]`
+* `SUB-C-01-B-[Title]`
+
+#### Internel issues
+For internal sub issues, like splitting into front and backend, should be prefixed with `INT-`.
+**Example:**
+* `INT-01-A-[Title]`
+
+### Additional Issues
+New issues can be created at any time. Any additional issues that do not fall into the Main, Sub, or Internal categories should be prefixed with `ADD-`.
+
+**Example:**
+* `ADD-[Number]-[Title]`
