@@ -62,9 +62,9 @@ docker compose down
    ```bash
    pnpm dev
    ```
-   
+
    (Or run individually in separate terminals: cd Backend && dotnet run and pnpm --filter frontend dev)
-   
+
    *Frontend runs on [http://localhost:5173](http://localhost:5173).*
 
    *Backend runs on [http://localhost:8080](http://localhost:8080).*
@@ -114,16 +114,16 @@ Once the autonomous deployment workflows run, they will push the branch to the s
 
 **4. SERVER_FINGERPRINT Debuging**
 
-The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD: 
-```bash 
+The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD:
+```bash
 ssh-keyscan -p 22 SERVER_IP 2>nul | ssh-keygen -lf -
 ```
-Example 
-```bash 
+Example
+```bash
 ssh-keyscan -p 22 150.230.151.68 2>nul | ssh-keygen -lf -
 
 ```
-The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519). 
+The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519).
 
 You can also isntead do the following:
 1. Go to your repository **Settings** -> **Secrets and variables** -> **Actions**.
@@ -189,7 +189,7 @@ pnpm db:seed
 Inspect the data:
 ```bash
 docker compose exec postgres psql -U metro -d metro
-``` 
+```
 
 ### Schema changes
 ```bash
@@ -209,4 +209,14 @@ Commit the generated files in `Backend/Migrations/`.
 
 MIT, per Section 7 of the AAU and Metro Service collaboration framework.
 
+## Naming convention for Issues
 
+Main issues, that already exist should be called MET-C-
+
+New issues created at sprint planning should be called ADD-01-Title
+
+At sprint planning if we split issues into sub issues that are split into sub issues should be called SUB
+
+So for MET-C-01 the sub issue would be called SUB-C-01-A-Title and SUB-C-01-B-Title
+
+For internal sub issues, like splitting into front and backend, should be called INT-01-A-Title
