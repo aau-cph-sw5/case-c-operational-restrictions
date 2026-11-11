@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatDayMonthYear } from "@/lib/dateFormat";
 
 export type DRStatus = "aktiv" | "afventer_deaktivering" | "arkiv" | "kladde";
 
@@ -40,16 +41,18 @@ export const STATUS_STYLES: Record<DRStatus, StatusStyle> = {
 };
 
 export interface ORNotificationCardProps {
-  referenceId: string;
   statusKey: DRStatus;
   title: string;
+  date: string;
+  signed: boolean;
   onSeMere?: () => void;
 }
 
 export function ORNotificationCard({
-  referenceId,
   statusKey,
   title,
+  date,
+  signed,
   onSeMere,
 }: ORNotificationCardProps) {
   const style = STATUS_STYLES[statusKey] || STATUS_STYLES.arkiv;
@@ -64,7 +67,15 @@ export function ORNotificationCard({
       )}
     >
       <div className="flex items-center justify-between text-xs font-medium">
-        <span className="text-muted-foreground font-semibold">ID: {referenceId}</span>
+        <span className="text-muted-foreground font-semibold">
+          Dato: {formatDayMonthYear(date)}
+        </span>
+        <span
+          style={{ backgroundColor: signed ? "#22C55E" : "#DC2626" }}
+          className="rounded-full px-2.5 py-0.5 font-semibold text-black"
+        >
+          {signed ? "Underskrevet" : "Ikke underskrevet"}
+        </span>
         <span className={cn("font-medium", style.statusTextColor)}>
           {style.statusLabel}
         </span>

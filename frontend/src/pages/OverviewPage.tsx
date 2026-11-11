@@ -10,6 +10,8 @@ export interface DrItem {
   referenceId: string;
   statusKey: DRStatus;
   title: string;
+  date: string;
+  signed: boolean;
   category: "kladde" | "alle" | "aktiv" | "arkiv";
 }
 
@@ -18,6 +20,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "k1",
     referenceId: "01012026-0101",
+    date: "2026-01-01T00:00:00Z",
+    signed: true,
     statusKey: "kladde",
     title: "Vandskade ved Sluseholmen medfører afbrudte døre",
     category: "kladde",
@@ -25,6 +29,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "k2",
     referenceId: "01012026-0102",
+    date: "2026-01-01T00:00:00Z",
+    signed: false,
     statusKey: "kladde",
     title: "Nørrebro lukket pga demonstrationer",
     category: "kladde",
@@ -34,6 +40,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "a1",
     referenceId: "01012026-0001",
+    date: "2026-01-01T00:00:00Z",
+    signed: true,
     statusKey: "aktiv",
     title: "Vandskade ved Sluseholmen medfører afbrudte døre",
     category: "aktiv",
@@ -41,6 +49,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "a2",
     referenceId: "12052026-0003",
+    date: "2026-05-12T00:00:00Z",
+    signed: false,
     statusKey: "aktiv",
     title: "Sænket hastighed mellem KBH H og Rådhuspladsen",
     category: "aktiv",
@@ -48,6 +58,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "a3",
     referenceId: "15052026-0004",
+    date: "2026-05-15T00:00:00Z",
+    signed: true,
     statusKey: "aktiv",
     title: "Færre toge på M3-linjen",
     category: "aktiv",
@@ -55,6 +67,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "a4",
     referenceId: "01012026-0002",
+    date: "2026-01-01T00:00:00Z",
+    signed: false,
     statusKey: "aktiv",
     title: "Nørrebro lukket pga demonstrationer",
     category: "aktiv",
@@ -64,6 +78,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ad1",
     referenceId: "14032024-00123",
+    date: "2024-03-14T00:00:00Z",
+    signed: true,
     statusKey: "afventer_deaktivering",
     title: "Strømafbrydelse ved Østerport st.",
     category: "aktiv",
@@ -71,6 +87,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ad2",
     referenceId: "03012026-0005",
+    date: "2026-01-03T00:00:00Z",
+    signed: false,
     statusKey: "afventer_deaktivering",
     title: "Østerport lukket pga demonstrationer",
     category: "aktiv",
@@ -80,6 +98,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ar1",
     referenceId: "03012023-1001",
+    date: "2023-01-03T00:00:00Z",
+    signed: true,
     statusKey: "arkiv",
     title: "Motor på 3 toge er brændt sammen",
     category: "arkiv",
@@ -87,6 +107,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ar2",
     referenceId: "03012022-1002",
+    date: "2022-01-03T00:00:00Z",
+    signed: false,
     statusKey: "arkiv",
     title: "M3-linjen holder sommerferie",
     category: "arkiv",
@@ -94,6 +116,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ar3",
     referenceId: "03012021-1003",
+    date: "2021-01-03T00:00:00Z",
+    signed: true,
     statusKey: "arkiv",
     title: "Ingen toge sikre; elektriker er på strejke",
     category: "arkiv",
@@ -101,6 +125,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ar4",
     referenceId: "03012023-1004",
+    date: "2023-01-03T00:00:00Z",
+    signed: false,
     statusKey: "arkiv",
     title: "Hul i skinnerne ved Mozarts plads",
     category: "arkiv",
@@ -108,6 +134,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ar5",
     referenceId: "03012024-1005",
+    date: "2024-01-03T00:00:00Z",
+    signed: true,
     statusKey: "arkiv",
     title: "Graffiti-maler tilskadekommet ved tog",
     category: "arkiv",
@@ -115,6 +143,8 @@ const MOCK_DATA: DrItem[] = [
   {
     id: "ar6",
     referenceId: "03012024-1006",
+    date: "2024-01-03T00:00:00Z",
+    signed: false,
     statusKey: "arkiv",
     title: "Toge blev solgt på auktion, vi mangler nye",
     category: "arkiv",
@@ -218,9 +248,10 @@ export function OverviewPage() {
             filteredItems.map((item) => (
               <ORNotificationCard
                 key={item.id}
-                referenceId={item.referenceId}
                 statusKey={item.statusKey}
                 title={item.title}
+                date={item.date}
+                signed={item.signed}
                 onSeMere={() => {
                   console.log(`Action clicked for ${item.referenceId}`);
                 }}
