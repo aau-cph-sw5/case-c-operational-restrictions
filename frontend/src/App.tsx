@@ -60,7 +60,6 @@ function App() {
       <p>
         <Link to="/login">Go to login page</Link>
       </p>
-
     </div>
   );
 }
