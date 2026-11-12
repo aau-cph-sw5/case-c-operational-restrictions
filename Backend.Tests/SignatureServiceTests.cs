@@ -4,8 +4,8 @@ using System.Runtime.CompilerServices;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
-using Backend.Services;
 using Backend.Models.Requests;
+using Backend.Services;
 
 namespace Backend.Tests;
 

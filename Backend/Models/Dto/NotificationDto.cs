@@ -1,6 +1,7 @@
+using System.Text.Json.Serialization;
+
 using Backend.Models.Entities;
 using Backend.Models.Enums;
-using System.Text.Json.Serialization;
 
 namespace Backend.Models.DTOs;
 
