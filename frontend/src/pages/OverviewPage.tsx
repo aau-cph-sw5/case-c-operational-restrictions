@@ -2,7 +2,10 @@ import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ORNotificationCard,type DRStatus } from "@/components/OverviewNotificationCard";
+import {
+  ORNotificationCard,
+  type DRStatus,
+} from "@/components/OverviewNotificationCard";
 import { BottomNav } from "@/components/ui/bottom-nav";
 
 export interface DrItem {
@@ -152,12 +155,20 @@ const MOCK_DATA: DrItem[] = [
 ];
 
 export function OverviewPage() {
-  const [activeTab, setActiveTab] = useState<"kladde" | "alle" | "aktiv" | "arkiv">("alle");
+  const [activeTab, setActiveTab] = useState<
+    "kladde" | "alle" | "aktiv" | "arkiv"
+  >("alle");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const kladdeCount = MOCK_DATA.filter((item) => item.category === "kladde").length;
-  const aktivCount = MOCK_DATA.filter((item) => item.category === "aktiv").length;
-  const arkivCount = MOCK_DATA.filter((item) => item.category === "arkiv").length;
+  const kladdeCount = MOCK_DATA.filter(
+    (item) => item.category === "kladde",
+  ).length;
+  const aktivCount = MOCK_DATA.filter(
+    (item) => item.category === "aktiv",
+  ).length;
+  const arkivCount = MOCK_DATA.filter(
+    (item) => item.category === "arkiv",
+  ).length;
   const alleCount = MOCK_DATA.length;
 
   const filteredItems = useMemo(() => {
@@ -174,7 +185,6 @@ export function OverviewPage() {
     <div className="h-screen w-screen bg-[#F8FAFC] flex justify-center items-center overflow-hidden antialiased text-foreground">
       {/* Permanent Fixed Mobile Shell Container */}
       <div className="w-full max-w-md h-full bg-white flex flex-col shadow-xl relative border-x border-border/40 overflow-hidden">
-        
         {/* Header*/}
         <header className="shrink-0 bg-[#E0F3FF] pt-5 pb-4 px-4 flex flex-col gap-4 border-b border-border/50 z-30">
           <h1 className="text-xl md:text-2xl font-bold text-center text-foreground font-heading">
@@ -189,7 +199,7 @@ export function OverviewPage() {
                 "py-2 px-1 text-xs md:text-sm font-semibold rounded-full transition-all text-center truncate cursor-pointer",
                 activeTab === "kladde"
                   ? "bg-[#2563EB] text-white shadow-sm"
-                  : "text-foreground hover:bg-black/5"
+                  : "text-foreground hover:bg-black/5",
               )}
             >
               Kladde ({kladdeCount})
@@ -200,7 +210,7 @@ export function OverviewPage() {
                 "py-2 px-1 text-xs md:text-sm font-semibold rounded-full transition-all text-center truncate cursor-pointer",
                 activeTab === "alle"
                   ? "bg-[#2563EB] text-white shadow-sm"
-                  : "text-foreground hover:bg-black/5"
+                  : "text-foreground hover:bg-black/5",
               )}
             >
               Alle ({alleCount})
@@ -211,7 +221,7 @@ export function OverviewPage() {
                 "py-2 px-1 text-xs md:text-sm font-semibold rounded-full transition-all text-center truncate cursor-pointer",
                 activeTab === "aktiv"
                   ? "bg-[#2563EB] text-white shadow-sm"
-                  : "text-foreground hover:bg-black/5"
+                  : "text-foreground hover:bg-black/5",
               )}
             >
               Aktiv ({aktivCount})
@@ -222,7 +232,7 @@ export function OverviewPage() {
                 "py-2 px-1 text-xs md:text-sm font-semibold rounded-full transition-all text-center truncate cursor-pointer",
                 activeTab === "arkiv"
                   ? "bg-[#2563EB] text-white shadow-sm"
-                  : "text-foreground hover:bg-black/5"
+                  : "text-foreground hover:bg-black/5",
               )}
             >
               Arkiv ({arkivCount})
@@ -259,7 +269,9 @@ export function OverviewPage() {
             ))
           ) : (
             <div className="text-center py-16 text-muted-foreground">
-              <p className="text-base font-medium">Ingen driftsrestriktioner fundet</p>
+              <p className="text-base font-medium">
+                Ingen driftsrestriktioner fundet
+              </p>
               <p className="text-sm mt-1">Prøv at søge efter noget andet.</p>
             </div>
           )}
