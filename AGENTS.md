@@ -3,9 +3,11 @@
 - A digital replacement for the paper-based Operational Restriction workflow: authoring, multi-party approval and signing, operator read-and-sign, cancellation, a register of restrictions in force, automatic notification, and a five-year archive, usable remotely.
 
 ## Folder Structure
+
 Always keep files in an appropriate folder. Models for databases (Dal) should be placed in Models/ModelDal´ Same for DTos Models/ModelsDto´.
 
 ## Classes
+
 Never Add classes in controllers or sevices unless told to do so.
 
 ## LLMs usage
@@ -29,14 +31,13 @@ Never Add classes in controllers or sevices unless told to do so.
 - Framework: ASP.NET Core / .NET
 - Architecture: MVCS
 
-
 ## Backend commands
 
 - dotnet build
 - dotnet run
 - dotnet test
 
-## Frontend 
+## Frontend
 
 - Typescript
 - React
@@ -97,4 +98,3 @@ Never Add classes in controllers or sevices unless told to do so.
 **Ask First:** Before modifying existing documents in a major way
 **Ask First:** When unsure between approaches, explain both and let me choose
 **Never Do:** edit config files or commit secrets
-

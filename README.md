@@ -1,6 +1,6 @@
 # Case C. Operational Restrictions
 
-*Driftsrestriktioner*  ·  5th Semester, BSc Software Engineering, AAU Copenhagen  ·  Autumn 2026
+_Driftsrestriktioner_ · 5th Semester, BSc Software Engineering, AAU Copenhagen · Autumn 2026
 
 A digital replacement for the paper-based Operational Restriction workflow: authoring, multi-party approval and signing, operator read-and-sign, cancellation, a register of restrictions in force, automatic notification, and a five-year archive, usable remotely.
 
@@ -27,7 +27,6 @@ A digital replacement for the paper-based Operational Restriction workflow: auth
 
 Items marked **(blocked)** are in this set because the product is incomplete without them, not because they can be pulled today: they need an answer from Metro first. The rule in CONTRIBUTING.md stands, and a blocked item that your team needs next is something to raise at the sprint review.
 
-
 **7 items are blocked** on an answer from Metro Service, down from eleven before Metro's August answers. They are not dead: read them, and bring the question to the next sprint review. Filter the issues by `status:blocked` to see them, and by `needs:metro` for everything that still carries a question for Metro.
 
 ## Getting it running
@@ -41,10 +40,11 @@ Items marked **(blocked)** are in this set because the product is incomplete wit
 docker compose up --build
 ```
 
-* **Frontend:** Open [http://localhost:5173](http://localhost:5173) in your browser.
-* **Backend API:** Access [http://localhost:8080/api/hello](http://localhost:8080/api/hello) (or via reverse-proxy at [http://localhost:5173/api/hello](http://localhost:5173/api/hello)).
+- **Frontend:** Open [http://localhost:5173](http://localhost:5173) in your browser.
+- **Backend API:** Access [http://localhost:8080/api/hello](http://localhost:8080/api/hello) (or via reverse-proxy at [http://localhost:5173/api/hello](http://localhost:5173/api/hello)).
 
 To stop the containers:
+
 ```bash
 docker compose down
 ```
@@ -53,35 +53,39 @@ docker compose down
 
 **Prerequisites:** .NET 10.0 SDK and Node.js 22+ / pnpm.
 
- **1. Install Dependencies:**
-   ```bash
-   pnpm install
-   ```
+**1. Install Dependencies:**
 
- **2. Start Backend & Frontend Concurrently:**
-   ```bash
-   pnpm dev
-   ```
-   
-   (Or run individually in separate terminals: cd Backend && dotnet run and pnpm --filter frontend dev)
-   
-   *Frontend runs on [http://localhost:5173](http://localhost:5173).*
+```bash
+pnpm install
+```
 
-   *Backend runs on [http://localhost:8080](http://localhost:8080).*
-   *Swagger UI (API documentation) is available at [http://localhost:8080/swagger](http://localhost:8080/swagger) when running in development.*
+**2. Start Backend & Frontend Concurrently:**
 
- **3. Format & Lint:**
-   ```bash
-   pnpm format    # Formats both backend (.NET) and frontend (Prettier)
-   pnpm lint      # Lints both backend (Roslyn analyzers) and frontend (ESLint)
-   ```
+```bash
+pnpm dev
+```
 
- **4. Run Tests:**
-   ```bash
-   pnpm test           # Runs both backend (.NET) and frontend (Vitest) tests
-   pnpm test:backend   # Backend tests only (dotnet test)
-   pnpm test:frontend  # Frontend tests only (Vitest)
-   ```
+(Or run individually in separate terminals: cd Backend && dotnet run and pnpm --filter frontend dev)
+
+_Frontend runs on [http://localhost:5173](http://localhost:5173)._
+
+_Backend runs on [http://localhost:8080](http://localhost:8080)._
+_Swagger UI (API documentation) is available at [http://localhost:8080/swagger](http://localhost:8080/swagger) when running in development._
+
+**3. Format & Lint:**
+
+```bash
+pnpm format    # Formats both backend (.NET) and frontend (Prettier)
+pnpm lint      # Lints both backend (Roslyn analyzers) and frontend (ESLint)
+```
+
+**4. Run Tests:**
+
+```bash
+pnpm test           # Runs both backend (.NET) and frontend (Vitest) tests
+pnpm test:backend   # Backend tests only (dotnet test)
+pnpm test:frontend  # Frontend tests only (Vitest)
+```
 
 ## Server and Autonomous Deployment
 
@@ -93,39 +97,44 @@ Provision a fresh, blank Linux server to host the application environments.
 **2. Set Up GitHub Secrets**
 The GitHub Actions runner requires credentials to access and configure the remote server. Add the following repository secrets:
 
-* `SERVER_HOST`: The IP address of your remote Linux server.
-* `SERVER_USER`: The Linux username used to execute commands on the machine.
-* `SSH_PRIVATE_KEY`: The SSH private key that has authorized access to the server.
-* `SERVER_FINGERPRINT`: The servers fingerprint identifies a server's public key, needed for secure connection.
-* `DOMAIN`: The base domain or subdomain (e.g., via DuckDNS) that Traefik will use for dynamic web routing.
-* `ACME_EMAIL`: The email address used for Let's Encrypt ACME registration and SSL/TLS certificate renewal notifications.
-* `JWT_SIGNING_KEY`: A secure random string (minimum 32 characters) used by the ASP.NET Core backend to sign and validate JWT authentication tokens.
+- `SERVER_HOST`: The IP address of your remote Linux server.
+- `SERVER_USER`: The Linux username used to execute commands on the machine.
+- `SSH_PRIVATE_KEY`: The SSH private key that has authorized access to the server.
+- `SERVER_FINGERPRINT`: The servers fingerprint identifies a server's public key, needed for secure connection.
+- `DOMAIN`: The base domain or subdomain (e.g., via DuckDNS) that Traefik will use for dynamic web routing.
+- `ACME_EMAIL`: The email address used for Let's Encrypt ACME registration and SSL/TLS certificate renewal notifications.
+- `JWT_SIGNING_KEY`: A secure random string (minimum 32 characters) used by the ASP.NET Core backend to sign and validate JWT authentication tokens.
 
 **3. Run the Server Bootstrap Workflow**
-You **must** run the "Server Bootstrap" GitHub Action (`bootstrap.yml`) *first*, before triggering any autonomous deployment workflows. This bootstrap script is entirely server-agnostic. It logs into the blank server to automatically install Docker, set up Docker Compose, configure the external networks, and deploy the global Traefik reverse proxy needed to route traffic to your future containers.
+You **must** run the "Server Bootstrap" GitHub Action (`bootstrap.yml`) _first_, before triggering any autonomous deployment workflows. This bootstrap script is entirely server-agnostic. It logs into the blank server to automatically install Docker, set up Docker Compose, configure the external networks, and deploy the global Traefik reverse proxy needed to route traffic to your future containers.
 **4. Example of autonomous deployment**
 Once the autonomous deployment workflows run, they will push the branch to the subdomain with the branch prefix, below is the current example, which might be deprecated;
 
-*Development branch runs on [http://dev.metro-operational-restrictions.duckdns.org](http://dev.metro-operational-restrictions.duckdns.org).*
+_Development branch runs on [http://dev.metro-operational-restrictions.duckdns.org](http://dev.metro-operational-restrictions.duckdns.org)._
 
-*Staging branch runs on  [http://staging.metro-operational-restrictions.duckdns.org](http://staging.metro-operational-restrictions.duckdns.org).*
+_Staging branch runs on [http://staging.metro-operational-restrictions.duckdns.org](http://staging.metro-operational-restrictions.duckdns.org)._
 
-*Main branch runs on [http://main.metro-operational-restrictions.duckdns.org](http://main.metro-operational-restrictions.duckdns.org).*
+_Main branch runs on [http://main.metro-operational-restrictions.duckdns.org](http://main.metro-operational-restrictions.duckdns.org)._
 
 **4. SERVER_FINGERPRINT Debuging**
 
-The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD: 
-```bash 
+The server fingerprint is something you yourself have to procure, one of the ways to do so is to use the following command in CMD:
+
+```bash
 ssh-keyscan -p 22 SERVER_IP 2>nul | ssh-keygen -lf -
 ```
-Example 
-```bash 
+
+Example
+
+```bash
 ssh-keyscan -p 22 150.230.151.68 2>nul | ssh-keygen -lf -
 
 ```
-The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519). 
+
+The `appleboy` plugin typically uses (ECDSA), but if it dosent work, you will have to test the other two formats (RSA) and (ED25519).
 
 You can also isntead do the following:
+
 1. Go to your repository **Settings** -> **Secrets and variables** -> **Actions**.
 2. Create a new **Variable**.
 3. Name it `ACTIONS_STEP_DEBUG` and set the value to `true`.
@@ -151,32 +160,33 @@ fixtures/      synthetic test data. Never anything Metro supplied.
 
 > Record here which assistants this team used and for what, per [the semester policy](https://github.com/aau-cph-sw5/semester-docs/blob/main/docs/11-ai-use.md). Two lines is enough.
 
-
 ## Local database
 
 Postgres 17 runs in Docker. The backend creates the tables (EF Core
 migrations) on startup in Development. Dummy data is inserted with a pnpm script.
 
 ### Start and seed
+
 ```bash
 docker compose up -d
 pnpm db:seed
 ```
+
 Wait a few seconds after `up` so the backend can create the tables.
 `pnpm db:seed` can be run repeatedly without creating duplicates.
 
 ### Seeded users
 
-| Name              | Email                    | Role       |
-|-------------------|--------------------------|------------|
-| Olivia Originator | originator@example.test  | Originator |
-| Dan Dom           | dom@example.test         | Dom        |
-| Oscar Operator    | operator@example.test    | Operator   |
-
+| Name              | Email                   | Role       |
+| ----------------- | ----------------------- | ---------- |
+| Olivia Originator | originator@example.test | Originator |
+| Dan Dom           | dom@example.test        | Dom        |
+| Oscar Operator    | operator@example.test   | Operator   |
 
 Seed users use a placeholder password hash and cannot log in yet.
 
 ### Reset
+
 ```bash
 docker compose down -v
 docker compose up -d
@@ -184,29 +194,31 @@ pnpm db:seed
 ```
 
 ### Connect
+
 `Host=localhost;Port=5432;Database=metro;Username=metro;Password=metro_local_pw`
 
 Inspect the data:
+
 ```bash
 docker compose exec postgres psql -U metro -d metro
-``` 
+```
 
 ### Schema changes
+
 ```bash
 cd Backend
 dotnet ef migrations add MigrationName
 ```
+
 Replace `MigrationName` with a short description of the change.
 The signing key is a dummy value needed because `Program.cs` requires it at startup.
 Commit the generated files in `Backend/Migrations/`.
 
 ### Troubleshooting
+
 - `relation "Users" does not exist`: the backend hasn't finished migrating. Wait and retry.
 - Port 5432 already allocated: stop the other Postgres, or map `"5433:5432"` in `docker-compose.yml` and use port 5433 on the host.
-
 
 ## Licence
 
 MIT, per Section 7 of the AAU and Metro Service collaboration framework.
-
-

@@ -1,9 +1,9 @@
 # ADR 0007. Automate server bootstrapping and deployments with Appleboy actions and Traefik
 
-**Status.** Proposed 
+**Status.** Proposed
 **Date.** 2026-09-29  
-**Deciders.** Group 4, Artem Shevchenko, Daniel Bach Eriksen, Gabriella Blake, Joakim Boldt   
-**Related backlog items.** MET-C-33  
+**Deciders.** Group 4, Artem Shevchenko, Daniel Bach Eriksen, Gabriella Blake, Joakim Boldt  
+**Related backlog items.** MET-C-33
 
 ## Context
 
@@ -22,6 +22,7 @@ We will also configure Traefik with an Automated Certificate Management Environm
 ## Consequences
 
 **What becomes easier**
+
 - Deployments are fully hands off and triggered directly by branch pushes.
 - Traefik automatically detects new Docker containers via the Docker socket and provisions routing dynamically based on environment variables, eliminating the need to update reverse proxy configurations manually.
 - SSL/TLS certificates are provisioned and renewed automatically via Let's Encrypt (ACME), enforcing HTTPS and supporting PWA installations and secure cookies without manual intervention.
@@ -29,11 +30,13 @@ We will also configure Traefik with an Automated Certificate Management Environm
 - Explicit GitHub Action parameters for source and target directories prevent us from having to write raw Bash scripts over SSH pipelines, reducing syntax errors.
 
 **What becomes harder**
+
 - We must securely manage SSH keys and domain variables within GitHub Secrets.
 - Traefik introduces an additional layer of Docker networking complexity (requiring a shared external `traefik-net` network) compared to direct host port bindings.
 - Troubleshooting deployment failures requires inspecting GitHub Action logs rather than direct local feedback.
 
 **What this commits us to**
+
 - Our deployment infrastructure is tightly coupled to GitHub Actions as a runner, Appleboy SSH actions for remote execution, and Traefik's label-based dynamic routing for traffic management.
 
 ## Alternatives considered

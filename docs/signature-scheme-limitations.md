@@ -18,16 +18,16 @@ In practice this is a click-to-sign by a logged-in user. The user's identity res
 
 ## Summary
 
-| Expectation | Status | Detail |
-|---|---|---|
-| Signer identity is established | Partial | Rests on a JWT only. Login is currently a placeholder. |
-| Signer is present at signing | Not met | No re-authentication, and tokens live for 14 days. |
-| Signature cannot be altered | Partial | Enforced in code and by test, not by the database. |
-| Alteration would be detectable | Not met | No hash, digital signature, or hash chain. |
-| Signature is durable | Not met | Currently held in memory only. |
-| Time of signing is trustworthy | Partial | Server clock, no external time source. |
-| Signed content is bound to the signature | Partial | Linked by id only, content is not hashed. |
-| Full history is kept | Not met | No signature audit trail in the code today. |
+| Expectation                              | Status  | Detail                                                 |
+| ---------------------------------------- | ------- | ------------------------------------------------------ |
+| Signer identity is established           | Partial | Rests on a JWT only. Login is currently a placeholder. |
+| Signer is present at signing             | Not met | No re-authentication, and tokens live for 14 days.     |
+| Signature cannot be altered              | Partial | Enforced in code and by test, not by the database.     |
+| Alteration would be detectable           | Not met | No hash, digital signature, or hash chain.             |
+| Signature is durable                     | Not met | Currently held in memory only.                         |
+| Time of signing is trustworthy           | Partial | Server clock, no external time source.                 |
+| Signed content is bound to the signature | Partial | Linked by id only, content is not hashed.              |
+| Full history is kept                     | Not met | No signature audit trail in the code today.            |
 
 ## Limits in detail
 

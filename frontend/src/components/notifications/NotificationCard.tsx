@@ -40,15 +40,14 @@ export function NotificationCard({
     ) {
       navigate(
         `/restrictions/${encodeURIComponent(
-          notification.operationalRestrictionId
-        )}`
+          notification.operationalRestrictionId,
+        )}`,
       );
       return;
     }
 
     onOpen(notification);
   }
-
 
   return (
     <article
@@ -98,7 +97,7 @@ export function NotificationCard({
         className={`notification-action ${
           notification.action === "Underskriv nu" ? "primary" : ""
         }`}
-      //  onClick={() => onOpen(notification)}
+        //  onClick={() => onOpen(notification)}
         onClick={handleAction}
       >
         {notification.action ?? "Se besked"}
