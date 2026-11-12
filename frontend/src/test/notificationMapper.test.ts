@@ -29,11 +29,13 @@ describe("notificationMapper", () => {
       makeDto({
         type: "SignatureRequired",
         requiresAction: true,
+        operationalRestrictionId: "op-rest-1",
       }),
     );
 
     expect(result).toEqual({
       id: "id-1",
+      operationalRestrictionId: "op-rest-1",
       category: "DRIFTSRESTRIKTION",
       title: "Info",
       message: "Message",
