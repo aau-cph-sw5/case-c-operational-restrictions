@@ -19,7 +19,7 @@ public class JwtService
         _options = options.Value;
     }
 
-    public MintedToken Mint(User user)
+    public MintedToken Mint(User user, IEnumerable<string>? roles = null)
     {
         var issuedAt = DateTime.UtcNow;
         var expiresAt = issuedAt.AddDays(_options.LifetimeDays);
@@ -32,6 +32,15 @@ public class JwtService
             new(JwtRegisteredClaimNames.Name, user.Name),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        if (roles != null)
+        {
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim("role", role));
+            }
+        }
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);

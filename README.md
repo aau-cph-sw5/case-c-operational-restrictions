@@ -167,14 +167,19 @@ Wait a few seconds after `up` so the backend can create the tables.
 
 ### Seeded users
 
-| Name              | Email                    | Role       |
-|-------------------|--------------------------|------------|
-| Olivia Originator | originator@example.test  | Originator |
-| Dan Dom           | dom@example.test         | Dom        |
-| Oscar Operator    | operator@example.test    | Operator   |
+In development environments (both local and the hosted `dev` branch), the database is automatically seeded on startup with users for each role. All seeded users share the password `Password123!`.
 
-
-Seed users use a placeholder password hash and cannot log in yet.
+| Name | Email | Role | Password |
+|---|---|---|---|
+| Olivia Originator | `originator@example.test` | Originator | `Password123!` |
+| Dan Dom | `dom@example.test` | DutyOperationsManager | `Password123!` |
+| Anna Jensen | `anna.jensen@example.test` | DutyOperationsManager | `Password123!` |
+| Oscar Operator | `operator@example.test` | Operator | `Password123!` |
+| Lars Nielsen | `lars.nielsen@example.test` | Operator | `Password123!` |
+| Sofie Hansen | `sofie.hansen@example.test` | Operator | `Password123!` |
+| Mikkel Pedersen | `mikkel.pedersen@example.test` | ControlroomSupervisor | `Password123!` |
+| Camilla Andersen | `camilla.andersen@example.test` | Betriebsleiter | `Password123!` |
+| Placeholder User | `placeholder@example.com` | Originator | `Password123!` |
 
 ### Reset
 ```bash
