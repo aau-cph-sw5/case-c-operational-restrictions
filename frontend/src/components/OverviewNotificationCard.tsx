@@ -63,7 +63,7 @@ export function ORNotificationCard({
       style={{ backgroundColor: style.bgHex }}
       className={cn(
         "rounded-xl border shadow-xs py-3.5 px-4 gap-2.5 transition-all hover:shadow-sm",
-        style.borderColor
+        style.borderColor,
       )}
     >
       <div className="flex items-center justify-between text-xs font-medium">
