@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 
-using Backend.Models.Enums;
-
 namespace Backend.Models.DTOs;
 
 public class CreateUserDto
@@ -13,7 +11,5 @@ public class CreateUserDto
     [Required]
     public string Password { get; set; } = string.Empty;
 
-    [Required]
-    public UserRole Role { get; set; }
-
+    // Roles are assigned through UserRoleAssignments in the database, not here.
 }

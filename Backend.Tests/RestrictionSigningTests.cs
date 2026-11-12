@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using Backend.Authorization;
 using Backend.Controllers;
 using Backend.Data;
 using Backend.Lifecycle;
@@ -14,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Tests;
 
+[Collection("SignatureService")]
 public class RestrictionSigningTests
 {
     private readonly AppDbContext _dbContext;
@@ -69,7 +71,7 @@ public class RestrictionSigningTests
 
         Assert.Equal(latestVersion.RestrictionId, signature.OperationalRestrictionId);
         Assert.Equal(restriction.OriginatorUserId, signature.SigneeId);
-        Assert.Equal(UserRole.Originator, signature.SigneeRole);
+        Assert.Equal(RoleNames.Originator, signature.SigneeRole);
         Assert.Equal(RestrictionState.Draft, persistedRestriction.State);
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, latestVersion.State);
     }
@@ -203,7 +205,7 @@ public class RestrictionSigningTests
         Assert.NotNull(dto.OriginatorSignature);
         Assert.Equal(signature.OperationalRestrictionId, dto.OriginatorSignature.OperationalRestrictionId);
         Assert.Equal(restriction.OriginatorUserId, dto.OriginatorSignature.SigneeId);
-        Assert.Equal(UserRole.Originator, dto.OriginatorSignature.SigneeRole);
+        Assert.Equal(RoleNames.Originator, dto.OriginatorSignature.SigneeRole);
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, dto.State);
     }
 

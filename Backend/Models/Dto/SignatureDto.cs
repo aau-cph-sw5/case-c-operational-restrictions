@@ -1,5 +1,4 @@
 using Backend.Models.Entities;
-using Backend.Models.Enums;
 
 namespace Backend.Models.DTOs;
 
@@ -9,7 +8,7 @@ public class SignatureDto
     public Guid RequiresSignatureId { get; set; }
     public Guid OperationalRestrictionId { get; set; }
     public Guid SigneeId { get; set; }
-    public UserRole SigneeRole { get; set; }
+    public string SigneeRole { get; set; } = string.Empty;
     public DateTime SignedAt { get; set; }
 
     public static SignatureDto FromDalEntity(Signature signature) =>

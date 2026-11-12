@@ -39,6 +39,16 @@ public class MissingRequiredRestrictionFieldException : Exception
     {
     }
 }
+
+// Separation of duties: the user who created a restriction may hold a role
+// that allows approving restrictions, but must not approve their own.
+public class SelfApprovalNotAllowedException : Exception
+{
+    public SelfApprovalNotAllowedException(Guid restrictionId, Guid userId)
+        : base($"User {userId} cannot approve operational restriction {restrictionId} because they created it")
+    {
+    }
+}
 public class SignatureNotFoundException : Exception
 {
     public SignatureNotFoundException(Guid id)
