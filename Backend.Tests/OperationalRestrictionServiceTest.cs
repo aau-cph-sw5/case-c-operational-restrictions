@@ -1,4 +1,5 @@
 using Backend.Data;
+using Backend.Exceptions;
 using Backend.Lifecycle;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
@@ -12,7 +13,8 @@ public class OperationalRestrictionServiceTests
 {
     private static OperationalRestrictionService CreateService(
     FakeOperationalRestrictionRepository repository,
-    FakeRestrictionTransitionEventRepository? eventRepository = null)
+    FakeRestrictionTransitionEventRepository? eventRepository = null,
+    SignatureService? signatureService = null)
     {
         var lifecycle = new RestrictionLifecycleService(
             new IRestrictionGuard[]
@@ -32,7 +34,8 @@ public class OperationalRestrictionServiceTests
             lifecycle,
             repository,
             eventRepository ?? new FakeRestrictionTransitionEventRepository(),
-            new FakeUnitOfWork());
+            new FakeUnitOfWork(),
+            signatureService);
     }
 
     private static Task<OperationalRestrictionDto> CreateDraftAsync(
@@ -130,11 +133,12 @@ public class OperationalRestrictionServiceTests
     {
         // Arrange
         var repo = new FakeOperationalRestrictionRepository();
-        var service = CreateService(repo);
+        var signatureService = new SignatureService(TestDatabase.CreateSeededContext());
+        var service = CreateService(repo, signatureService: signatureService);
 
         var originator = Guid.NewGuid();
         var dutyOperationsManager = Guid.NewGuid();
-        var controlRoomSupervisor = Guid.NewGuid();
+        var controlRoomSupervisor = DbSeeder.MikkelId;
 
         // Act
         var draft = await CreateDraftAsync(service, originator);
@@ -144,7 +148,8 @@ public class OperationalRestrictionServiceTests
         var submittedAgain = await service.SubmitForApprovalAsync(resubmittedDraft.Id, originator);
         var approved = await service.ApproveRestrictionAsync(submittedAgain.Id, dutyOperationsManager);
         var pendingSupervisor = await service.SubmitForControlRoomSupervisorApprovalAsync(approved.Id, dutyOperationsManager);
-        var active = await service.ActivateRestrictionAsync(pendingSupervisor.Id, controlRoomSupervisor);
+        var signature = await service.SignControlRoomSupervisorAndActivateAsync(pendingSupervisor.Id, controlRoomSupervisor);
+        var active = await service.GetByIdAsync(pendingSupervisor.Id);
 
         // Assert
         Assert.Equal(RestrictionState.Draft, draft.State);
@@ -156,10 +161,89 @@ public class OperationalRestrictionServiceTests
         Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, pendingSupervisor.State);
         Assert.Equal(RestrictionState.Active, active.State);
 
+        Assert.Equal(controlRoomSupervisor, signature.SigneeId);
+        Assert.Equal(UserRole.ControlroomSupervisor, signature.SigneeRole);
         Assert.Equal(7, repo.Restrictions.Single(
             r => r.RestrictionId == active.Id).Version);
         Assert.Equal(controlRoomSupervisor, active.CreatedBy);
         Assert.Equal(8, repo.Restrictions.Count);
+
+        // The operators who must read and sign are fixed at the moment the
+        // restriction comes into force, and recorded on the Active version.
+        var expectedOperators = new[] { DbSeeder.LarsId, DbSeeder.SofieId, DbSeeder.OscarId };
+        Assert.Equal(expectedOperators.OrderBy(x => x), active.AssignedOperatorsIds.OrderBy(x => x));
+    }
+
+    [Fact]
+    public async Task EditOnRestrictionInForceIsRefused()
+    {
+        // Arrange
+        var repo = new FakeOperationalRestrictionRepository();
+        var signatureService = new SignatureService(TestDatabase.CreateSeededContext());
+        var service = CreateService(repo, signatureService: signatureService);
+
+        var originator = Guid.NewGuid();
+        var draft = await CreateDraftAsync(service, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
+        var approved = await service.ApproveRestrictionAsync(submitted.Id, Guid.NewGuid());
+        var pendingSupervisor = await service.SubmitForControlRoomSupervisorApprovalAsync(approved.Id, Guid.NewGuid());
+        await service.SignControlRoomSupervisorAndActivateAsync(pendingSupervisor.Id, DbSeeder.MikkelId);
+        var active = await service.GetByIdAsync(pendingSupervisor.Id);
+
+        // Act & Assert - a restriction in force cannot be edited, only cancelled
+        var exception = await Assert.ThrowsAsync<OperationalRestrictionNotEditableException>(
+            () => service.EditRestrictionAsync(active.Id, new OperationalRestrictionDto
+            {
+                RestrictionDescription = "Changed while in force"
+            }));
+
+        Assert.Contains("Active", exception.Message);
+        Assert.Equal(5, repo.Restrictions.Count);
+    }
+
+    [Fact]
+    public async Task EditOnReturnedForChangesIsAllowed()
+    {
+        // Arrange
+        var repo = new FakeOperationalRestrictionRepository();
+        var service = CreateService(repo);
+
+        var originator = Guid.NewGuid();
+        var draft = await CreateDraftAsync(service, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
+        var returned = await service.ReturnForChangesAsync(submitted.Id, Guid.NewGuid(), "Add track section");
+
+        // Act
+        var edited = await service.EditRestrictionAsync(returned.Id, new OperationalRestrictionDto
+        {
+            RestrictionDescription = "Updated after review"
+        });
+
+        // Assert
+        Assert.Equal("Updated after review", edited.RestrictionDescription);
+    }
+
+    [Fact]
+    public async Task ActivationWithoutControlRoomSupervisorSignatureIsRefused()
+    {
+        // Arrange
+        var repo = new FakeOperationalRestrictionRepository();
+        var service = CreateService(repo);
+
+        var originator = Guid.NewGuid();
+        var dutyOperationsManager = Guid.NewGuid();
+        var draft = await CreateDraftAsync(service, originator);
+        var submitted = await service.SubmitForApprovalAsync(draft.Id, originator);
+        var approved = await service.ApproveRestrictionAsync(submitted.Id, dutyOperationsManager);
+        var pendingSupervisor = await service.SubmitForControlRoomSupervisorApprovalAsync(approved.Id, dutyOperationsManager);
+
+        // Act - a bare transition to Active without the supervisor having signed
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.ActivateRestrictionAsync(pendingSupervisor.Id, DbSeeder.MikkelId));
+
+        // Assert
+        Assert.Contains("ControlRoomSupervisorSignatureIsFound", exception.Message);
+        Assert.Equal(4, repo.Restrictions.Count);
     }
 
     [Fact]

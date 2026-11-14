@@ -72,3 +72,20 @@ public class RequiresSignatureNotSignableException : Exception
     {
     }
 }
+
+public class NotControlRoomSupervisorException : Exception
+{
+    public NotControlRoomSupervisorException(Guid userId)
+        : base($"User {userId} is not a control room supervisor and cannot sign for implementation")
+    {
+    }
+}
+
+public class OperationalRestrictionNotEditableException : Exception
+{
+    public OperationalRestrictionNotEditableException(Guid id, string state)
+        : base($"Operational restriction {id} cannot be edited because it is {state}. " +
+               "A restriction in force can only be cancelled.")
+    {
+    }
+}

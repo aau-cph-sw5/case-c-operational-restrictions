@@ -36,6 +36,10 @@ public class OperationalRestrictionDto
 
     public string ReviewDescription { get; set; } = string.Empty;
 
+    // Operators who must read and sign the restriction, fixed when it comes
+    // into force (MET-C-009).
+    public List<Guid> AssignedOperatorsIds { get; set; } = new();
+
     public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction)
     {
         var signatures = operationalRestriction.SignatureSheet?
@@ -62,7 +66,8 @@ public class OperationalRestrictionDto
             ReviewerId = operationalRestriction.ReviewerId,
             ReviewDescription = operationalRestriction.ReviewDescription,
             Signatures = signatures,
-            OriginatorSignature = originatorSignature
+            OriginatorSignature = originatorSignature,
+            AssignedOperatorsIds = new List<Guid>(operationalRestriction.AssignedOperatorsIds)
         };
     }
 }

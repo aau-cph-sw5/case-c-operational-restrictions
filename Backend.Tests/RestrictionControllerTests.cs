@@ -157,6 +157,18 @@ public class RestrictionControllerTests
         Assert.DoesNotContain(restrictions, x => x.State == RestrictionState.Draft && x.OriginatorUserId != DbSeeder.LarsId);
     }
 
+    [Fact]
+    public async Task GetActiveReturnsOnlyRestrictionsInForce()
+    {
+        // The seeded database contains restrictions in Active state.
+        var result = await CreateControllerFor(DbSeeder.LarsId).GetActive();
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var restrictions = Assert.IsType<List<OperationalRestrictionDto>>(ok.Value);
+        Assert.NotEmpty(restrictions);
+        Assert.All(restrictions, x => Assert.Equal(RestrictionState.Active, x.State));
+    }
+
     private RestrictionsController CreateControllerFor(Guid userId)
     {
         var user = new ClaimsPrincipal(new ClaimsIdentity(

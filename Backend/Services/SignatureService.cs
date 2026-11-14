@@ -153,7 +153,98 @@ public class SignatureService(
             .ToList();
     }
 
-    internal void DiscardUnpersistedOriginatorSignature(Signature signature)
+    /// <summary>
+    /// Creates the control room supervisor's signature for implementation (MET-C-009).
+    /// Only a user with the ControlroomSupervisor role may sign, and each restriction
+    /// can only be signed for implementation once.
+    /// </summary>
+    public Signature SignControlRoomSupervisor(Guid operationalRestrictionId, Guid signerUserId)
+    {
+        var signer = _appDbContext.Users.SingleOrDefault(user => user.Id == signerUserId);
+
+        if (signer == null || signer.Role != UserRole.ControlroomSupervisor)
+            throw new NotControlRoomSupervisorException(signerUserId);
+
+        var existingSignature = _signatures.FirstOrDefault(signature =>
+            signature.OperationalRestrictionId == operationalRestrictionId
+            && signature.SigneeRole == UserRole.ControlroomSupervisor);
+
+        if (existingSignature != null)
+        {
+            throw new RequiresSignatureNotSignableException(
+                existingSignature.RequiresSignatureId,
+                RequiresSignatureStatus.CompletedSignature.ToString());
+        }
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+        };
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = UserRole.ControlroomSupervisor,
+            SignedAt = DateTime.UtcNow
+        };
+        _signatures.Add(signature);
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+
+        return signature;
+    }
+
+    public Signature? GetControlRoomSupervisorSignature(Guid operationalRestrictionId)
+    {
+        return _signatures.FirstOrDefault(signature =>
+            signature.OperationalRestrictionId == operationalRestrictionId
+            && signature.SigneeRole == UserRole.ControlroomSupervisor);
+    }
+
+    /// <summary>
+    /// MET-C-009: determines the operators who must read and sign the
+    /// restriction at the moment it comes into force, and creates a pending
+    /// required signature for each of them. Operators on holiday are skipped.
+    /// Returns the created required signatures; their signee ids are the
+    /// assigned operators to record on the restriction version.
+    /// </summary>
+    public List<RequiresSignature> AssignOperatorsForImplementation(Guid operationalRestrictionId)
+    {
+        var operatorIds = _appDbContext.Users
+            .Where(user => user.Role == UserRole.Operator
+                && user.WorkingStatus != UserWorkingStatus.OnHoliday)
+            .Select(user => user.Id)
+            .ToList();
+
+        var requiredSignatures = operatorIds
+            .Select(operatorId => new RequiresSignature
+            {
+                Id = Guid.NewGuid(),
+                OperationalRestrictionId = operationalRestrictionId,
+                SigneeId = operatorId,
+                RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+            })
+            .ToList();
+
+        //her skal de tilføjes til db i fremtiden
+        _requiredSignatures.AddRange(requiredSignatures);
+
+        return requiredSignatures;
+    }
+
+    internal void DiscardUnpersistedRequiredSignatures(IEnumerable<Guid> requiresSignatureIds)
+    {
+        var ids = requiresSignatureIds.ToHashSet();
+        _requiredSignatures.RemoveAll(required => ids.Contains(required.Id));
+    }
+
+    internal void DiscardUnpersistedSignature(Signature signature)
     {
         var requiredSignature = GetRequiresSignatureById(signature.RequiresSignatureId);
 

@@ -18,6 +18,8 @@ public interface IOperationalRestrictionService
     Task<List<OperationalRestrictionDto>> GetAllAsync();
     Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId);
 
+    Task<Signature> SignControlRoomSupervisorAndActivateAsync(Guid id, Guid signerId);
+
     Task<List<OperationalRestrictionDto>> GetActiveRestrictionsAsync();
 
     Task<OperationalRestrictionDto> EditRestrictionAsync(

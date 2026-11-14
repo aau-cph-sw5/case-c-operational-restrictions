@@ -172,10 +172,63 @@ public class OperationalRestrictionService
         catch
         {
             if (signature != null)
-                _signatureService.DiscardUnpersistedOriginatorSignature(signature);
+                _signatureService.DiscardUnpersistedSignature(signature);
 
             throw;
         }
+    }
+
+    /// <summary>
+    /// MET-C-009: the control room supervisor signs the restriction for
+    /// implementation, which moves it from PendingControlRoomSupervisorApproval
+    /// to Active. Only users with the ControlroomSupervisor role may sign.
+    /// </summary>
+    public async Task<Signature> SignControlRoomSupervisorAndActivateAsync(Guid id, Guid signerId)
+    {
+        if (_signatureService == null)
+            throw new InvalidOperationException("SignatureService is not configured.");
+
+        var restriction = await _repository.GetByIdAsync(id)
+            ?? throw new OperationalRestrictionNotFoundException(id);
+
+        if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
+            throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
+
+        Signature? signature = null;
+        List<RequiresSignature>? assignedOperators = null;
+        try
+        {
+            signature = _signatureService.SignControlRoomSupervisor(id, signerId);
+
+            // The set of operators who must read and sign is fixed at the moment
+            // the restriction comes into force, and recorded on the new version.
+            assignedOperators = _signatureService.AssignOperatorsForImplementation(id);
+
+            await TransitionAsync(
+                id,
+                RestrictionAction.Active,
+                signerId,
+                newVersion =>
+                {
+                    newVersion.SignatureSheet.Add(signature);
+                    newVersion.AssignedOperatorsIds =
+                        assignedOperators.Select(required => required.SigneeId).ToList();
+                });
+        }
+        catch
+        {
+            if (signature != null)
+                _signatureService.DiscardUnpersistedSignature(signature);
+
+            // Roll back only the required signatures this attempt created.
+            if (assignedOperators != null)
+                _signatureService.DiscardUnpersistedRequiredSignatures(
+                    assignedOperators.Select(required => required.Id));
+
+            throw;
+        }
+
+        return signature;
     }
 
     /// <summary>
@@ -208,7 +261,14 @@ public class OperationalRestrictionService
     {
         var original = await GetRestrictionOrThrowAsync(id);
 
-        // TODO : restrict editing to Draft/ReturnedForChanges states.
+        // Only drafts and restrictions returned for changes can be edited; a
+        // restriction in force (Active) can only be cancelled (MET-C-009).
+        if (original.State != RestrictionState.Draft
+            && original.State != RestrictionState.ReturnedForChanges)
+        {
+            throw new OperationalRestrictionNotEditableException(id, original.State.ToString());
+        }
+
         var newVersion = await SaveAsNewVersionAsync(original, v =>
         {
             v.RestrictionDescription = updateRestrictionDto.RestrictionDescription;

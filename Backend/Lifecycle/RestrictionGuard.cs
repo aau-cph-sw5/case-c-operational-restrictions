@@ -94,8 +94,8 @@ public sealed class ControlRoomSupervisorSignatureIsFound : IRestrictionGuard<Op
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        // TODO: Check data.ControlRoomSupervisorSignature when added to DTO
-        return true;
+        return data.Signatures.Any(signature =>
+            signature.SigneeRole == UserRole.ControlroomSupervisor);
     }
 }
 
@@ -105,7 +105,6 @@ public sealed class OperatorsAreAssigned : IRestrictionGuard<OperationalRestrict
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        // TODO: Check data.AssignedOperatorsIds when added to DTO
-        return true;
+        return data.AssignedOperatorsIds.Count > 0;
     }
 }

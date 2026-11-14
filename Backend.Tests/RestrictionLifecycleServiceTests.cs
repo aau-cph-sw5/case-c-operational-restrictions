@@ -115,7 +115,12 @@ public class RestrictionLifecycleServiceTests
             StartDate = DateTime.Now,
             State = state,
             ReviewerId = Guid.NewGuid(),
-            ReviewDescription = "Review comment"
+            ReviewDescription = "Review comment",
+            Signatures = new List<SignatureDto>
+            {
+                new() { SigneeRole = UserRole.ControlroomSupervisor }
+            },
+            AssignedOperatorsIds = new List<Guid> { Guid.NewGuid() }
         };
     }
 
@@ -262,6 +267,42 @@ public class RestrictionLifecycleServiceTests
             RestrictionState.PendingControlRoomSupervisorApproval,
             RestrictionAction.Active,
             data);
+    }
+
+    [Fact]
+    public void TransitionToActiveWithoutControlRoomSupervisorSignatureIsRefused()
+    {
+        // Arrange - no control room supervisor signature on the signature sheet
+        var data = CreateValidDto(RestrictionState.PendingControlRoomSupervisorApproval);
+        data.Signatures.Clear();
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanTransition(
+                RestrictionState.PendingControlRoomSupervisorApproval,
+                RestrictionAction.Active,
+                data));
+
+        // Assert
+        Assert.Contains("ControlRoomSupervisorSignatureIsFound", exception.Message);
+    }
+
+    [Fact]
+    public void TransitionToActiveWithoutAssignedOperatorsIsRefused()
+    {
+        // Arrange - the operator set is fixed when the restriction comes into force
+        var data = CreateValidDto(RestrictionState.PendingControlRoomSupervisorApproval);
+        data.AssignedOperatorsIds.Clear();
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanTransition(
+                RestrictionState.PendingControlRoomSupervisorApproval,
+                RestrictionAction.Active,
+                data));
+
+        // Assert
+        Assert.Contains("OperatorsAreAssigned", exception.Message);
     }
 
     // ========== ReturnedForChanges State Transitions ==========

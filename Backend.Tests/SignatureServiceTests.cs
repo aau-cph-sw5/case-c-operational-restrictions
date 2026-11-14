@@ -137,4 +137,48 @@ public class SignatureServiceTests
         Assert.DoesNotContain(required, x => x.SigneeId == DbSeeder.MikkelId);
         Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
     }
+
+    [Fact]
+    public void SignControlRoomSupervisorCreatesImmutableSignatureWithSupervisorRole()
+    {
+        var restrictionId = Guid.NewGuid();
+        var before = DateTime.UtcNow;
+
+        var signature = _service.SignControlRoomSupervisor(restrictionId, DbSeeder.MikkelId);
+
+        Assert.Equal(DbSeeder.MikkelId, signature.SigneeId);
+        Assert.Equal(UserRole.ControlroomSupervisor, signature.SigneeRole);
+        Assert.Equal(restrictionId, signature.OperationalRestrictionId);
+        Assert.True(signature.SignedAt >= before);
+        Assert.True(_service.IsSignatureValid(signature.Id));
+        Assert.Same(signature, _service.GetControlRoomSupervisorSignature(restrictionId));
+    }
+
+    [Fact]
+    public void GetControlRoomSupervisorSignatureReturnsNullBeforeSigning()
+    {
+        Assert.Null(_service.GetControlRoomSupervisorSignature(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void SignControlRoomSupervisorTwiceThrows()
+    {
+        var restrictionId = Guid.NewGuid();
+        _service.SignControlRoomSupervisor(restrictionId, DbSeeder.MikkelId);
+
+        Assert.Throws<RequiresSignatureNotSignableException>(
+            () => _service.SignControlRoomSupervisor(restrictionId, DbSeeder.MikkelId));
+    }
+
+    [Fact]
+    public void SignControlRoomSupervisorWithNonSupervisorRoleThrows()
+    {
+        var restrictionId = Guid.NewGuid();
+
+        Assert.Throws<NotControlRoomSupervisorException>(
+            () => _service.SignControlRoomSupervisor(restrictionId, DbSeeder.LarsId));
+        Assert.Throws<NotControlRoomSupervisorException>(
+            () => _service.SignControlRoomSupervisor(restrictionId, Guid.NewGuid()));
+        Assert.Null(_service.GetControlRoomSupervisorSignature(restrictionId));
+    }
 }

@@ -226,6 +226,99 @@ public class RestrictionSigningTests
         Assert.Equal(StatusCodes.Status409Conflict, conflict.StatusCode);
     }
 
+    [Fact]
+    public async Task ControlRoomSupervisorSigningForImplementationCreatesSignatureAndActivatesRestriction()
+    {
+        var restriction = await AddRestrictionAsync(RestrictionState.PendingControlRoomSupervisorApproval);
+        var controller = CreateController(DbSeeder.MikkelId);
+
+        var actionResult = await controller.SignForImplementation(restriction.RestrictionId);
+
+        var result = Assert.IsType<OkObjectResult>(actionResult);
+        var signature = Assert.IsType<SignatureDto>(result.Value);
+        Assert.Equal(DbSeeder.MikkelId, signature.SigneeId);
+        Assert.Equal(UserRole.ControlroomSupervisor, signature.SigneeRole);
+
+        // The original version keeps its state, while a new version becomes Active
+        var persistedRestriction = await _dbContext.OperationalRestrictions
+            .AsNoTracking()
+            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
+        var latestVersion = await _dbContext.OperationalRestrictions
+            .AsNoTracking()
+            .OrderByDescending(r => r.Version)
+            .FirstAsync(item => item.OriginalOperationalRestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, persistedRestriction.State);
+        Assert.Equal(RestrictionState.Active, latestVersion.State);
+        Assert.Equal(latestVersion.RestrictionId, signature.OperationalRestrictionId);
+        Assert.NotNull(_signatureService.GetControlRoomSupervisorSignature(latestVersion.RestrictionId));
+
+        // The operators who must read and sign are fixed and recorded at the
+        // moment the restriction comes into force (operators on holiday are excluded).
+        var expectedOperators = new[] { DbSeeder.LarsId, DbSeeder.SofieId, DbSeeder.OscarId };
+        Assert.Equal(expectedOperators.OrderBy(x => x), latestVersion.AssignedOperatorsIds.OrderBy(x => x));
+    }
+
+    [Fact]
+    public async Task NonControlRoomSupervisorCannotSignForImplementation()
+    {
+        var restriction = await AddRestrictionAsync(RestrictionState.PendingControlRoomSupervisorApproval);
+        var preExistingRequired = _signatureService
+            .CreateRequiredSignatures(restriction.RestrictionId).First();
+        var controller = CreateController(DbSeeder.LarsId);
+
+        var actionResult = await controller.SignForImplementation(restriction.RestrictionId);
+
+        var result = Assert.IsType<ObjectResult>(actionResult);
+        Assert.Equal(StatusCodes.Status403Forbidden, result.StatusCode);
+
+        var persistedRestriction = await _dbContext.OperationalRestrictions
+            .AsNoTracking()
+            .SingleAsync(item => item.RestrictionId == restriction.RestrictionId, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, persistedRestriction.State);
+        Assert.Null(_signatureService.GetControlRoomSupervisorSignature(restriction.RestrictionId));
+        // The failed attempt must not invalidate required signatures it did not create.
+        Assert.Equal(
+            RequiresSignatureStatus.PendingSignature,
+            _signatureService.GetRequiresSignatureById(preExistingRequired.Id).RequiresSignatureStatus);
+    }
+
+    [Fact]
+    public async Task SignForImplementationOutsidePendingControlRoomSupervisorApprovalReturnsConflict()
+    {
+        var restriction = await AddRestrictionAsync(RestrictionState.Draft);
+        var controller = CreateController(DbSeeder.MikkelId);
+
+        var actionResult = await controller.SignForImplementation(restriction.RestrictionId);
+
+        Assert.IsType<ConflictObjectResult>(actionResult);
+        Assert.Null(_signatureService.GetControlRoomSupervisorSignature(restriction.RestrictionId));
+    }
+
+    [Fact]
+    public async Task SigningForImplementationTwiceReturnsConflict()
+    {
+        var restriction = await AddRestrictionAsync(RestrictionState.PendingControlRoomSupervisorApproval);
+        var controller = CreateController(DbSeeder.MikkelId);
+
+        var firstSign = await controller.SignForImplementation(restriction.RestrictionId);
+        Assert.IsType<OkObjectResult>(firstSign);
+
+        var secondSign = await controller.SignForImplementation(restriction.RestrictionId);
+        var conflict = Assert.IsType<ConflictObjectResult>(secondSign);
+        Assert.Equal(StatusCodes.Status409Conflict, conflict.StatusCode);
+    }
+
+    [Fact]
+    public async Task SignForImplementationOnMissingRestrictionReturnsNotFound()
+    {
+        var controller = CreateController(DbSeeder.MikkelId);
+
+        var actionResult = await controller.SignForImplementation(Guid.NewGuid());
+
+        Assert.IsType<NotFoundObjectResult>(actionResult);
+    }
+
     private async Task<OperationalRestriction> AddRestrictionAsync(RestrictionState state)
     {
         var originator = Guid.NewGuid();

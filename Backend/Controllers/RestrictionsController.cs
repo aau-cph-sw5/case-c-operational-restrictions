@@ -100,6 +100,19 @@ public class RestrictionsController : ApiControllerBase
     }
 
     /// <summary>
+    /// Retrieves the register of restrictions in force (C-016): all restrictions
+    /// in Active state, e.g. after a control room supervisor signed for implementation.
+    /// </summary>
+    /// <response code="200">Returns the restrictions in force</response>
+    [HttpGet("active")]
+    public async Task<ActionResult<List<OperationalRestrictionDto>>> GetActive()
+    {
+        var restrictions = await _operationalRestrictionService.GetActiveRestrictionsAsync();
+
+        return Ok(restrictions);
+    }
+
+    /// <summary>
     /// Signs an operational restriction as its originator.
     /// </summary>
     /// <response code="403">The authenticated user is not the restriction originator</response>
@@ -226,6 +239,60 @@ public class RestrictionsController : ApiControllerBase
         {
             LogUnexpectedError(_logger, exception);
             return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Signs an operational restriction for implementation as the control room
+    /// supervisor, moving it from PendingControlRoomSupervisorApproval to Active.
+    /// </summary>
+    /// <response code="403">The authenticated user is not a control room supervisor</response>
+    /// <response code="404">The operational restriction was not found</response>
+    /// <response code="409">The operational restriction is not awaiting control room supervisor approval</response>
+    /// <response code="200">Returns the created immutable signature</response>
+    [HttpPost("{id:guid}/sign-for-implementation")]
+    public async Task<IActionResult> SignForImplementation(Guid id)
+    {
+        OperationalRestrictionDto restriction;
+        try
+        {
+            restriction = await _operationalRestrictionService.GetByIdAsync(id);
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+
+        if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
+        {
+            return Conflict(new { error = "Only restrictions awaiting control room supervisor approval can be signed for implementation." });
+        }
+
+        try
+        {
+            var signature = await _operationalRestrictionService
+                .SignControlRoomSupervisorAndActivateAsync(id, CurrentUserId);
+            return Ok(SignatureDto.FromDalEntity(signature));
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (NotControlRoomSupervisorException exception)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+        }
+        catch (OperationalRestrictionNotSignableException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+        catch (RequiresSignatureNotSignableException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new { error = exception.Message });
         }
     }
 }
