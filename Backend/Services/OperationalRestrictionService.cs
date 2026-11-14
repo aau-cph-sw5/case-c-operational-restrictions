@@ -222,7 +222,7 @@ public class OperationalRestrictionService
 
             // Roll back only the required signatures this attempt created.
             if (assignedOperators != null)
-                _signatureService.DiscardUnpersistedRequiredSignatures(
+                SignatureService.DiscardUnpersistedRequiredSignatures(
                     assignedOperators.Select(required => required.Id));
 
             throw;

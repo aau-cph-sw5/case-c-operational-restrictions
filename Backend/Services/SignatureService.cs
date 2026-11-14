@@ -238,7 +238,7 @@ public class SignatureService(
         return requiredSignatures;
     }
 
-    internal void DiscardUnpersistedRequiredSignatures(IEnumerable<Guid> requiresSignatureIds)
+    internal static void DiscardUnpersistedRequiredSignatures(IEnumerable<Guid> requiresSignatureIds)
     {
         var ids = requiresSignatureIds.ToHashSet();
         _requiredSignatures.RemoveAll(required => ids.Contains(required.Id));
