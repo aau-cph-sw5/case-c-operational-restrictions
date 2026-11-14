@@ -12,6 +12,7 @@ using Backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Tests;
 
@@ -21,11 +22,13 @@ public class RestrictionSigningTests
     private readonly AppDbContext _dbContext;
     private readonly SignatureService _signatureService;
     private readonly OperationalRestrictionService _restrictionService;
+    private readonly ILogger<RestrictionsController> _logger;
 
     public RestrictionSigningTests()
     {
         _dbContext = TestDatabase.CreateSeededContext();
         _signatureService = new SignatureService(_dbContext);
+        _logger = new LoggerFactory().CreateLogger<RestrictionsController>();
 
         var lifecycle = new RestrictionLifecycleService(
             new IRestrictionGuard[]
@@ -248,7 +251,7 @@ public class RestrictionSigningTests
 
     private RestrictionsController CreateController(Guid currentUserId)
     {
-        var controller = new RestrictionsController(_restrictionService)
+        var controller = new RestrictionsController(_restrictionService, _logger)
         {
             ControllerContext = new ControllerContext
             {
