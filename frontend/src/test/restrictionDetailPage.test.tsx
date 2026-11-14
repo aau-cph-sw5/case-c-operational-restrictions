@@ -53,7 +53,11 @@ function apiError(status: number): RestrictionApiError {
   return Object.assign(new Error(`HTTP ${status}`), { status });
 }
 
-function renderPage(initialEntry: string | { pathname: string; state?: unknown } = "/restrictions/restriction-1") {
+function renderPage(
+  initialEntry:
+    | string
+    | { pathname: string; state?: unknown } = "/restrictions/restriction-1",
+) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
@@ -257,8 +261,8 @@ describe("RestrictionDetailPage", () => {
     });
     await screen.findByText("restriction-1");
 
-    expect(
-      screen.getByTestId("navigation-notification"),
-    ).toHaveTextContent("Driftsrestriktion oprettet som kladde.");
+    expect(screen.getByTestId("navigation-notification")).toHaveTextContent(
+      "Driftsrestriktion oprettet som kladde.",
+    );
   });
 });

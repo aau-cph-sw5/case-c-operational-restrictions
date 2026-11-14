@@ -1,7 +1,7 @@
-
-using Backend.Data;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+
+using DatabaseLayer.Tests;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -9,22 +9,14 @@ using Xunit;
 
 namespace Backend.Tests;
 
-public class NotificationDatabaseTests
+public class NotificationDatabaseTests(TestDatabaseFixture fixture)
+    : IClassFixture<TestDatabaseFixture>
 {
     [Fact]
     public async Task CanSaveAndRetrieveNotificationWithDelivery()
     {
-        var connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-            ?? throw new InvalidOperationException(
-                "Test database connection is missing");
-
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(connectionString)
-            .Options;
-
-        await using var db = new AppDbContext(options);
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var db = fixture.CreateContext();
 
         var userId = Guid.NewGuid();
         var notificationId = Guid.NewGuid();
@@ -59,13 +51,13 @@ public class NotificationDatabaseTests
             LastError = "Simulated delivery failure"
         });
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
 
         db.ChangeTracker.Clear();
 
         var saved = await db.Notifications
             .Include(n => n.Deliveries)
-            .SingleAsync(n => n.Id == notificationId);
+            .SingleAsync(n => n.Id == notificationId, cancellationToken);
 
         Assert.Equal(userId, saved.RecipientUserId);
         Assert.Single(saved.Deliveries);
@@ -75,7 +67,5 @@ public class NotificationDatabaseTests
         Assert.Equal(
             "Simulated delivery failure",
             saved.Deliveries[0].LastError);
-
-        await transaction.RollbackAsync();
     }
 }

@@ -3,21 +3,13 @@ using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
+#pragma warning disable CA1861
 
 namespace Backend.Migrations
 {
     /// <inheritdoc />
     public partial class AddNotifications : Migration
     {
-        private static readonly string[] DeliveryStatusNextAttemptAtColumns = { "Status", "NextAttemptAt" };
-
-        private static readonly string[] RecipientCreatedAtColumns = { "RecipientUserId", "CreatedAt" };
-
-        private static readonly string[] RecipientReadAtColumns = { "RecipientUserId", "ReadAt" };
-
-        private static readonly string[] RecipientActionResolvedColumns =
-            { "RecipientUserId", "RequiresAction", "ResolvedAt" };
-
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -43,12 +35,35 @@ namespace Backend.Migrations
                         name: "FK_Notifications_OperationalRestrictions_OperationalRestrictio~",
                         column: x => x.OperationalRestrictionId,
                         principalTable: "OperationalRestrictions",
-                        principalColumn: "Id",
+                        principalColumn: "RestrictionId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Notifications_Users_RecipientUserId",
                         column: x => x.RecipientUserId,
                         principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "NotificationAuditEntries",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    NotificationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RecipientUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OperationalRestrictionId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EventType = table.Column<int>(type: "integer", nullable: false),
+                    OccurredAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Details = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NotificationAuditEntries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_NotificationAuditEntries_Notifications_NotificationId",
+                        column: x => x.NotificationId,
+                        principalTable: "Notifications",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -77,6 +92,16 @@ namespace Backend.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_NotificationAuditEntries_NotificationId",
+                table: "NotificationAuditEntries",
+                column: "NotificationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NotificationAuditEntries_OperationalRestrictionId_OccurredAt",
+                table: "NotificationAuditEntries",
+                columns: new[] { "OperationalRestrictionId", "OccurredAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_NotificationDeliveries_NotificationId",
                 table: "NotificationDeliveries",
                 column: "NotificationId");
@@ -84,7 +109,7 @@ namespace Backend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_NotificationDeliveries_Status_NextAttemptAt",
                 table: "NotificationDeliveries",
-                columns: DeliveryStatusNextAttemptAtColumns);
+                columns: new[] { "Status", "NextAttemptAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_OperationalRestrictionId",
@@ -94,22 +119,25 @@ namespace Backend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_CreatedAt",
                 table: "Notifications",
-                columns: RecipientCreatedAtColumns);
+                columns: new[] { "RecipientUserId", "CreatedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_ReadAt",
                 table: "Notifications",
-                columns: RecipientReadAtColumns);
+                columns: new[] { "RecipientUserId", "ReadAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_RequiresAction_ResolvedAt",
                 table: "Notifications",
-                columns: RecipientActionResolvedColumns);
+                columns: new[] { "RecipientUserId", "RequiresAction", "ResolvedAt" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "NotificationAuditEntries");
+
             migrationBuilder.DropTable(
                 name: "NotificationDeliveries");
 

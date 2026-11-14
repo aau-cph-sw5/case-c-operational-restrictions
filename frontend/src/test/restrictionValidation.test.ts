@@ -1,0 +1,106 @@
+import { describe, expect, it } from "vitest";
+import {
+  EMPTY_VALUES,
+  hasErrors,
+  validateRestrictionForm,
+} from "../lib/restrictionValidation";
+
+const valid = {
+  title: "Metro 101 - 2026 version",
+  reference: "REF-2026-001",
+  startDate: "2026-11-01",
+  endDate: "2026-11-02",
+  situationDescription: "Beskrivelse af situationen",
+  restrictionDescription: "Beskrivelse af driftsrestriktionen",
+  cancellationDescription: "Beskrivelse af ophævelsen",
+};
+
+describe("validateRestrictionForm", () => {
+  it("flags every empty required field, but not annulleres or reference", () => {
+    const errors = validateRestrictionForm(EMPTY_VALUES);
+    expect(Object.keys(errors).sort()).toEqual([
+      "cancellationDescription",
+      "restrictionDescription",
+      "situationDescription",
+      "startDate",
+      "title",
+    ]);
+  });
+
+  it("uses Danish error messages", () => {
+    expect(validateRestrictionForm(EMPTY_VALUES).startDate).toBe(
+      "Ikrafttræden er påkrævet.",
+    );
+    expect(validateRestrictionForm(EMPTY_VALUES).title).toBe(
+      "Titel er påkrævet.",
+    );
+  });
+
+  it("accepts a valid form", () => {
+    expect(hasErrors(validateRestrictionForm(valid))).toBe(false);
+  });
+
+  it("accepts a form without annulleres and reference", () => {
+    expect(
+      hasErrors(
+        validateRestrictionForm({ ...valid, endDate: "", reference: "" }),
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects an empty title", () => {
+    expect(hasErrors(validateRestrictionForm({ ...valid, title: "   " }))).toBe(
+      true,
+    );
+  });
+
+  it("rejects annulleres before ikrafttræden", () => {
+    const errors = validateRestrictionForm({ ...valid, endDate: "2026-10-01" });
+    expect(errors.endDate).toBe("Annulleres skal være efter Ikrafttræden.");
+  });
+
+  it("rejects annulleres equal to ikrafttræden", () => {
+    const errors = validateRestrictionForm({
+      ...valid,
+      endDate: valid.startDate,
+    });
+    expect(errors.endDate).toBe("Annulleres skal være efter Ikrafttræden.");
+  });
+
+  it("only validates the requested fields", () => {
+    const errors = validateRestrictionForm(EMPTY_VALUES, ["startDate"]);
+    expect(Object.keys(errors)).toEqual(["startDate"]);
+  });
+
+  it("rejects a field exceeding character limit", () => {
+    const titleError = validateRestrictionForm({
+      ...valid,
+      title: "a".repeat(101),
+    });
+    expect(titleError.title).toBe("Titel må højst være 100 tegn.");
+
+    const refError = validateRestrictionForm({
+      ...valid,
+      reference: "a".repeat(101),
+    });
+    expect(refError.reference).toBe("Reference må højst være 100 tegn.");
+  });
+
+  it("rejects descriptions exceeding 500 characters", () => {
+    const errors = validateRestrictionForm({
+      ...valid,
+      situationDescription: "a".repeat(501),
+      restrictionDescription: "b".repeat(501),
+      cancellationDescription: "c".repeat(501),
+    });
+    expect(errors.situationDescription).toBe(
+      "Om situationen må højst være 500 tegn.",
+    );
+    expect(errors.restrictionDescription).toBe(
+      "Om driftsrestriktionen må højst være 500 tegn.",
+    );
+    expect(errors.cancellationDescription).toBe(
+      "Om ophævelse må højst være 500 tegn.",
+    );
+  });
+});

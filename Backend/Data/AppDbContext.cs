@@ -12,17 +12,19 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<User> Users => Set<User>();
-
     public DbSet<OperationalRestriction> OperationalRestrictions => Set<OperationalRestriction>();
+    public DbSet<RestrictionTransitionEvent> RestrictionTransitionEvents => Set<RestrictionTransitionEvent>();
+    public DbSet<User> Users => Set<User>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
     public DbSet<NotificationAuditEntry> NotificationAuditEntries => Set<NotificationAuditEntry>();
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<OperationalRestriction>()
+            .HasKey(r => r.RestrictionId);
 
         modelBuilder.Entity<Notification>(entity =>
         {
@@ -117,5 +119,4 @@ public class AppDbContext : DbContext
         if (hasChangedEntries)
             throw new InvalidOperationException("Notification audit entries are append-only and cannot be changed or deleted.");
     }
-
 }

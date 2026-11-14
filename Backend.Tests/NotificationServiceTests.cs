@@ -79,7 +79,7 @@ public class NotificationServiceTests : IDisposable
 
         var notificationId = service.AddNotification(
             new CreateNotificationRequest(recipient, NotificationType.SignatureRequired, true, restrictionId));
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var entry = Assert.Single(_db.NotificationAuditEntries);
         Assert.Equal(notificationId, entry.NotificationId);
@@ -96,10 +96,10 @@ public class NotificationServiceTests : IDisposable
         var service = new NotificationService(_db, new SignatureService(_db));
         var notificationId = service.AddNotification(
             new CreateNotificationRequest(recipient, NotificationType.SignatureRequired, true, restrictionId));
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await service.ResolveActionRequiredAsync(restrictionId, recipient);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var entry = Assert.Single(_db.NotificationAuditEntries, x => x.EventType == NotificationAuditEventType.Resolved);
         Assert.Equal(notificationId, entry.NotificationId);
@@ -112,11 +112,11 @@ public class NotificationServiceTests : IDisposable
         var service = new NotificationService(_db, new SignatureService(_db));
         service.AddNotification(
             new CreateNotificationRequest(Guid.NewGuid(), NotificationType.SignatureRequired, true, Guid.NewGuid()));
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         _db.NotificationAuditEntries.Remove(_db.NotificationAuditEntries.Single());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _db.SaveChangesAsync());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _db.SaveChangesAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class NotificationServiceTests : IDisposable
 
         // Assert: Verify the notification was marked as read
         var notification = await _db.Notifications
-         .FirstAsync(x => x.Id == notificationId);
+         .FirstAsync(x => x.Id == notificationId, TestContext.Current.CancellationToken);
 
         Assert.True(result);
         Assert.NotNull(notification.ReadAt);
@@ -178,7 +178,7 @@ public class NotificationServiceTests : IDisposable
 
         // Assert
         var notification = await _db.Notifications
-            .FirstAsync(x => x.Id == notificationId);
+            .FirstAsync(x => x.Id == notificationId, TestContext.Current.CancellationToken);
 
         Assert.False(result);
         Assert.Null(notification.ReadAt);
@@ -199,10 +199,10 @@ public class NotificationServiceTests : IDisposable
         );
 
         var notification = await _db.Notifications
-            .FirstAsync(x => x.Id == notificationId);
+            .FirstAsync(x => x.Id == notificationId, TestContext.Current.CancellationToken);
 
         notification.ReadAt = originalReadAt;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var service = new NotificationService(_db, new SignatureService(_db));
 

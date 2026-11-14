@@ -94,7 +94,7 @@ public class NotificationDeliveryProcessorTests : IDisposable
         await processor.ProcessDueDeliveriesAsync(CancellationToken.None);
         var delivery = _db.NotificationDeliveries.Single();
         delivery.NextAttemptAt = DateTime.UtcNow.AddMinutes(-1);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
         await processor.ProcessDueDeliveriesAsync(CancellationToken.None);
 
         var entries = _db.NotificationAuditEntries.ToList();
