@@ -15,11 +15,16 @@ namespace Backend.Controllers;
 [Authorize]
 public class RestrictionsController : ApiControllerBase
 {
-    private readonly IOperationalRestrictionService _operationalRestrictionService;
+    private static readonly Action<ILogger, Exception?> LogUnexpectedError =
+        LoggerMessage.Define(LogLevel.Error, new EventId(0, nameof(LogUnexpectedError)), "Unexpected error");
 
-    public RestrictionsController(IOperationalRestrictionService operationalRestrictionService)
+    private readonly IOperationalRestrictionService _operationalRestrictionService;
+    private readonly ILogger<RestrictionsController> _logger;
+
+    public RestrictionsController(IOperationalRestrictionService operationalRestrictionService, ILogger<RestrictionsController> logger)
     {
         _operationalRestrictionService = operationalRestrictionService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -158,6 +163,11 @@ public class RestrictionsController : ApiControllerBase
         {
             return Conflict(new { error = exception.Message });
         }
+        catch (Exception exception)
+        {
+            LogUnexpectedError(_logger, exception);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     private IActionResult? ValidateSigningRequirements(OperationalRestrictionDto restriction)
@@ -211,6 +221,11 @@ public class RestrictionsController : ApiControllerBase
         catch (InvalidOperationException exception)
         {
             return Conflict(new { error = exception.Message });
+        }
+        catch (Exception exception)
+        {
+            LogUnexpectedError(_logger, exception);
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 }
