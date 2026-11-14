@@ -47,8 +47,8 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// Backend enum order for UserRole (Originator, Dom, Operator).
-const numericRoles = ["Originator", "Dom", "Operator"];
+// Backend enum order for UserRole (Originator, Dom, Operator, ControlroomSupervisor).
+const numericRoles = ["Originator", "Dom", "Operator", "ControlroomSupervisor"];
 
 function toSignature(raw: Record<string, unknown>): SignatureDto {
   const role = raw.signeeRole;
@@ -158,4 +158,19 @@ export async function signRestriction(
   }
 
   return null;
+}
+
+// POST /api/restrictions/{id}/sign-for-implementation
+// The control room supervisor signs an approved restriction for
+// implementation; the backend responds with the created signature, so the
+// caller re-fetches the restriction to see it in force.
+export async function signForImplementation(id: string): Promise<void> {
+  const response = await fetch(
+    `/api/restrictions/${encodeURIComponent(id)}/sign-for-implementation`,
+    { method: "POST", headers: authHeaders() },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
 }

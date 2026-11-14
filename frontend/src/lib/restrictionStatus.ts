@@ -4,6 +4,7 @@ export const statusLabels: Record<RestrictionStatus, string> = {
   Draft: "Kladde",
   PendingApproval: "Afventer godkendelse",
   PendingDOMApproval: "Afventer DOM-godkendelse",
+  PendingControlRoomSupervisorApproval: "Afventer kontrolrumschef",
   Approved: "Godkendt",
   Active: "Aktiv",
   Archived: "Arkiveret",
@@ -23,6 +24,7 @@ export const statusClasses: Record<RestrictionStatus, string> = {
   Draft: blue,
   PendingApproval: amber,
   PendingDOMApproval: amber,
+  PendingControlRoomSupervisorApproval: amber,
   Approved: green,
   Active: green,
   Archived: grey,
@@ -33,14 +35,16 @@ export const statusClasses: Record<RestrictionStatus, string> = {
 
 // Backend RestrictionStatus enum order. ASP.NET serialises enums as numbers
 // unless a JsonStringEnumConverter is registered, so accept both forms.
+// Only the entries MET-C-009 needs are aligned with the backend enum
+// (5 = PendingControlRoomSupervisorApproval, 6 = Active).
 const numericStatuses: RestrictionStatus[] = [
   "Draft",
   "PendingApproval",
   "Approved",
   "Active",
   "Archived",
-  "Cancelled",
-  "Closing",
+  "PendingControlRoomSupervisorApproval",
+  "Active",
 ];
 
 export function normalizeStatus(raw: unknown): RestrictionStatus {

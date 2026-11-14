@@ -21,6 +21,7 @@ import { restrictionTexts as t } from "../lib/restrictionTexts";
 import { authService } from "../services/authService";
 import {
   getRestrictionById,
+  signForImplementation,
   signRestriction,
 } from "../services/restrictionApi";
 import { isRestrictionApiError } from "../types/restrictionApiError";
@@ -52,6 +53,22 @@ function signErrorMessage(error: unknown): string {
     }
   }
   return t.signFailed;
+}
+
+function signForImplementationErrorMessage(error: unknown): string {
+  if (isRestrictionApiError(error)) {
+    switch (error.status) {
+      case 403:
+        return t.signForImplementationForbidden;
+      case 404:
+        return t.notFound;
+      case 409:
+        return t.signForImplementationConflict;
+      case 401:
+        return t.sessionExpired;
+    }
+  }
+  return t.signForImplementationFailed;
 }
 
 // Important-notification style from the design guide: Beeswax background,
@@ -93,6 +110,10 @@ export function RestrictionDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  const [signingForImplementation, setSigningForImplementation] =
+    useState(false);
+  const [signForImplementationError, setSignForImplementationError] =
+    useState<string | null>(null);
 
   const navNotification =
     (
@@ -159,6 +180,25 @@ export function RestrictionDetailPage() {
     }
   }
 
+  async function handleSignForImplementation() {
+    if (!restriction) return;
+
+    setSigningForImplementation(true);
+    setSignForImplementationError(null);
+
+    try {
+      // The endpoint responds with the created signature, so re-fetch the
+      // restriction to show it in force (Active).
+      await signForImplementation(restriction.id);
+      const updated = await getRestrictionById(restriction.id);
+      setRestriction(updated);
+    } catch (error) {
+      setSignForImplementationError(signForImplementationErrorMessage(error));
+    } finally {
+      setSigningForImplementation(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className={pageClasses} role="status">
@@ -193,6 +233,14 @@ export function RestrictionDetailPage() {
   const isOriginator =
     currentUser !== null && currentUser.id === restriction.originatorUserId;
   const canSign = isDraft && isOriginator;
+
+  // MET-C-009: only the control room supervisor can sign an approved
+  // restriction for implementation, moving it into force.
+  const isPendingControlRoomSupervisor =
+    restriction.status === "PendingControlRoomSupervisorApproval";
+  const isControlRoomSupervisor = currentUser?.role === "ControlroomSupervisor";
+  const canSignForImplementation =
+    isPendingControlRoomSupervisor && isControlRoomSupervisor;
 
   const knownUsers = currentUser ? { [currentUser.id]: currentUser.name } : {};
 
@@ -272,6 +320,23 @@ export function RestrictionDetailPage() {
       />
 
       {signError && <ErrorAlert>{signError}</ErrorAlert>}
+      {signForImplementationError && (
+        <ErrorAlert>{signForImplementationError}</ErrorAlert>
+      )}
+
+      {canSignForImplementation && (
+        <div className="flex flex-wrap gap-3 pb-4">
+          <RestrictionActionButton
+            onClick={handleSignForImplementation}
+            loading={signingForImplementation}
+            loadingLabel={t.signingForImplementation}
+            icon={<Pencil className="size-4" aria-hidden />}
+            title="Sign for Implementation"
+          >
+            {t.signForImplementation}
+          </RestrictionActionButton>
+        </div>
+      )}
 
       {canSign && (
         <div className="flex flex-wrap gap-3 pb-4">

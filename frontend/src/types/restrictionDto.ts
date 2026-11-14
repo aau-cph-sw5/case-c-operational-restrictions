@@ -4,6 +4,7 @@ export type RestrictionStatus =
   | "Draft"
   | "PendingApproval"
   | "PendingDOMApproval"
+  | "PendingControlRoomSupervisorApproval"
   | "Approved"
   | "Active"
   | "Archived"

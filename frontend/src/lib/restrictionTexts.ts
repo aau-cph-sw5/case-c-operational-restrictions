@@ -21,6 +21,14 @@ export const restrictionTexts = {
   sign: "Underskriv",
   signSubmit: "Underskriv og indsend til godkendelse",
   signing: "Underskriver...",
+  signForImplementation: "Underskriv for implementering",
+  signingForImplementation: "Underskriver for implementering...",
+  signForImplementationForbidden:
+    "Kun kontrolrumschefen kan underskrive en restriktion for implementering.",
+  signForImplementationConflict:
+    "Restriktionen afventer ikke kontrolrumschefens underskrift.",
+  signForImplementationFailed:
+    "Underskrivning for implementering mislykkedes. Prøv igen.",
   edit: "Rediger",
   editComingSoon: "Redigering er ikke implementeret endnu",
   loading: "Henter restriktion...",

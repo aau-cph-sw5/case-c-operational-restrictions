@@ -1,6 +1,7 @@
 // API:
 // Raw HTTP calls to the .NET backend's auth endpoints.
 // No side effects and no storage — just request in, response out.
+import { normalizeRole } from "../lib/userRole";
 import type { LoginRequest } from "../types/loginRequest";
 import type { LoginResponse } from "../types/loginResponse";
 import type { UserDto } from "../types/userDto";
@@ -31,5 +32,7 @@ export async function getCurrentUser(token: string): Promise<UserDto> {
     throw new Error("Session is invalid or expired.");
   }
 
-  return response.json();
+  // The backend serialises the role enum as a number; normalise it to its name.
+  const raw = (await response.json()) as UserDto & { role: unknown };
+  return { ...raw, role: normalizeRole(raw.role) };
 }
