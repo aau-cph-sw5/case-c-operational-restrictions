@@ -112,8 +112,9 @@ export function RestrictionDetailPage() {
   const [signError, setSignError] = useState<string | null>(null);
   const [signingForImplementation, setSigningForImplementation] =
     useState(false);
-  const [signForImplementationError, setSignForImplementationError] =
-    useState<string | null>(null);
+  const [signForImplementationError, setSignForImplementationError] = useState<
+    string | null
+  >(null);
 
   const navNotification =
     (

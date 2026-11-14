@@ -353,7 +353,9 @@ describe("RestrictionDetailPage", () => {
     );
     expect(signForImplementationButton()).not.toBeInTheDocument();
     const blocks = screen.getAllByTestId("signature-block");
-    expect(blocks.some((b) => b.textContent?.includes("ControlroomSupervisor"))).toBe(true);
+    expect(
+      blocks.some((b) => b.textContent?.includes("ControlroomSupervisor")),
+    ).toBe(true);
   });
 
   it.each([
