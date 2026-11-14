@@ -196,10 +196,53 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         Assert.DoesNotContain(restrictions, x => x.State == RestrictionState.Draft && x.OriginatorUserId != DbSeeder.LarsId);
     }
 
-    private HttpClient CreateClientFor(Guid userId)
+    [Fact]
+    public async Task DomCanReturnPendingRestrictionForChangesWithComment()
+    {
+        var client = CreateClientFor(DbSeeder.AnnaId, UserRole.DutyOperationsManager);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/restrictions/5eed0000-0000-0000-0000-000000000003/request-changes",
+            new { comment = "Add the affected track section." },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var returned = await ReadAsync<OperationalRestrictionDto>(response);
+        Assert.Equal(RestrictionState.ReturnedForChanges, returned.State);
+        Assert.Equal(DbSeeder.AnnaId, returned.ReviewerId);
+        Assert.Equal("Add the affected track section.", returned.ReviewDescription);
+    }
+
+    [Fact]
+    public async Task NonDomCannotReturnRestrictionForChanges()
+    {
+        var client = CreateClientFor(DbSeeder.LarsId, UserRole.Operator);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/restrictions/5eed0000-0000-0000-0000-000000000003/request-changes",
+            new { comment = "Add the affected track section." },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RequestChangesOnDraftReturnsConflict()
+    {
+        var client = CreateClientFor(DbSeeder.AnnaId, UserRole.DutyOperationsManager);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/restrictions/5eed0000-0000-0000-0000-000000000001/request-changes",
+            new { comment = "Add the affected track section." },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    private HttpClient CreateClientFor(Guid userId, UserRole role = UserRole.Originator)
     {
         var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _factory.CreateTokenFor(userId));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _factory.CreateTokenFor(userId, role));
 
         return client;
     }

@@ -25,9 +25,11 @@ public class AuthController : ApiControllerBase
     /// <returns></returns>
     [HttpPost("login")]
     [AllowAnonymous]
-    public ActionResult<LoginResponseDto> Login(LoginRequestDto request)
+    public async Task<ActionResult<LoginResponseDto>> Login(
+        LoginRequestDto request,
+        CancellationToken cancellationToken)
     {
-        var result = _authService.Login(request);
+        var result = await _authService.LoginAsync(request, cancellationToken);
 
         return result.Succeeded
             ? Ok(result.Response)
@@ -37,9 +39,11 @@ public class AuthController : ApiControllerBase
 
     [HttpPost("check-token/{token}")]
     [AllowAnonymous]
-    public ActionResult<UserDto> CheckValidityOfToken(string token)
+    public async Task<ActionResult<UserDto>> CheckValidityOfToken(
+        string token,
+        CancellationToken cancellationToken)
     {
-        var user = _authService.CheckValidityOfToken(token);
+        var user = await _authService.CheckValidityOfTokenAsync(token, cancellationToken);
         return user is not null
             ? Ok(user)
             : Unauthorized(new { error = "Invalid or expired token." });

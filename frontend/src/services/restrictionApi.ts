@@ -74,7 +74,8 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
     id: String(raw.id ?? ""),
     originatorUserId: String(raw.originatorUserId ?? ""),
     status: normalizeStatus(raw.status ?? raw.state),
-    title: raw.title ? String(raw.title) : undefined,
+    reviewDescription:
+      typeof raw.reviewDescription === "string" ? raw.reviewDescription : null,
     startDate: String(raw.startDate ?? ""),
     endDate: raw.endDate ? String(raw.endDate) : null,
     restrictionDescription: String(
@@ -133,14 +134,37 @@ export async function getRestrictionById(id: string): Promise<RestrictionDto> {
   return toRestriction(await response.json());
 }
 
-// POST /api/restrictions/{id}/sign
+// POST /api/restrictions/{id}/request-changes
+// DOM returns a pending restriction to its originator with a mandatory comment.
+// Resolves with the new ReturnedForChanges version.
+export async function requestChanges(
+  id: string,
+  comment: string,
+): Promise<RestrictionDto> {
+  const response = await fetch(
+    `/api/restrictions/${encodeURIComponent(id)}/request-changes`,
+    {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ comment: comment.trim() }),
+    },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return toRestriction(await response.json());
+}
+
+// POST /api/signature/sign/{requiresSignatureId}
 // Resolves with the updated restriction when the response body contains one,
 // otherwise null (the caller then re-fetches the restriction).
 export async function signRestriction(
   id: string,
 ): Promise<RestrictionDto | null> {
   const response = await fetch(
-    `/api/restrictions/${encodeURIComponent(id)}/sign`,
+    `/api/signature/sign/${encodeURIComponent(id)}`,
     { method: "POST", headers: authHeaders() },
   );
 

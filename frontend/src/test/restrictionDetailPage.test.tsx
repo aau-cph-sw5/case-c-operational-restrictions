@@ -1,6 +1,7 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { normalizeStatus } from "../lib/restrictionStatus";
 import { RestrictionDetailPage } from "../pages/RestrictionDetailPage";
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import type { RestrictionDto } from "../types/restrictionDto";
@@ -8,12 +9,14 @@ import type { RestrictionDto } from "../types/restrictionDto";
 const mocks = vi.hoisted(() => ({
   getRestrictionById: vi.fn(),
   signRestriction: vi.fn(),
+  requestChanges: vi.fn(),
   getCurrentUser: vi.fn(),
 }));
 
 vi.mock("../services/restrictionApi", () => ({
   getRestrictionById: mocks.getRestrictionById,
   signRestriction: mocks.signRestriction,
+  requestChanges: mocks.requestChanges,
 }));
 
 vi.mock("../services/authService", () => ({
@@ -99,6 +102,97 @@ describe("RestrictionDetailPage", () => {
     expect(screen.getByTestId("start-local")).toBeInTheDocument();
     expect(screen.getByTestId("end-local")).toBeInTheDocument();
     expect(screen.getByText(/speed limit 40 km\/h/i)).toBeInTheDocument();
+  });
+
+  it("shows the saved requested-changes comment to the originator after loading", async () => {
+    mocks.getRestrictionById.mockResolvedValue({
+      ...draft,
+      status: "ReturnedForChanges",
+      reviewDescription: "Please add the affected track section.",
+    });
+    renderPage();
+
+    const notice = await screen.findByTestId("requested-changes-notice");
+    expect(notice).toHaveTextContent("Please add the affected track section.");
+  });
+
+  it("does not show a requested-changes notice for a draft", async () => {
+    renderPage();
+    await screen.findByText("restriction-1");
+
+    expect(
+      screen.queryByTestId("requested-changes-notice"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not show the requested-changes notice to a non-originator", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      ...originator,
+      id: "someone-else",
+    });
+    mocks.getRestrictionById.mockResolvedValue({
+      ...draft,
+      status: "ReturnedForChanges",
+      reviewDescription: "Please add the affected track section.",
+    });
+    renderPage();
+    await screen.findByText("restriction-1");
+
+    expect(
+      screen.queryByTestId("requested-changes-notice"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the review comment as a detail card to non-originators", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      ...originator,
+      id: "someone-else",
+    });
+    mocks.getRestrictionById.mockResolvedValue({
+      ...draft,
+      status: "ReturnedForChanges",
+      reviewDescription: "Please add the affected track section.",
+    });
+    renderPage();
+
+    expect(await screen.findByTestId("review-comment")).toHaveTextContent(
+      "Please add the affected track section.",
+    );
+  });
+
+  it("does not duplicate the review comment card for the originator", async () => {
+    mocks.getRestrictionById.mockResolvedValue({
+      ...draft,
+      status: "ReturnedForChanges",
+      reviewDescription: "Please add the affected track section.",
+    });
+    renderPage();
+    await screen.findByTestId("requested-changes-notice");
+
+    expect(screen.queryByTestId("review-comment")).not.toBeInTheDocument();
+  });
+
+  it("does not show an old review comment once the restriction is no longer returned", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      ...originator,
+      id: "someone-else",
+    });
+    mocks.getRestrictionById.mockResolvedValue({
+      ...signed,
+      status: "PendingDOMApproval",
+      reviewDescription: "Old comment",
+    });
+    renderPage();
+    await screen.findByText("restriction-1");
+
+    expect(screen.queryByTestId("review-comment")).not.toBeInTheDocument();
+  });
+
+  it("normalizes backend ReturnedForChanges enum values", () => {
+    expect(normalizeStatus(2)).toBe("ReturnedForChanges");
+    expect(normalizeStatus("ReturnedForChanges")).toBe("ReturnedForChanges");
+    expect(normalizeStatus(3)).toBe("Cancelled");
+    expect(normalizeStatus(4)).toBe("Approved");
   });
 
   it("shows the Unsigned Draft badge when there are no signatures", async () => {
@@ -263,6 +357,126 @@ describe("RestrictionDetailPage", () => {
 
     expect(screen.getByTestId("navigation-notification")).toHaveTextContent(
       "Driftsrestriktion oprettet som kladde.",
+    );
+  });
+
+  describe("DOM request changes", () => {
+    const dom = {
+      id: "dom-1",
+      name: "Dan Dom",
+      email: "dom@example.test",
+      role: "DutyOperationsManager",
+    };
+    const pending: RestrictionDto = { ...signed, status: "PendingDOMApproval" };
+    const returned: RestrictionDto = {
+      ...pending,
+      id: "restriction-2",
+      status: "ReturnedForChanges",
+      reviewDescription: "Add the affected track section.",
+    };
+    const requestButton = () =>
+      screen.queryByRole("button", { name: /anmod om ændringer/i });
+    const commentField = () =>
+      screen.getByLabelText(/kommentar til originator/i);
+
+    beforeEach(() => {
+      mocks.getCurrentUser.mockResolvedValue(dom);
+      mocks.getRestrictionById.mockResolvedValue(pending);
+    });
+
+    it("shows the request-changes form to a DOM for a pending restriction", async () => {
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(commentField()).toBeInTheDocument();
+      expect(requestButton()).toBeEnabled();
+    });
+
+    it("hides the form from the originator", async () => {
+      mocks.getCurrentUser.mockResolvedValue(originator);
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(requestButton()).not.toBeInTheDocument();
+    });
+
+    it("hides the form from a user whose role is not DOM", async () => {
+      mocks.getCurrentUser.mockResolvedValue({ ...dom, role: "Operator" });
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(requestButton()).not.toBeInTheDocument();
+    });
+
+    it("hides the form when the restriction is not awaiting DOM approval", async () => {
+      mocks.getRestrictionById.mockResolvedValue({
+        ...pending,
+        status: "Approved",
+      });
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(requestButton()).not.toBeInTheDocument();
+    });
+
+    it("requires a comment before sending", async () => {
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      fireEvent.change(commentField(), { target: { value: "   " } });
+      fireEvent.click(requestButton()!);
+
+      expect(
+        await screen.findByText("Skriv en kommentar til originator."),
+      ).toBeInTheDocument();
+      expect(commentField()).toHaveAttribute("aria-invalid", "true");
+      expect(mocks.requestChanges).not.toHaveBeenCalled();
+    });
+
+    it("sends the comment, shows success and the returned status", async () => {
+      mocks.requestChanges.mockResolvedValue(returned);
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      fireEvent.change(commentField(), {
+        target: { value: "Add the affected track section." },
+      });
+      fireEvent.click(requestButton()!);
+
+      expect(
+        await screen.findByTestId("request-changes-success"),
+      ).toHaveTextContent(/returneret til originator/i);
+      expect(mocks.requestChanges).toHaveBeenCalledWith(
+        "restriction-1",
+        "Add the affected track section.",
+      );
+      expect(screen.getByTestId("status-badge")).toHaveTextContent(
+        "Returneret for ændringer",
+      );
+      expect(requestButton()).not.toBeInTheDocument();
+    });
+
+    it.each([
+      [400, /kommentar er påkrævet/i],
+      [403, /kun en duty operations manager/i],
+      [409, /afventer ikke længere godkendelse/i],
+    ])(
+      "shows an error and keeps the restriction pending when the request returns %i",
+      async (status, message) => {
+        mocks.requestChanges.mockRejectedValue(apiError(status));
+        renderPage();
+        await screen.findByText("restriction-1");
+
+        fireEvent.change(commentField(), { target: { value: "Fix it" } });
+        fireEvent.click(requestButton()!);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent(message);
+        expect(screen.getByTestId("status-badge")).toHaveTextContent(
+          "Afventer DOM-godkendelse",
+        );
+        expect(commentField()).toHaveValue("Fix it");
+        expect(requestButton()).toBeEnabled();
+      },
     );
   });
 });
