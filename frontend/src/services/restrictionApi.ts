@@ -2,7 +2,6 @@
 // Raw HTTP calls to the .NET backend's restriction endpoints.
 // Attaches the stored JWT and turns non-2xx responses into errors that carry
 // the HTTP status, so the UI can show a message per status code.
-import { normalizeStatus } from "../lib/restrictionStatus";
 import type {
   CreateRestrictionRequest,
   RestrictionDto as CreatedRestrictionDto,
@@ -47,18 +46,11 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// Backend enum order for UserRole (Originator, Dom, Operator, ControlroomSupervisor).
-const numericRoles = ["Originator", "Dom", "Operator", "ControlroomSupervisor"];
-
 function toSignature(raw: Record<string, unknown>): SignatureDto {
-  const role = raw.signeeRole;
   return {
     signeeId: String(raw.signeeId ?? ""),
     signeeName: typeof raw.signeeName === "string" ? raw.signeeName : undefined,
-    signeeRole:
-      typeof role === "number"
-        ? (numericRoles[role] ?? "Unknown")
-        : String(role ?? "Unknown"),
+    signeeRole: String(raw.signeeRole ?? "Unknown"),
     signedAt: String(raw.signedAt ?? ""),
   };
 }
@@ -73,7 +65,7 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
   return {
     id: String(raw.id ?? ""),
     originatorUserId: String(raw.originatorUserId ?? ""),
-    status: normalizeStatus(raw.status ?? raw.state),
+    status: (raw.status ?? raw.state ?? "Unknown") as RestrictionDto["status"],
     title: raw.title ? String(raw.title) : undefined,
     startDate: String(raw.startDate ?? ""),
     endDate: raw.endDate ? String(raw.endDate) : null,

@@ -32,30 +32,3 @@ export const statusClasses: Record<RestrictionStatus, string> = {
   Closing: amber,
   Unknown: grey,
 };
-
-// Backend RestrictionStatus enum order. ASP.NET serialises enums as numbers
-// unless a JsonStringEnumConverter is registered, so accept both forms.
-// Only the entries MET-C-009 needs are aligned with the backend enum
-// (5 = PendingControlRoomSupervisorApproval, 6 = Active).
-const numericStatuses: RestrictionStatus[] = [
-  "Draft",
-  "PendingApproval",
-  "Approved",
-  "Active",
-  "Archived",
-  "PendingControlRoomSupervisorApproval",
-  "Active",
-];
-
-export function normalizeStatus(raw: unknown): RestrictionStatus {
-  if (typeof raw === "number") return numericStatuses[raw] ?? "Unknown";
-
-  if (typeof raw === "string") {
-    const match = (Object.keys(statusLabels) as RestrictionStatus[]).find(
-      (status) => status.toLowerCase() === raw.toLowerCase(),
-    );
-    return match ?? "Unknown";
-  }
-
-  return "Unknown";
-}

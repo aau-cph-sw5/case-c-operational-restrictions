@@ -239,7 +239,8 @@ export function RestrictionDetailPage() {
   // restriction for implementation, moving it into force.
   const isPendingControlRoomSupervisor =
     restriction.status === "PendingControlRoomSupervisorApproval";
-  const isControlRoomSupervisor = currentUser?.role === "ControlroomSupervisor";
+  const isControlRoomSupervisor =
+    currentUser?.roles.includes("ControlroomSupervisor") ?? false;
   const canSignForImplementation =
     isPendingControlRoomSupervisor && isControlRoomSupervisor;
 

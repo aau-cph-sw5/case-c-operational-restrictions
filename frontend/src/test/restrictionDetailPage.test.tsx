@@ -26,14 +26,14 @@ const originator = {
   id: "user-1",
   name: "Olivia Originator",
   email: "originator@example.test",
-  role: "Originator" as const,
+  roles: ["Originator"],
 };
 
 const controlRoomSupervisor = {
   id: "user-crs",
   name: "Mikkel Pedersen",
   email: "mikkel.pedersen@example.test",
-  role: "ControlroomSupervisor" as const,
+  roles: ["ControlroomSupervisor"],
 };
 
 const draft: RestrictionDto = {
