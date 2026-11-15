@@ -157,14 +157,14 @@ export async function requestChanges(
   return toRestriction(await response.json());
 }
 
-// POST /api/signature/sign/{requiresSignatureId}
+// POST /api/restrictions/{id}/sign
 // Resolves with the updated restriction when the response body contains one,
 // otherwise null (the caller then re-fetches the restriction).
 export async function signRestriction(
   id: string,
 ): Promise<RestrictionDto | null> {
   const response = await fetch(
-    `/api/signature/sign/${encodeURIComponent(id)}`,
+    `/api/restrictions/${encodeURIComponent(id)}/sign`,
     { method: "POST", headers: authHeaders() },
   );
 

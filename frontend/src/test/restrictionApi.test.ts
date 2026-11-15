@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getRestrictionById, requestChanges } from "../services/restrictionApi";
+import {
+  getRestrictionById,
+  requestChanges,
+  signRestriction,
+} from "../services/restrictionApi";
 
 describe("restrictionApi", () => {
   afterEach(() => {
@@ -69,5 +73,19 @@ describe("restrictionApi", () => {
     await expect(
       requestChanges("restriction-1", "Fix it"),
     ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("posts to the restriction signing endpoint with the restriction ID", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: "signature-1" }),
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await signRestriction("restriction-1");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/restrictions/restriction-1/sign");
+    expect(init.method).toBe("POST");
   });
 });
