@@ -56,11 +56,12 @@ public class PermissionServiceTests
         var service = CreateService();
 
         var annaPermissions = await service.GetPermissionsForUserAsync(DbSeeder.AnnaId);
-        Assert.Equal(4, annaPermissions.Count);
+        Assert.Equal(5, annaPermissions.Count);
         Assert.Contains(Permissions.OperationalRestrictionRead, annaPermissions);
         Assert.Contains(Permissions.OperationalRestrictionCreate, annaPermissions);
         Assert.Contains(Permissions.OperationalRestrictionSign, annaPermissions);
         Assert.Contains(Permissions.OperationalRestrictionApprove, annaPermissions);
+        Assert.Contains(Permissions.OperationalRestrictionRequestChanges, annaPermissions);
 
         var larsPermissions = await service.GetPermissionsForUserAsync(DbSeeder.LarsId);
         Assert.Equal(3, larsPermissions.Count);

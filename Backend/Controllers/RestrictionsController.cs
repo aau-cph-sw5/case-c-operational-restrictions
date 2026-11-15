@@ -135,7 +135,7 @@ public class RestrictionsController : ApiControllerBase
     }
 
     [HttpPost("{id:guid}/request-changes")]
-    [Authorize(Roles = nameof(UserRole.DutyOperationsManager))]
+    [RequiresPermission(Permissions.OperationalRestrictionRequestChanges)]
     public async Task<ActionResult<OperationalRestrictionDto>> RequestChanges(
         Guid id,
         RequestChangesRequest request)

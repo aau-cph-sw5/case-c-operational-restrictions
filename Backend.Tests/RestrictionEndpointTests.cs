@@ -199,7 +199,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task DomCanReturnPendingRestrictionForChangesWithComment()
     {
-        var client = CreateClientFor(DbSeeder.AnnaId, UserRole.DutyOperationsManager);
+        var client = CreateClientFor(DbSeeder.AnnaId);
 
         var response = await client.PostAsJsonAsync(
             "/api/restrictions/5eed0000-0000-0000-0000-000000000003/request-changes",
@@ -216,7 +216,20 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task NonDomCannotReturnRestrictionForChanges()
     {
-        var client = CreateClientFor(DbSeeder.LarsId, UserRole.Operator);
+        var client = CreateClientFor(DbSeeder.LarsId);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/restrictions/5eed0000-0000-0000-0000-000000000003/request-changes",
+            new { comment = "Add the affected track section." },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SupervisorWithApprovePermissionCannotReturnRestrictionForChanges()
+    {
+        var client = CreateClientFor(DbSeeder.MikkelId);
 
         var response = await client.PostAsJsonAsync(
             "/api/restrictions/5eed0000-0000-0000-0000-000000000003/request-changes",
@@ -229,7 +242,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task RequestChangesOnDraftReturnsConflict()
     {
-        var client = CreateClientFor(DbSeeder.AnnaId, UserRole.DutyOperationsManager);
+        var client = CreateClientFor(DbSeeder.AnnaId);
 
         var response = await client.PostAsJsonAsync(
             "/api/restrictions/5eed0000-0000-0000-0000-000000000001/request-changes",
@@ -239,10 +252,10 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
-    private HttpClient CreateClientFor(Guid userId, UserRole role = UserRole.Originator)
+    private HttpClient CreateClientFor(Guid userId)
     {
         var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _factory.CreateTokenFor(userId, role));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _factory.CreateTokenFor(userId));
 
         return client;
     }

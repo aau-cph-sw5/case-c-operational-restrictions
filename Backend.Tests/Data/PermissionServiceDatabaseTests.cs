@@ -16,6 +16,25 @@ public class PermissionServiceDatabaseTests(
     TestDatabaseFixture fixture) : IClassFixture<TestDatabaseFixture>
 {
     [Fact]
+    public async Task MigrationGrantsRequestChangesToDutyOperationsManager()
+    {
+        await using var context = fixture.CreateContext();
+        var permissionId = Guid.Parse("20000000-0000-0000-0000-000000000001");
+
+        var grantExists = await (
+            from grant in context.RolePermissions
+            join role in context.Roles on grant.RoleId equals role.Id
+            join permission in context.Permissions on grant.PermissionId equals permission.Id
+            where role.Name == RoleNames.DutyOperationsManager
+                && permission.Id == permissionId
+                && permission.Name == Permissions.OperationalRestrictionRequestChanges
+            select grant
+        ).AnyAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(grantExists);
+    }
+
+    [Fact]
     public async Task SeededUsersResolvePermissionsThroughTheirRoles()
     {
         await using var context = fixture.CreateContext();
@@ -43,8 +62,9 @@ public class PermissionServiceDatabaseTests(
 
         var permissions = await service.GetPermissionsForUserAsync(DbSeeder.AnnaId);
 
-        Assert.Equal(4, permissions.Count);
+        Assert.Equal(5, permissions.Count);
         Assert.Contains(Permissions.OperationalRestrictionApprove, permissions);
+        Assert.Contains(Permissions.OperationalRestrictionRequestChanges, permissions);
     }
 
     [Fact]
