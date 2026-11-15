@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Lifecycle;
@@ -162,7 +163,7 @@ public class OperationalRestrictionServiceTests
         Assert.Equal(RestrictionState.Active, active.State);
 
         Assert.Equal(controlRoomSupervisor, signature.SigneeId);
-        Assert.Equal(UserRole.ControlroomSupervisor, signature.SigneeRole);
+        Assert.Equal(RoleNames.ControlroomSupervisor, signature.SigneeRole);
         Assert.Equal(7, repo.Restrictions.Single(
             r => r.RestrictionId == active.Id).Version);
         Assert.Equal(controlRoomSupervisor, active.CreatedBy);

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 
 using Backend.Configuration;
 using Backend.Data;
@@ -19,7 +20,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddControllers();
+// Enums are serialised as their names ("ControlroomSupervisor"), not numbers,
+// so the API contract is self-describing and the frontend needs no numeric mapping.
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddScoped<IExampleService, ExampleService>();
 
 

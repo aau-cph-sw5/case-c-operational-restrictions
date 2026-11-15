@@ -1,4 +1,5 @@
 
+using Backend.Authorization;
 using Backend.Lifecycle;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
@@ -118,7 +119,7 @@ public class RestrictionLifecycleServiceTests
             ReviewDescription = "Review comment",
             Signatures = new List<SignatureDto>
             {
-                new() { SigneeRole = UserRole.ControlroomSupervisor }
+                new() { SigneeRole = RoleNames.ControlroomSupervisor }
             },
             AssignedOperatorsIds = new List<Guid> { Guid.NewGuid() }
         };

@@ -162,12 +162,12 @@ public class SignatureService(
     {
         var signer = _appDbContext.Users.SingleOrDefault(user => user.Id == signerUserId);
 
-        if (signer == null || signer.Role != UserRole.ControlroomSupervisor)
+        if (signer == null || !GetRoleNames(signerUserId).Contains(RoleNames.ControlroomSupervisor))
             throw new NotControlRoomSupervisorException(signerUserId);
 
         var existingSignature = _signatures.FirstOrDefault(signature =>
             signature.OperationalRestrictionId == operationalRestrictionId
-            && signature.SigneeRole == UserRole.ControlroomSupervisor);
+            && signature.SigneeRole == RoleNames.ControlroomSupervisor);
 
         if (existingSignature != null)
         {
@@ -191,7 +191,7 @@ public class SignatureService(
             RequiresSignatureId = requiredSignature.Id,
             OperationalRestrictionId = operationalRestrictionId,
             SigneeId = signerUserId,
-            SigneeRole = UserRole.ControlroomSupervisor,
+            SigneeRole = RoleNames.ControlroomSupervisor,
             SignedAt = DateTime.UtcNow
         };
         _signatures.Add(signature);
@@ -204,7 +204,7 @@ public class SignatureService(
     {
         return _signatures.FirstOrDefault(signature =>
             signature.OperationalRestrictionId == operationalRestrictionId
-            && signature.SigneeRole == UserRole.ControlroomSupervisor);
+            && signature.SigneeRole == RoleNames.ControlroomSupervisor);
     }
 
     /// <summary>
@@ -217,9 +217,13 @@ public class SignatureService(
     public List<RequiresSignature> AssignOperatorsForImplementation(Guid operationalRestrictionId)
     {
         var operatorIds = _appDbContext.Users
-            .Where(user => user.Role == UserRole.Operator
-                && user.WorkingStatus != UserWorkingStatus.OnHoliday)
-            .Select(user => user.Id)
+            .Where(user => user.WorkingStatus != UserWorkingStatus.OnHoliday)
+            .Join(
+                _appDbContext.UserRoleAssignments
+                    .Where(assignment => assignment.Role.Name == RoleNames.Operator),
+                user => user.Id,
+                assignment => assignment.UserId,
+                (user, assignment) => user.Id)
             .ToList();
 
         var requiredSignatures = operatorIds

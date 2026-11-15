@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
@@ -95,7 +96,7 @@ public sealed class ControlRoomSupervisorSignatureIsFound : IRestrictionGuard<Op
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
         return data.Signatures.Any(signature =>
-            signature.SigneeRole == UserRole.ControlroomSupervisor);
+            signature.SigneeRole == RoleNames.ControlroomSupervisor);
     }
 }
 

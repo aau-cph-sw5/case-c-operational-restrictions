@@ -1,5 +1,3 @@
-using Backend.Models.Enums;
-
 namespace Backend.Models.DTOs;
 
 // MODEL - DTO (Data Transfer Object):
@@ -13,5 +11,6 @@ public class UserDto
 
     public string Email { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
+    // Role names (e.g. "ControlroomSupervisor"), resolved from UserRoleAssignments.
+    public List<string> Roles { get; set; } = new();
 }

@@ -1,9 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 
+using Backend.Data;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
-
-using Nelibur.ObjectMapper;
 
 namespace Backend.Services.Auth;
 
@@ -11,12 +10,14 @@ public class AuthService
 {
     private readonly PasswordHasher _passwordHasher;
     private readonly JwtService _jwtService;
+    private readonly AppDbContext _appDbContext;
     private readonly User _placeholderUser;
 
-    public AuthService(PasswordHasher passwordHasher, JwtService jwtService)
+    public AuthService(PasswordHasher passwordHasher, JwtService jwtService, AppDbContext appDbContext)
     {
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
+        _appDbContext = appDbContext;
         //Laver en placeholder user mens der ikke er en databse
         _placeholderUser = new User
         {
@@ -69,17 +70,23 @@ public class AuthService
             return null;
         }
 
-        return TinyMapper.Map<UserDto>(_placeholderUser);
+        return MapToDto(_placeholderUser);
     }
 
-    private static UserDto MapToDto(User user)
+    private UserDto MapToDto(User user)
     {
         return new UserDto
         {
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
-            Role = user.Role
+            Roles = _appDbContext.UserRoleAssignments
+                .Where(assignment => assignment.UserId == user.Id)
+                .Join(_appDbContext.Roles,
+                    assignment => assignment.RoleId,
+                    role => role.Id,
+                    (assignment, role) => role.Name)
+                .ToList()
         };
     }
 }

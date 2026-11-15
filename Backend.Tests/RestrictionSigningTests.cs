@@ -237,7 +237,7 @@ public class RestrictionSigningTests
         var result = Assert.IsType<OkObjectResult>(actionResult);
         var signature = Assert.IsType<SignatureDto>(result.Value);
         Assert.Equal(DbSeeder.MikkelId, signature.SigneeId);
-        Assert.Equal(UserRole.ControlroomSupervisor, signature.SigneeRole);
+        Assert.Equal(RoleNames.ControlroomSupervisor, signature.SigneeRole);
 
         // The original version keeps its state, while a new version becomes Active
         var persistedRestriction = await _dbContext.OperationalRestrictions

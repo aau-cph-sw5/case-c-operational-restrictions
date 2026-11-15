@@ -147,7 +147,7 @@ public class SignatureServiceTests
         var signature = _service.SignControlRoomSupervisor(restrictionId, DbSeeder.MikkelId);
 
         Assert.Equal(DbSeeder.MikkelId, signature.SigneeId);
-        Assert.Equal(UserRole.ControlroomSupervisor, signature.SigneeRole);
+        Assert.Equal(RoleNames.ControlroomSupervisor, signature.SigneeRole);
         Assert.Equal(restrictionId, signature.OperationalRestrictionId);
         Assert.True(signature.SignedAt >= before);
         Assert.True(_service.IsSignatureValid(signature.Id));
