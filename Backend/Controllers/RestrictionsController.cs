@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Exceptions;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
@@ -14,11 +15,18 @@ namespace Backend.Controllers;
 [Authorize]
 public class RestrictionsController : ApiControllerBase
 {
-    private readonly IOperationalRestrictionService _operationalRestrictionService;
+    private static readonly Action<ILogger, Exception?> LogUnexpectedError =
+        LoggerMessage.Define(LogLevel.Error, new EventId(0, nameof(LogUnexpectedError)), "Unexpected error");
 
-    public RestrictionsController(IOperationalRestrictionService operationalRestrictionService)
+    private readonly IOperationalRestrictionService _operationalRestrictionService;
+    private readonly ILogger<RestrictionsController> _logger;
+
+    public RestrictionsController(
+        IOperationalRestrictionService operationalRestrictionService,
+        ILogger<RestrictionsController> logger)
     {
         _operationalRestrictionService = operationalRestrictionService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -26,12 +34,15 @@ public class RestrictionsController : ApiControllerBase
     /// </summary>
     /// <response code="201">Returns the created restriction</response>
     /// <response code="400">The end date is not after the start date</response>
+    /// <response code="403">The user has no role granting OperationalRestriction:Create</response>
     [HttpPost]
+    [RequiresPermission(Permissions.OperationalRestrictionCreate)]
     public async Task<ActionResult<OperationalRestrictionDto>> Create(CreateRestrictionRequest request)
     {
         try
         {
-            var restriction = await _operationalRestrictionService.CreateRestrictionAsync(request with { CreatedBy = CurrentUserId });
+            var restriction = await _operationalRestrictionService.CreateRestrictionAsync(
+                request with { CreatedBy = CurrentUserId });
 
             return CreatedAtAction(nameof(GetById), new { id = restriction.Id }, restriction);
         }
@@ -60,7 +71,9 @@ public class RestrictionsController : ApiControllerBase
     /// </summary>
     /// <response code="200">Returns the restriction</response>
     /// <response code="404">The restriction was not found, or it is a draft owned by another user</response>
+    /// <response code="403">The user has no role granting OperationalRestriction:Read</response>
     [HttpGet("{id:guid}")]
+    [RequiresPermission(Permissions.OperationalRestrictionRead)]
     public async Task<ActionResult<OperationalRestrictionDto>> GetById(Guid id)
     {
         try
@@ -79,7 +92,9 @@ public class RestrictionsController : ApiControllerBase
     /// Retrieves all non-draft restrictions plus the logged-in user's own drafts.
     /// </summary>
     /// <response code="200">Returns the restrictions</response>
+    /// <response code="403">The user has no role granting OperationalRestriction:Read</response>
     [HttpGet]
+    [RequiresPermission(Permissions.OperationalRestrictionRead)]
     public async Task<ActionResult<List<OperationalRestrictionDto>>> GetAll()
     {
         var restrictions = await _operationalRestrictionService.GetAllAsync(CurrentUserId);
@@ -95,7 +110,9 @@ public class RestrictionsController : ApiControllerBase
     /// <response code="400">The restriction is missing required information</response>
     /// <response code="409">The operational restriction is not in Draft state</response>
     /// <response code="200">Returns the created immutable signature</response>
+    /// <response code="403">The user has no role granting OperationalRestriction:Sign</response>
     [HttpPost("{id:guid}/sign")]
+    [RequiresPermission(Permissions.OperationalRestrictionSign)]
     public async Task<IActionResult> Sign(Guid id)
     {
         OperationalRestrictionDto restriction;
@@ -144,6 +161,45 @@ public class RestrictionsController : ApiControllerBase
         catch (InvalidOperationException exception)
         {
             return Conflict(new { error = exception.Message });
+        }
+    }
+
+    /// <summary>
+    /// Approves a restriction that is pending duty operations manager approval.
+    /// The originator of a restriction can never approve it themselves, even if
+    /// their role grants the approval permission.
+    /// </summary>
+    /// <response code="200">Returns the approved restriction</response>
+    /// <response code="403">The user has no role granting OperationalRestriction:Approve, or they created the restriction themselves</response>
+    /// <response code="404">The operational restriction was not found</response>
+    /// <response code="409">The operational restriction is not pending approval</response>
+    [HttpPost("{id:guid}/approve")]
+    [RequiresPermission(Permissions.OperationalRestrictionApprove)]
+    public async Task<IActionResult> Approve(Guid id)
+    {
+        try
+        {
+            var approved = await _operationalRestrictionService.ApproveRestrictionAsync(id, CurrentUserId);
+            return Ok(approved);
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (SelfApprovalNotAllowedException exception)
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+        catch (Exception exception)
+        {
+            LogUnexpectedError(_logger, exception);
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -198,6 +254,11 @@ public class RestrictionsController : ApiControllerBase
         catch (InvalidOperationException exception)
         {
             return Conflict(new { error = exception.Message });
+        }
+        catch (Exception exception)
+        {
+            LogUnexpectedError(_logger, exception);
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 }

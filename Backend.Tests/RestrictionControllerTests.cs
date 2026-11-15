@@ -11,16 +11,19 @@ using Backend.Services;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Tests;
 
 public class RestrictionControllerTests
 {
     private readonly OperationalRestrictionService _service;
+    private readonly ILogger<RestrictionsController> _logger;
 
     public RestrictionControllerTests()
     {
         var appDbContext = TestDatabase.CreateSeededContext();
+        _logger = new LoggerFactory().CreateLogger<RestrictionsController>();
         var lifecycle = new RestrictionLifecycleService(
             new IRestrictionGuard[]
             {
@@ -160,7 +163,7 @@ public class RestrictionControllerTests
             [new Claim(JwtRegisteredClaimNames.Sub, userId.ToString())],
             "Test"));
 
-        return new RestrictionsController(_service)
+        return new RestrictionsController(_service, _logger)
         {
             ControllerContext = new ControllerContext
             {
