@@ -139,6 +139,60 @@ public class SignatureService(
             && signature.SigneeRole == RoleNames.Originator);
     }
 
+    /// <summary>
+    /// Creates the control room supervisor's signature for implementation.
+    /// Only a user with the ControlroomSupervisor role may sign, and each restriction.
+    /// Can only be signed once.
+    /// </summary>
+
+    public Signature SignControlRoomSupervisor(Guid operationalRestrictionId, Guid signerUserId)
+    {
+        var signer = _appDbContext.Users.SingleOrDefault(user => user.Id == signerUserId);
+
+        if (signer == null || !GetRoleNames(signerUserId).Contains(RoleNames.ControlroomSupervisor))
+            throw new InvalidOperationException("User is not control room supervisor.");
+
+        var existingSignature = _signatures.FirstOrDefault(
+            signature => signature.OperationalRestrictionId == operationalRestrictionId
+                         && signature.SigneeRole == RoleNames.ControlroomSupervisor);
+
+        if (existingSignature != null)
+            throw new InvalidOperationException("Signature already exists.");
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+        };
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = RoleNames.ControlroomSupervisor,
+            RequiresSignatureId = requiredSignature.Id,
+            SignedAt = DateTime.UtcNow
+        };
+        _signatures.Add(signature);
+
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+
+        return signature;
+    }
+
+    public Signature? GetControlRoomSupervisorSignature(Guid operationalRestrictionId)
+    {
+        return _signatures.FirstOrDefault(signature =>
+            signature.OperationalRestrictionId == operationalRestrictionId
+            && signature.SigneeRole == RoleNames.ControlroomSupervisor
+        );
+    }
+
+
     // The signer's current role names, resolved from the database so the
     // recorded label matches the data-driven role assignments.
     private List<string> GetRoleNames(Guid userId)

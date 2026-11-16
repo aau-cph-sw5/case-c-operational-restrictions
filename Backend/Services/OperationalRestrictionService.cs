@@ -178,6 +178,33 @@ public class OperationalRestrictionService
         }
     }
 
+
+    /// <summary>
+    /// The control room supervisor signs the restriction for implementation, which moves it from PendingControlRoomSupervisorApproval to Active.
+    /// Only users with the ControlroomSupervisor role may sign.
+    /// </summary>
+    public async Task<Signature> SignControlRoomSupervisorApprovalAsync(Guid id, Guid signerId)
+    {
+        if (_signatureService == null)
+            throw new InvalidOperationException("SignatureService is not configured.");
+
+        var restriction = await _repository.GetByIdAsync(id) ?? throw new OperationalRestrictionNotFoundException(id);
+
+        if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
+            throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
+
+        Signature? signature;
+
+        try
+        {
+            signature = _signatureService.SignControlRoomSupervisor(id, signerId);
+        }
+        catch { throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString()); }
+        ;
+
+        return signature;
+    }
+
     /// <summary>
     /// Retrieves all operational restrictions from the database. Returns an empty list if none are found.
     /// Drafts are only included for their originator.
