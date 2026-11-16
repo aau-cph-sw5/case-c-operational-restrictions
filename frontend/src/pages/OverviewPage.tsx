@@ -53,7 +53,9 @@ export function OverviewPage() {
 
   const filteredItems = useMemo(() => {
     return restrictions.filter((item) => {
-      const matchesTab = (activeTab === "alle" && item.category !== "kladde") || item.category === activeTab;
+      const matchesTab =
+        (activeTab === "alle" && item.category !== "kladde") ||
+        item.category === activeTab;
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.referenceId.toLowerCase().includes(searchQuery.toLowerCase());
@@ -68,7 +70,7 @@ export function OverviewPage() {
 
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
-      
+
       return dateB.getTime() - dateA.getTime();
     });
   }, [filteredItems]);
@@ -145,7 +147,7 @@ export function OverviewPage() {
             />
           </div>
           <div className=" text-muted-foreground text-xs text-left">
-              Sidst opdateret: {lastUpdated}
+            Sidst opdateret: {lastUpdated}
           </div>
         </header>
 
