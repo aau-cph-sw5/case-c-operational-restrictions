@@ -172,7 +172,7 @@ public class OperationalRestrictionService
         catch
         {
             if (signature != null)
-                _signatureService.DiscardUnpersistedOriginatorSignature(signature);
+                _signatureService.DiscardUnpersistedSignature(signature);
 
             throw;
         }
@@ -188,21 +188,34 @@ public class OperationalRestrictionService
         if (_signatureService == null)
             throw new InvalidOperationException("SignatureService is not configured.");
 
-        var restriction = await _repository.GetByIdAsync(id) ?? throw new OperationalRestrictionNotFoundException(id);
+        var restriction = await _repository.GetByIdAsync(id)
+            ?? throw new OperationalRestrictionNotFoundException(id);
 
         if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
             throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
 
-        Signature? signature;
-
+        Signature? signature = null;
         try
         {
             signature = _signatureService.SignControlRoomSupervisor(id, signerId);
-        }
-        catch { throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString()); }
-        ;
+            await TransitionAsync(
+                id,
+                RestrictionAction.Active,
+                signerId,
+                newVersion =>
+                {
+                    newVersion.SignatureSheet.Add(signature);
+                });
 
-        return signature;
+            return signature;
+        }
+        catch
+        {
+            if (signature != null)
+                _signatureService.DiscardUnpersistedSignature(signature);
+
+            throw;
+        }
     }
 
     /// <summary>

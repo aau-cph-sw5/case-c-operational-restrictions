@@ -150,7 +150,7 @@ public class SignatureService(
         var signer = _appDbContext.Users.SingleOrDefault(user => user.Id == signerUserId);
 
         if (signer == null || !GetRoleNames(signerUserId).Contains(RoleNames.ControlroomSupervisor))
-            throw new InvalidOperationException("User is not control room supervisor.");
+            throw new NotControlRoomSupervisorException(signerUserId);
 
         var existingSignature = _signatures.FirstOrDefault(
             signature => signature.OperationalRestrictionId == operationalRestrictionId
@@ -207,7 +207,7 @@ public class SignatureService(
             .ToList();
     }
 
-    internal void DiscardUnpersistedOriginatorSignature(Signature signature)
+    internal void DiscardUnpersistedSignature(Signature signature)
     {
         var requiredSignature = GetRequiresSignatureById(signature.RequiresSignatureId);
 
