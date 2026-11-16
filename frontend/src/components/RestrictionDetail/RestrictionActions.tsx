@@ -10,6 +10,9 @@ interface RestrictionActionsProps {
   canRequestChanges: boolean;
   submittingChanges: boolean;
   onRequestChanges: (comment: string) => Promise<boolean>;
+  canSignForImplementation: boolean;
+  signingForImplementation: boolean;
+  onSignForImplementation: () => void;
 }
 
 export function RestrictionActions({
@@ -19,6 +22,9 @@ export function RestrictionActions({
   canRequestChanges,
   submittingChanges,
   onRequestChanges,
+  canSignForImplementation,
+  signingForImplementation,
+  onSignForImplementation,
 }: RestrictionActionsProps) {
   return (
     <>
@@ -48,6 +54,19 @@ export function RestrictionActions({
             icon={<FilePen className="size-4" aria-hidden />}
           >
             {t.edit}
+          </RestrictionActionButton>
+        </div>
+      )}
+
+      {canSignForImplementation && (
+        <div className="flex flex-wrap gap-3 pb-4">
+          <RestrictionActionButton
+            onClick={onSignForImplementation}
+            loading={signingForImplementation}
+            loadingLabel={t.signing}
+            title="Sign for Implementation"
+          >
+            {t.signForImplementation}
           </RestrictionActionButton>
         </div>
       )}

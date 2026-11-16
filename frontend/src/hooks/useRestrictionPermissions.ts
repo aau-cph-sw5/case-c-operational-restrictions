@@ -9,6 +9,8 @@ export interface RestrictionPermissions {
   canSign: boolean;
   isAwaitingDomApproval: boolean;
   canRequestChanges: boolean;
+  isAwaitingControlRoomSupervisorApproval: boolean;
+  canSignForImplementation: boolean;
   reviewComment: string | undefined;
   hasRequestedChanges: boolean;
   showReviewCommentCard: boolean;
@@ -39,6 +41,15 @@ export function useRestrictionPermissions(
       (currentUser.roles === undefined ||
         currentUser.roles.includes("DutyOperationsManager"));
 
+    const isAwaitingControlRoomSupervisorApproval =
+      restriction?.status === "PendingControlRoomSupervisorApproval";
+
+    const canSignForImplementation =
+      Boolean(isAwaitingControlRoomSupervisorApproval) &&
+      currentUser !== null &&
+      (currentUser.roles === undefined ||
+        currentUser.roles.includes("ControlroomSupervisor"));
+
     const reviewComment =
       restriction?.status === "ReturnedForChanges"
         ? restriction.reviewDescription?.trim()
@@ -54,6 +65,8 @@ export function useRestrictionPermissions(
       canSign,
       isAwaitingDomApproval,
       canRequestChanges,
+      isAwaitingControlRoomSupervisorApproval,
+      canSignForImplementation,
       reviewComment,
       hasRequestedChanges,
       showReviewCommentCard,

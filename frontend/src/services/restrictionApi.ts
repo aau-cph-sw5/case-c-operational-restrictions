@@ -183,3 +183,20 @@ export async function signRestriction(
 
   return null;
 }
+
+// POST /api/restrictions/{id}/sign-for-implementation
+// Control room supervisor signs for implementation (PendingControlRoomSupervisorApproval
+// -> Active). The backend responds with the created signature, which the caller
+// appends to the in-memory restriction together with the Active status.
+export async function signForImplementation(id: string): Promise<SignatureDto> {
+  const response = await fetch(
+    `/api/restrictions/${encodeURIComponent(id)}/sign-for-implementation`,
+    { method: "POST", headers: authHeaders() },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return toSignature((await response.json()) as Record<string, unknown>);
+}

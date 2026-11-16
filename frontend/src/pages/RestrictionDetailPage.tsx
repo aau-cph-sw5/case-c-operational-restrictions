@@ -10,7 +10,10 @@ import { ReviewCommentCard } from "@/components/RestrictionDetail/ReviewCommentC
 import { pageClasses } from "@/lib/pageLayout.ts";
 import { loadErrorMessage } from "@/lib/utils/loadErrorMessage.ts";
 import { requestChangesErrorMessage } from "@/lib/utils/requestChangesErrorMessage.ts";
-import { signErrorMessage } from "@/lib/utils/signErrorMessages.ts";
+import {
+  signErrorMessage,
+  signForImplementationErrorMessage,
+} from "@/lib/utils/signErrorMessages.ts";
 import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
@@ -22,6 +25,7 @@ import { restrictionTexts as t } from "../lib/restrictionTexts";
 import {
   getRestrictionById,
   requestChanges,
+  signForImplementation,
   signRestriction,
 } from "../services/restrictionApi";
 
@@ -30,6 +34,13 @@ export function RestrictionDetailPage() {
   const location = useLocation();
   const [signing, setSigning] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  const [signingForImplementation, setSigningForImplementation] =
+    useState(false);
+  const [signForImplementationError, setSignForImplementationError] = useState<
+    string | null
+  >(null);
+  const [signForImplementationSuccess, setSignForImplementationSuccess] =
+    useState(false);
   const [requestingChanges, setRequestingChanges] = useState(false);
   const [requestChangesError, setRequestChangesError] = useState<string | null>(
     null,
@@ -92,6 +103,33 @@ export function RestrictionDetailPage() {
     }
   }
 
+  async function handleSignForImplementation() {
+    if (!restriction) return;
+
+    setSigningForImplementation(true);
+    setSignForImplementationError(null);
+    setSignForImplementationSuccess(false);
+
+    try {
+      // The endpoint responds with the created signature and moves the
+      // restriction from PendingControlRoomSupervisorApproval to Active, so
+      // update the in-memory restriction directly instead of re-fetching.
+      const signature = await signForImplementation(restriction.id);
+      setRestriction({
+        ...restriction,
+        status: "Active",
+        signatures: [...restriction.signatures, signature],
+      });
+      setSignForImplementationSuccess(true);
+    } catch (error) {
+      // State stays PendingControlRoomSupervisorApproval; the in-memory
+      // restriction is left untouched.
+      setSignForImplementationError(signForImplementationErrorMessage(error));
+    } finally {
+      setSigningForImplementation(false);
+    }
+  }
+
   async function handleRequestChanges(comment: string): Promise<boolean> {
     if (!restriction) return false;
 
@@ -114,6 +152,7 @@ export function RestrictionDetailPage() {
   const {
     canSign,
     canRequestChanges,
+    canSignForImplementation,
     reviewComment,
     hasRequestedChanges,
     showReviewCommentCard,
@@ -169,7 +208,17 @@ export function RestrictionDetailPage() {
         knownUsers={knownUsers}
       />
 
+      {signForImplementationSuccess && (
+        <SuccessAlert testId="sign-for-implementation-success">
+          {t.signForImplementationSuccess}
+        </SuccessAlert>
+      )}
+
       {signError && <ErrorAlert>{signError}</ErrorAlert>}
+
+      {signForImplementationError && (
+        <ErrorAlert>{signForImplementationError}</ErrorAlert>
+      )}
 
       {requestChangesError && <ErrorAlert>{requestChangesError}</ErrorAlert>}
 
@@ -180,6 +229,9 @@ export function RestrictionDetailPage() {
         canRequestChanges={canRequestChanges}
         submittingChanges={requestingChanges}
         onRequestChanges={handleRequestChanges}
+        canSignForImplementation={canSignForImplementation}
+        signingForImplementation={signingForImplementation}
+        onSignForImplementation={handleSignForImplementation}
       />
     </main>
   );

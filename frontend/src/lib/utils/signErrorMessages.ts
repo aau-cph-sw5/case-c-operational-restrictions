@@ -18,3 +18,21 @@ export function signErrorMessage(error: unknown): string {
   }
   return t.signFailed;
 }
+
+// Same status mapping as signErrorMessage, but for the control room
+// supervisor's sign-for-implementation endpoint.
+export function signForImplementationErrorMessage(error: unknown): string {
+  if (isRestrictionApiError(error)) {
+    switch (error.status) {
+      case 403:
+        return t.signForImplementationForbidden;
+      case 404:
+        return t.notFound;
+      case 409:
+        return t.signForImplementationConflict;
+      case 401:
+        return t.sessionExpired;
+    }
+  }
+  return t.signFailed;
+}
