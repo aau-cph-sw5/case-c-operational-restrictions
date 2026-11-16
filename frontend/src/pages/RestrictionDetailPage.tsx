@@ -111,9 +111,6 @@ export function RestrictionDetailPage() {
     setSignForImplementationSuccess(false);
 
     try {
-      // The endpoint responds with the created signature and moves the
-      // restriction from PendingControlRoomSupervisorApproval to Active, so
-      // update the in-memory restriction directly instead of re-fetching.
       const signature = await signForImplementation(restriction.id);
       setRestriction({
         ...restriction,
@@ -122,8 +119,6 @@ export function RestrictionDetailPage() {
       });
       setSignForImplementationSuccess(true);
     } catch (error) {
-      // State stays PendingControlRoomSupervisorApproval; the in-memory
-      // restriction is left untouched.
       setSignForImplementationError(signForImplementationErrorMessage(error));
     } finally {
       setSigningForImplementation(false);
