@@ -28,6 +28,17 @@ public class SignatureService(
     }
 
 
+    // The users who must read and sign a restriction when it becomes active:
+    // everyone at work or off work at that moment (i.e. not on holiday).
+    public List<Guid> GetAtWorkAndOffWorkUserIds()
+    {
+        return _appDbContext.Users
+            .Where(user => user.WorkingStatus == UserWorkingStatus.AtWork
+                        || user.WorkingStatus == UserWorkingStatus.OffWork)
+            .Select(user => user.Id)
+            .ToList();
+    }
+
     public List<RequiresSignature> CreateRequiredSignatures(Guid operationalRestrictionId)
     {
         var createdSignatures = _appDbContext.Users

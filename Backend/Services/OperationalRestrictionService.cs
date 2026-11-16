@@ -188,6 +188,8 @@ public class OperationalRestrictionService
         if (_signatureService == null)
             throw new InvalidOperationException("SignatureService is not configured.");
 
+        var signatureService = _signatureService;
+
         var restriction = await _repository.GetByIdAsync(id)
             ?? throw new OperationalRestrictionNotFoundException(id);
 
@@ -197,7 +199,7 @@ public class OperationalRestrictionService
         Signature? signature = null;
         try
         {
-            signature = _signatureService.SignControlRoomSupervisor(id, signerId);
+            signature = signatureService.SignControlRoomSupervisor(id, signerId);
             await TransitionAsync(
                 id,
                 RestrictionAction.Active,
@@ -205,6 +207,9 @@ public class OperationalRestrictionService
                 newVersion =>
                 {
                     newVersion.SignatureSheet.Add(signature);
+
+                    newVersion.AssignedOperatorsIds =
+                        signatureService.GetAtWorkAndOffWorkUserIds();
                 });
 
             return signature;
@@ -212,7 +217,7 @@ public class OperationalRestrictionService
         catch
         {
             if (signature != null)
-                _signatureService.DiscardUnpersistedSignature(signature);
+                signatureService.DiscardUnpersistedSignature(signature);
 
             throw;
         }
