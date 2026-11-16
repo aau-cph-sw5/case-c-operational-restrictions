@@ -365,7 +365,7 @@ describe("RestrictionDetailPage", () => {
       id: "dom-1",
       name: "Dan Dom",
       email: "dom@example.test",
-      role: "DutyOperationsManager",
+      roles: ["DutyOperationsManager"],
     };
     const pending: RestrictionDto = { ...signed, status: "PendingDOMApproval" };
     const returned: RestrictionDto = {
@@ -401,7 +401,7 @@ describe("RestrictionDetailPage", () => {
     });
 
     it("hides the form from a user whose role is not DOM", async () => {
-      mocks.getCurrentUser.mockResolvedValue({ ...dom, role: "Operator" });
+      mocks.getCurrentUser.mockResolvedValue({ ...dom, roles: ["Operator"] });
       renderPage();
       await screen.findByText("restriction-1");
 
