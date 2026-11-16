@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 
 using Backend.Configuration;
@@ -30,6 +31,7 @@ builder.Services.AddScoped<IOperationalRestrictionRepository, OperationalRestric
 builder.Services.AddScoped<IRestrictionTransitionEventRepository, RestrictionTransitionEventRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<SignatureService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 // Register Guards
 builder.Services.AddSingleton<IRestrictionGuard, StartDateIsFoundGuard>();
@@ -72,6 +74,7 @@ builder.Services
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
+            RoleClaimType = ClaimTypes.Role,
             ValidateIssuer = true,
             ValidIssuer = jwtOptions.Issuer,
             ValidateAudience = true,

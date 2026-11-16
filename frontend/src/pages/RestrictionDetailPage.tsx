@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   FilePen,
   LoaderCircle,
+  MessageSquareWarning,
   OctagonAlert,
   Pencil,
 } from "lucide-react";
@@ -15,12 +16,14 @@ import { Button, buttonVariants } from "../components/ui/button";
 import { RestrictionActionButton } from "../components/RestrictionActionButton";
 import { RestrictionInfoCard } from "../components/RestrictionInfoCard";
 import { RestrictionStatusBadge } from "../components/RestrictionStatusBadge";
+import { RequestChangesForm } from "../components/RequestChangesForm";
 import { SignatureSection } from "../components/SignatureSection";
 import { formatLocal, formatUtc } from "../lib/dateFormat";
 import { restrictionTexts as t } from "../lib/restrictionTexts";
 import { authService } from "../services/authService";
 import {
   getRestrictionById,
+  requestChanges,
   signRestriction,
 } from "../services/restrictionApi";
 import { isRestrictionApiError } from "../types/restrictionApiError";
@@ -52,6 +55,24 @@ function signErrorMessage(error: unknown): string {
     }
   }
   return t.signFailed;
+}
+
+function requestChangesErrorMessage(error: unknown): string {
+  if (isRestrictionApiError(error)) {
+    switch (error.status) {
+      case 400:
+        return t.requestChangesBadRequest;
+      case 403:
+        return t.requestChangesForbidden;
+      case 404:
+        return t.notFound;
+      case 409:
+        return t.requestChangesConflict;
+      case 401:
+        return t.sessionExpired;
+    }
+  }
+  return t.requestChangesFailed;
 }
 
 // Important-notification style from the design guide: Beeswax background,
@@ -93,6 +114,11 @@ export function RestrictionDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  const [requestingChanges, setRequestingChanges] = useState(false);
+  const [requestChangesError, setRequestChangesError] = useState<string | null>(
+    null,
+  );
+  const [requestChangesSuccess, setRequestChangesSuccess] = useState(false);
 
   const navNotification =
     (
@@ -159,6 +185,25 @@ export function RestrictionDetailPage() {
     }
   }
 
+  async function handleRequestChanges(comment: string): Promise<boolean> {
+    if (!restriction) return false;
+
+    setRequestingChanges(true);
+    setRequestChangesError(null);
+    setRequestChangesSuccess(false);
+
+    try {
+      setRestriction(await requestChanges(restriction.id, comment));
+      setRequestChangesSuccess(true);
+      return true;
+    } catch (error) {
+      setRequestChangesError(requestChangesErrorMessage(error));
+      return false;
+    } finally {
+      setRequestingChanges(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className={pageClasses} role="status">
@@ -193,6 +238,24 @@ export function RestrictionDetailPage() {
   const isOriginator =
     currentUser !== null && currentUser.id === restriction.originatorUserId;
   const canSign = isDraft && isOriginator;
+  // The backend enforces the DOM role; the role check here only hides the form
+  // once the current-user response includes a role.
+  const isAwaitingDomApproval =
+    restriction.status === "PendingDOMApproval" ||
+    restriction.status === "PendingApproval";
+  const canRequestChanges =
+    isAwaitingDomApproval &&
+    currentUser !== null &&
+    !isOriginator &&
+    (currentUser.role === undefined ||
+      currentUser.role === "DutyOperationsManager");
+  const reviewComment =
+    restriction.status === "ReturnedForChanges"
+      ? restriction.reviewDescription?.trim()
+      : undefined;
+  // The originator sees the comment in the action notice above instead.
+  const hasRequestedChanges = Boolean(reviewComment) && isOriginator;
+  const showReviewCommentCard = Boolean(reviewComment) && !isOriginator;
 
   const knownUsers = currentUser ? { [currentUser.id]: currentUser.name } : {};
 
@@ -208,6 +271,33 @@ export function RestrictionDetailPage() {
           <CheckCircle2 className="size-5 text-[#37AB87]" aria-hidden />
           <AlertDescription className="text-base text-[#1E745B]">
             {navNotification}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {requestChangesSuccess && (
+        <Alert
+          data-testid="request-changes-success"
+          className="border-[#37AB87] bg-[#DAFBEA] font-['Inter_Variable','Inter',sans-serif] text-base text-[#1E745B]"
+        >
+          <CheckCircle2 className="size-5 text-[#37AB87]" aria-hidden />
+          <AlertDescription className="text-base text-[#1E745B]">
+            {t.requestChangesSuccess}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {hasRequestedChanges && (
+        <Alert
+          data-testid="requested-changes-notice"
+          className="border-[#EF7D00] bg-[#FEF3C7] font-['Inter_Variable','Inter',sans-serif] text-base text-[#EF7D00]"
+        >
+          <OctagonAlert aria-hidden />
+          <AlertDescription className="text-base">
+            <p className="font-bold">{t.requestedChanges}</p>
+            <p>
+              {t.requestedChangesComment}: {restriction.reviewDescription}
+            </p>
           </AlertDescription>
         </Alert>
       )}
@@ -231,6 +321,25 @@ export function RestrictionDetailPage() {
           <RestrictionStatusBadge status={restriction.status} />
         </div>
       </header>
+
+      {showReviewCommentCard && (
+        <section
+          data-testid="review-comment-callout"
+          aria-label={t.requestedChangesComment}
+          className="rounded-lg border-2 border-l-8 border-[#EF7D00] bg-[#FEF3C7] p-4 font-['Inter_Variable','Inter',sans-serif] shadow-md"
+        >
+          <h2 className="flex items-center gap-2 text-lg font-bold text-[#EF7D00]">
+            <MessageSquareWarning className="size-6 shrink-0" aria-hidden />
+            {t.requestedChangesComment}
+          </h2>
+          <p
+            data-testid="review-comment"
+            className="mt-2 text-[20px] font-semibold whitespace-pre-wrap text-black"
+          >
+            {reviewComment}
+          </p>
+        </section>
+      )}
 
       <section aria-label="Detaljer" className="space-y-2">
         <RestrictionInfoCard label={t.startDate}>
@@ -272,6 +381,15 @@ export function RestrictionDetailPage() {
       />
 
       {signError && <ErrorAlert>{signError}</ErrorAlert>}
+
+      {requestChangesError && <ErrorAlert>{requestChangesError}</ErrorAlert>}
+
+      {canRequestChanges && (
+        <RequestChangesForm
+          submitting={requestingChanges}
+          onSubmit={handleRequestChanges}
+        />
+      )}
 
       {canSign && (
         <div className="flex flex-wrap gap-3 pb-4">

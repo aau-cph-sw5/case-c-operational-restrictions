@@ -15,7 +15,8 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
+    // Roles are not stored on the user: they come from UserRoleAssignments,
+    // so a user can hold several roles and role changes are data-only.
 
     public UserWorkingStatus WorkingStatus { get; set; }
 
