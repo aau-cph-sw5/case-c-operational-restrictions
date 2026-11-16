@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,13 @@ import {
   type DRStatus,
 } from "@/components/OverviewNotificationCard";
 import { BottomNav } from "@/components/ui/bottom-nav";
+import {
+  getAllRestrictions,
+  getSignatureStatuses,
+  type SignatureStatusDto,
+} from "@/services/restrictionApi";
+
+import type { RestrictionDto } from "@/types/restrictionDto";
 
 export interface DrItem {
   id: string;
@@ -14,172 +22,120 @@ export interface DrItem {
   statusKey: DRStatus;
   title: string;
   date: string;
-  signed: boolean;
   category: "kladde" | "alle" | "aktiv" | "arkiv";
 }
 
-const MOCK_DATA: DrItem[] = [
-  // Kladde items
-  {
-    id: "k1",
-    referenceId: "01012026-0101",
-    date: "2026-01-01T00:00:00Z",
-    signed: true,
-    statusKey: "kladde",
-    title: "Vandskade ved Sluseholmen medfører afbrudte døre",
-    category: "kladde",
-  },
-  {
-    id: "k2",
-    referenceId: "01012026-0102",
-    date: "2026-01-01T00:00:00Z",
-    signed: false,
-    statusKey: "kladde",
-    title: "Nørrebro lukket pga demonstrationer",
-    category: "kladde",
-  },
+function toDrItem(restriction: RestrictionDto): DrItem {
+  const status = restriction.status;
 
-  // Aktiv items
-  {
-    id: "a1",
-    referenceId: "01012026-0001",
-    date: "2026-01-01T00:00:00Z",
-    signed: true,
-    statusKey: "aktiv",
-    title: "Vandskade ved Sluseholmen medfører afbrudte døre",
-    category: "aktiv",
-  },
-  {
-    id: "a2",
-    referenceId: "12052026-0003",
-    date: "2026-05-12T00:00:00Z",
-    signed: false,
-    statusKey: "aktiv",
-    title: "Sænket hastighed mellem KBH H og Rådhuspladsen",
-    category: "aktiv",
-  },
-  {
-    id: "a3",
-    referenceId: "15052026-0004",
-    date: "2026-05-15T00:00:00Z",
-    signed: true,
-    statusKey: "aktiv",
-    title: "Færre toge på M3-linjen",
-    category: "aktiv",
-  },
-  {
-    id: "a4",
-    referenceId: "01012026-0002",
-    date: "2026-01-01T00:00:00Z",
-    signed: false,
-    statusKey: "aktiv",
-    title: "Nørrebro lukket pga demonstrationer",
-    category: "aktiv",
-  },
+  const category: DrItem["category"] =
+    status === "Draft" || status === "ReturnedForChanges"
+      ? "kladde"
+      : status === "Archived" ||
+          status === "Cancelled" ||
+          status === "OutOfForce"
+        ? "arkiv"
+        : "aktiv";
 
-  // Afventer deaktivering items (under Aktiv tab)
-  {
-    id: "ad1",
-    referenceId: "14032024-00123",
-    date: "2024-03-14T00:00:00Z",
-    signed: true,
-    statusKey: "afventer_deaktivering",
-    title: "Strømafbrydelse ved Østerport st.",
-    category: "aktiv",
-  },
-  {
-    id: "ad2",
-    referenceId: "03012026-0005",
-    date: "2026-01-03T00:00:00Z",
-    signed: false,
-    statusKey: "afventer_deaktivering",
-    title: "Østerport lukket pga demonstrationer",
-    category: "aktiv",
-  },
+  const statusKey: DRStatus =
+    category === "kladde"
+      ? "kladde"
+      : category === "arkiv"
+        ? "arkiv"
+        : status === "Closing" || status === "AwaitingOperatorSignOut"
+          ? "afventer_deaktivering"
+          : "aktiv";
 
-  // Arkiv items
-  {
-    id: "ar1",
-    referenceId: "03012023-1001",
-    date: "2023-01-03T00:00:00Z",
-    signed: true,
-    statusKey: "arkiv",
-    title: "Motor på 3 toge er brændt sammen",
-    category: "arkiv",
-  },
-  {
-    id: "ar2",
-    referenceId: "03012022-1002",
-    date: "2022-01-03T00:00:00Z",
-    signed: false,
-    statusKey: "arkiv",
-    title: "M3-linjen holder sommerferie",
-    category: "arkiv",
-  },
-  {
-    id: "ar3",
-    referenceId: "03012021-1003",
-    date: "2021-01-03T00:00:00Z",
-    signed: true,
-    statusKey: "arkiv",
-    title: "Ingen toge sikre; elektriker er på strejke",
-    category: "arkiv",
-  },
-  {
-    id: "ar4",
-    referenceId: "03012023-1004",
-    date: "2023-01-03T00:00:00Z",
-    signed: false,
-    statusKey: "arkiv",
-    title: "Hul i skinnerne ved Mozarts plads",
-    category: "arkiv",
-  },
-  {
-    id: "ar5",
-    referenceId: "03012024-1005",
-    date: "2024-01-03T00:00:00Z",
-    signed: true,
-    statusKey: "arkiv",
-    title: "Graffiti-maler tilskadekommet ved tog",
-    category: "arkiv",
-  },
-  {
-    id: "ar6",
-    referenceId: "03012024-1006",
-    date: "2024-01-03T00:00:00Z",
-    signed: false,
-    statusKey: "arkiv",
-    title: "Toge blev solgt på auktion, vi mangler nye",
-    category: "arkiv",
-  },
-];
+  return {
+    id: restriction.id,
+    referenceId: restriction.reference ?? restriction.id,
+    statusKey,
+    title: restriction.restrictionDescription,
+    date: restriction.startDate,
+    category,
+  };
+}
 
 export function OverviewPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     "kladde" | "alle" | "aktiv" | "arkiv"
   >("alle");
   const [searchQuery, setSearchQuery] = useState("");
+  const [restrictions, setRestrictions] = useState<RestrictionDto[]>([]);
+  const [signatureStatuses, setSignatureStatuses] = useState<
+    Record<string, SignatureStatusDto[]>
+  >({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const kladdeCount = MOCK_DATA.filter(
-    (item) => item.category === "kladde",
-  ).length;
-  const aktivCount = MOCK_DATA.filter(
-    (item) => item.category === "aktiv",
-  ).length;
-  const arkivCount = MOCK_DATA.filter(
-    (item) => item.category === "arkiv",
-  ).length;
-  const alleCount = MOCK_DATA.length;
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRestrictions() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const data = await getAllRestrictions();
+        if (cancelled) return;
+
+        setRestrictions(data);
+
+        const results = await Promise.allSettled(
+          data.map((restriction) => getSignatureStatuses(restriction.id)),
+        );
+
+        if (cancelled) return;
+
+        const statuses: Record<string, SignatureStatusDto[]> = {};
+
+        results.forEach((result, index) => {
+          if (result.status === "fulfilled") {
+            statuses[data[index].id] = result.value;
+          }
+        });
+
+        setSignatureStatuses(statuses);
+      } catch {
+        if (!cancelled) {
+          setError("Kunne ikke hente driftsrestriktioner.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadRestrictions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const items = useMemo(() => restrictions.map(toDrItem), [restrictions]);
+
+  const kladdeCount = items.filter((item) => item.category === "kladde").length;
+
+  const aktivCount = items.filter((item) => item.category === "aktiv").length;
+
+  const arkivCount = items.filter((item) => item.category === "arkiv").length;
+
+  const alleCount = items.length;
 
   const filteredItems = useMemo(() => {
-    return MOCK_DATA.filter((item) => {
+    return items.filter((item) => {
       const matchesTab = activeTab === "alle" || item.category === activeTab;
+
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.referenceId.toLowerCase().includes(searchQuery.toLowerCase());
+
       return matchesTab && matchesSearch;
     });
-  }, [activeTab, searchQuery]);
+  }, [items, activeTab, searchQuery]);
 
   return (
     <div className="h-screen w-screen bg-[#F8FAFC] flex justify-center items-center overflow-hidden antialiased text-foreground">
@@ -254,16 +210,22 @@ export function OverviewPage() {
 
         {/* Scrollable Card List Container */}
         <main className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-white pb-20">
-          {filteredItems.length > 0 ? (
+          {loading ? (
+            <p className="text-center py-16 text-muted-foreground">
+              Henter driftsrestriktioner...
+            </p>
+          ) : error ? (
+            <p className="text-center py-16 text-red-600">{error}</p>
+          ) : filteredItems.length > 0 ? (
             filteredItems.map((item) => (
               <ORNotificationCard
                 key={item.id}
                 statusKey={item.statusKey}
                 title={item.title}
                 date={item.date}
-                signed={item.signed}
+                signatureStatuses={signatureStatuses[item.id] ?? []}
                 onSeMere={() => {
-                  console.log(`Action clicked for ${item.referenceId}`);
+                  navigate(`/restrictions/${item.id}`);
                 }}
               />
             ))

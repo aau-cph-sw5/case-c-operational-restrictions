@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDayMonthYear } from "@/lib/dateFormat";
+import { CheckCircle2, CircleX, AlertTriangle } from "lucide-react";
+import type { SignatureStatusDto } from "@/services/restrictionApi";
 
 export type DRStatus = "aktiv" | "afventer_deaktivering" | "arkiv" | "kladde";
 
@@ -44,7 +46,7 @@ export interface ORNotificationCardProps {
   statusKey: DRStatus;
   title: string;
   date: string;
-  signed: boolean;
+  signatureStatuses?: SignatureStatusDto[];
   onSeMere?: () => void;
 }
 
@@ -52,7 +54,7 @@ export function ORNotificationCard({
   statusKey,
   title,
   date,
-  signed,
+  signatureStatuses = [],
   onSeMere,
 }: ORNotificationCardProps) {
   const style = STATUS_STYLES[statusKey] || STATUS_STYLES.arkiv;
@@ -70,16 +72,68 @@ export function ORNotificationCard({
         <span className="text-muted-foreground font-semibold">
           Dato: {formatDayMonthYear(date)}
         </span>
-        <span
-          style={{ backgroundColor: signed ? "#22C55E" : "#DC2626" }}
-          className="rounded-full px-2.5 py-0.5 font-semibold text-black"
-        >
-          {signed ? "Underskrevet" : "Ikke underskrevet"}
-        </span>
+
+        {signatureStatuses.length === 0 ? (
+          <span className="rounded-full px-2.5 py-0.5 font-semibold bg-gray-200 text-gray-700">
+            Underskriftsstatus ukendt
+          </span>
+        ) : (
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 font-semibold",
+              signatureStatuses.every(
+                (signature) => signature.status === "CompletedSignature",
+              )
+                ? "bg-green-200 text-green-900"
+                : "bg-red-200 text-red-900",
+            )}
+          >
+            {signatureStatuses.every(
+              (signature) => signature.status === "CompletedSignature",
+            )
+              ? "Alle underskrevet"
+              : "Mangler underskrifter"}
+          </span>
+        )}
+
         <span className={cn("font-medium", style.statusTextColor)}>
           {style.statusLabel}
         </span>
       </div>
+      {/* MET-C-017: Required signature statuses */}
+      {signatureStatuses.length > 0 && (
+        <div className="flex flex-col gap-1.5 text-xs">
+          {signatureStatuses.map((signature) => {
+            const isCompleted = signature.status === "CompletedSignature";
+            const isInvalid = signature.status === "Invalid";
+
+            return (
+              <div
+                key={signature.requiresSignatureId}
+                className="flex items-center gap-2"
+              >
+                {isCompleted ? (
+                  <CheckCircle2 className="size-4 text-green-700" />
+                ) : isInvalid ? (
+                  <AlertTriangle className="size-4 text-amber-700" />
+                ) : (
+                  <CircleX className="size-4 text-red-700" />
+                )}
+
+                <span>
+                  {signature.signeeName} (
+                  {signature.signeeRole || "Ukendt rolle"}){" — "}
+                  {isCompleted
+                    ? "Underskrevet"
+                    : isInvalid
+                      ? "Ugyldig"
+                      : "Mangler underskrift"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-heading text-base md:text-lg font-bold text-foreground leading-snug">
           {title}

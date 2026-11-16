@@ -3,6 +3,7 @@ using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+using Backend.Models.DTOs;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -185,4 +186,44 @@ public class SignatureService(
 
         return GetRequiresSignatureById(signature.RequiresSignatureId).RequiresSignatureStatus == RequiresSignatureStatus.CompletedSignature;
     }
+
+
+    public List<RequiresSignature> GetRequiredSignaturesByRestrictionId(
+        Guid operationalRestrictionId)
+    {
+        return _requiredSignatures
+            .Where(required =>
+                required.OperationalRestrictionId == operationalRestrictionId)
+            .ToList();
+    }
+
+
+    public List<SignatureStatusDto> GetSignatureStatuses(Guid operationalRestrictionId)
+    {
+        var requiredSignatures = GetRequiredSignaturesByRestrictionId(operationalRestrictionId);
+
+        var signeeIds = requiredSignatures
+            .Select(required => required.SigneeId)
+            .Distinct()
+            .ToList();
+
+        var users = _appDbContext.Users
+            .Where(user => signeeIds.Contains(user.Id))
+            .ToDictionary(user => user.Id);
+
+        return requiredSignatures.Select(required =>
+        {
+            users.TryGetValue(required.SigneeId, out var user);
+
+            return new SignatureStatusDto
+            {
+                RequiresSignatureId = required.Id,
+                SigneeId = required.SigneeId,
+                SigneeName = user?.Name ?? "Unknown",
+                SigneeRole = string.Join(", ", GetRoleNames(required.SigneeId)),
+                Status = required.RequiresSignatureStatus.ToString()
+            };
+        }).ToList();
+    }
+
 }
