@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/ui/bottom-nav";
 import { getOverviewRestrictions } from "@/services/overviewApi";
 import type { DrItem } from "@/types/overviewRestriction";
 import { isRestrictionApiError } from "@/types/restrictionApiError";
+import { clockTimeNow } from "@/lib/dateFormat";
 
 export function OverviewPage() {
   const [activeTab, setActiveTab] = useState<
@@ -48,11 +49,11 @@ export function OverviewPage() {
   const arkivCount = restrictions.filter(
     (item) => item.category === "arkiv",
   ).length;
-  const alleCount = restrictions.length;
+  const alleCount = restrictions.length - kladdeCount;
 
   const filteredItems = useMemo(() => {
     return restrictions.filter((item) => {
-      const matchesTab = activeTab === "alle" || item.category === activeTab;
+      const matchesTab = (activeTab === "alle" && item.category !== "kladde") || item.category === activeTab;
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.referenceId.toLowerCase().includes(searchQuery.toLowerCase());
@@ -60,8 +61,22 @@ export function OverviewPage() {
     });
   }, [restrictions, activeTab, searchQuery]);
 
+  const sortedItems = useMemo(() => {
+    return filteredItems.sort((a, b) => {
+      if (a.category === "arkiv") return 1;
+      else if (b.category === "arkiv") return -1;
+
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [filteredItems]);
+
+  var lastUpdated = clockTimeNow();
+
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] flex justify-center items-center overflow-hidden antialiased text-foreground">
+    <div className="h-screen w-screen bg-[#F8FAFC] flex justify-center items-center overflow-hidden antialiased text-foreground overscroll-none">
       {/* Permanent Fixed Mobile Shell Container */}
       <div className="w-full max-w-md h-full bg-white flex flex-col shadow-xl relative border-x border-border/40 overflow-hidden">
         {/* Header*/}
@@ -129,6 +144,9 @@ export function OverviewPage() {
               className="pl-9 bg-white border-border/80 h-11 text-base rounded-full shadow-xs focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
+          <div className=" text-muted-foreground text-xs text-left">
+              Sidst opdateret: {lastUpdated}
+          </div>
         </header>
 
         {/* Scrollable Card List Container */}
@@ -141,8 +159,8 @@ export function OverviewPage() {
             <p className="text-center py-16 text-destructive font-medium">
               {error}
             </p>
-          ) : filteredItems.length > 0 ? (
-            filteredItems.map((item) => (
+          ) : sortedItems.length > 0 ? (
+            sortedItems.map((item) => (
               <ORNotificationCard
                 key={item.id}
                 statusKey={item.statusKey}

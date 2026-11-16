@@ -49,3 +49,9 @@ export function formatLocal(value?: string | null): string {
     time
   );
 }
+
+// HH:MM in local time
+export function clockTimeNow() {
+  const now = new Date();
+  return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
