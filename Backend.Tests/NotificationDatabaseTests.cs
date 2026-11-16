@@ -1,4 +1,3 @@
-
 using Backend.Data;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
@@ -14,17 +13,11 @@ public class NotificationDatabaseTests
     [Fact]
     public async Task CanSaveAndRetrieveNotificationWithDelivery()
     {
-        var connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-            ?? throw new InvalidOperationException(
-                "Test database connection is missing");
-
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(connectionString)
+            .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
             .Options;
 
         await using var db = new AppDbContext(options);
-        await using var transaction = await db.Database.BeginTransactionAsync();
 
         var userId = Guid.NewGuid();
         var notificationId = Guid.NewGuid();
@@ -75,7 +68,5 @@ public class NotificationDatabaseTests
         Assert.Equal(
             "Simulated delivery failure",
             saved.Deliveries[0].LastError);
-
-        await transaction.RollbackAsync();
     }
 }
