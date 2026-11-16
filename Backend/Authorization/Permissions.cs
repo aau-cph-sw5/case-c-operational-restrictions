@@ -9,4 +9,5 @@ public static class Permissions
     public const string OperationalRestrictionCreate = "OperationalRestriction:Create";
     public const string OperationalRestrictionSign = "OperationalRestriction:Sign";
     public const string OperationalRestrictionApprove = "OperationalRestriction:Approve";
+    public const string OperationalRestrictionRequestChanges = "OperationalRestriction:RequestChanges";
 }

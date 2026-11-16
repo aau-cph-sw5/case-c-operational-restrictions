@@ -14,7 +14,7 @@ public static class DbSeeder
     // All seeded users share this password, so any of them can be used when testing locally.
     public const string SeedPassword = "Password123!";
 
-    // The placeholder user from AuthService, so the logged-in user owns some of the seeded drafts.
+    // This seeded user owns some of the sample drafts.
     public static readonly Guid PlaceholderUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
     public static readonly Guid AnnaId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid LarsId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -49,7 +49,8 @@ public static class DbSeeder
         (Permissions.OperationalRestrictionRead, "Read operational restrictions"),
         (Permissions.OperationalRestrictionCreate, "Create operational restrictions"),
         (Permissions.OperationalRestrictionSign, "Sign operational restrictions"),
-        (Permissions.OperationalRestrictionApprove, "Approve operational restrictions")
+        (Permissions.OperationalRestrictionApprove, "Approve operational restrictions"),
+        (Permissions.OperationalRestrictionRequestChanges, "Request changes to operational restrictions")
     ];
 
     // Which permissions each role grants. Stored in the database, so this
@@ -67,7 +68,8 @@ public static class DbSeeder
             Permissions.OperationalRestrictionRead,
             Permissions.OperationalRestrictionCreate,
             Permissions.OperationalRestrictionSign,
-            Permissions.OperationalRestrictionApprove
+            Permissions.OperationalRestrictionApprove,
+            Permissions.OperationalRestrictionRequestChanges
         ],
         [RoleNames.Operator] =
         [

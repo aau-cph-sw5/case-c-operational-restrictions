@@ -21,7 +21,9 @@ public class RestrictionsController : ApiControllerBase
     private readonly IOperationalRestrictionService _operationalRestrictionService;
     private readonly ILogger<RestrictionsController> _logger;
 
-    public RestrictionsController(IOperationalRestrictionService operationalRestrictionService, ILogger<RestrictionsController> logger)
+    public RestrictionsController(
+        IOperationalRestrictionService operationalRestrictionService,
+        ILogger<RestrictionsController> logger)
     {
         _operationalRestrictionService = operationalRestrictionService;
         _logger = logger;
@@ -39,7 +41,8 @@ public class RestrictionsController : ApiControllerBase
     {
         try
         {
-            var restriction = await _operationalRestrictionService.CreateRestrictionAsync(request with { CreatedBy = CurrentUserId });
+            var restriction = await _operationalRestrictionService.CreateRestrictionAsync(
+                request with { CreatedBy = CurrentUserId });
 
             return CreatedAtAction(nameof(GetById), new { id = restriction.Id }, restriction);
         }
@@ -129,6 +132,36 @@ public class RestrictionsController : ApiControllerBase
         }
 
         return await SignRestrictionAsync(restriction.Id);
+    }
+
+    [HttpPost("{id:guid}/request-changes")]
+    [RequiresPermission(Permissions.OperationalRestrictionRequestChanges)]
+    public async Task<ActionResult<OperationalRestrictionDto>> RequestChanges(
+        Guid id,
+        RequestChangesRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Comment))
+        {
+            return BadRequest(new { error = "A review comment is required." });
+        }
+
+        try
+        {
+            var restriction = await _operationalRestrictionService.ReturnForChangesAsync(
+                id,
+                CurrentUserId,
+                request.Comment.Trim());
+
+            return Ok(restriction);
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
     }
 
     /// <summary>

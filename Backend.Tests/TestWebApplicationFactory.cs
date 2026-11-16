@@ -46,6 +46,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         using var scope = Services.CreateScope();
         var jwtService = scope.ServiceProvider.GetRequiredService<JwtService>();
 
-        return jwtService.Mint(new User { Id = userId, Name = "Test User", Email = $"{userId}@example.com" }).AccessToken;
+        return jwtService.Mint(new User
+        {
+            Id = userId,
+            Name = "Test User",
+            Email = $"{userId}@example.com"
+        }).AccessToken;
     }
 }
