@@ -6,7 +6,6 @@ import { ProtectedRoute } from "../hooks/ProtectedRoute";
 import { InstallButton } from "../components/InstallButton";
 import { CreateRestrictionPage } from "../pages/CreateRestrictionPage";
 import { OverviewPage } from "../pages/OverviewPage";
-import { OverviewPage } from "../pages/OverviewPage";
 
 export function AppRoutes() {
   return (
