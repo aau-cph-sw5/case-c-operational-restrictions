@@ -111,7 +111,9 @@ export function RestrictionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const [restriction, setRestriction] = useState<RestrictionDto | null>(null);
-  const [signatureStatuses, setSignatureStatuses] = useState<SignatureStatusDto[]>([]);
+  const [signatureStatuses, setSignatureStatuses] = useState<
+    SignatureStatusDto[]
+  >([]);
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);

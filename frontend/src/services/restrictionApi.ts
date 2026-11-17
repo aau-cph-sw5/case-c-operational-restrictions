@@ -134,7 +134,6 @@ export async function getRestrictionById(id: string): Promise<RestrictionDto> {
   return toRestriction(await response.json());
 }
 
-
 export async function getAllRestrictions(): Promise<RestrictionDto[]> {
   const response = await fetch("/api/restrictions", {
     headers: authHeaders(),
