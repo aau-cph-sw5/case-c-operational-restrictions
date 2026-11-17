@@ -37,6 +37,13 @@ export const restrictionTexts = {
   signConflict:
     "Restriktionen er ikke længere en kladde og kan ikke underskrives.",
   signFailed: "Underskrivningen mislykkedes. Prøv igen.",
+  signForImplementation: "Underskriv for implementering",
+  signForImplementationSuccess:
+    "Restriktionen er underskrevet for implementering og er nu aktiv.",
+  signForImplementationForbidden:
+    "Kun en kontrolrumschef kan underskrive for implementering.",
+  signForImplementationConflict:
+    "Restriktionen afventer ikke længere kontrolrumsgodkendelse. Genindlæs siden.",
   requestChangesHeading: "Anmod om ændringer",
   requestChangesLabel: "Kommentar til originator",
   requestChangesHelper:

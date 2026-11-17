@@ -39,12 +39,13 @@ public class AuthService
         }
 
         var token = _jwtService.Mint(user);
+        var roles = await GetRoleNamesAsync(user.Id, cancellationToken);
 
         return LoginResult.Success(new LoginResponseDto
         {
             AccessToken = token.AccessToken,
             ExpiresAtUtc = token.ExpiresAtUtc,
-            User = MapToDto(user)
+            User = MapToDto(user, roles)
         });
     }
 
@@ -68,17 +69,40 @@ public class AuthService
             user => user.Id == userId,
             cancellationToken);
 
-        return user is null ? null : MapToDto(user);
+        if (user is null)
+        {
+            return null;
+        }
+
+        var roles = await GetRoleNamesAsync(user.Id, cancellationToken);
+        return MapToDto(user, roles);
     }
 
-    private static UserDto MapToDto(User user)
+    private static UserDto MapToDto(User user, List<string> roles)
     {
         return new UserDto
         {
             Id = user.Id,
             Name = user.Name,
-            Email = user.Email
+            Email = user.Email,
+            Roles = roles
         };
+    }
+
+    // Role names come from UserRoleAssignments, not from a column on the user,
+    // so the DTO always reflects the current data-driven role assignments.
+    private async Task<List<string>> GetRoleNamesAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return await _db.UserRoleAssignments
+            .Where(assignment => assignment.UserId == userId)
+            .Join(_db.Roles,
+                assignment => assignment.RoleId,
+                role => role.Id,
+                (assignment, role) => role.Name)
+            .OrderBy(name => name)
+            .ToListAsync(cancellationToken);
     }
 
 }
