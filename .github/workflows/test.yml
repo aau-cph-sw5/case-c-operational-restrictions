@@ -6,13 +6,31 @@ on:
       - main
       - staging
       - development
-      - 'feature/**'
+      - "feature/**"
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: metro
+          POSTGRES_PASSWORD: metro_ci_pw
+          POSTGRES_DB: metro_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U metro"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=metro_test;Username=metro;Password=metro_ci_pw"
 
     steps:
       - name: Checkout repository
@@ -21,7 +39,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: "10.0.x"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -31,12 +49,23 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'pnpm'
+          node-version: "22"
+          cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install dotnet-ef
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Restore NuGet packages
+        run: dotnet restore CaseC.slnx
+
+      - name: Apply database migrations
+        run: dotnet ef database update --project Backend --startup-project Backend
+        env:
+          Jwt__SigningKey: "ci-only-signing-key-not-a-secret-1234567890"
 
       - name: Check formatting
         run: pnpm format:check
