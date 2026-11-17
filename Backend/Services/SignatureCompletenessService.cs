@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Data;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
@@ -16,10 +17,18 @@ public class SignatureCompletenessService(AppDbContext appDbContext)
         var computedAt = DateTime.UtcNow;
 
         // Operators on shift = role Operator and working status AtWork.
-        var operatorsOnShift = await _appDbContext.Users
+        // Roles come from UserRoleAssignments, not from a column on the user.
+        var operatorsOnShift = await (
+            from user in _appDbContext.Users
+            join assignment in _appDbContext.UserRoleAssignments
+                on user.Id equals assignment.UserId
+            join role in _appDbContext.Roles
+                on assignment.RoleId equals role.Id
+            where role.Name == RoleNames.Operator
+                && user.WorkingStatus == UserWorkingStatus.AtWork
+            select user
+        )
             .AsNoTracking()
-            .Where(user => user.Role == UserRole.Operator
-                && user.WorkingStatus == UserWorkingStatus.AtWork)
             .OrderBy(user => user.Name)
             .ToListAsync();
 

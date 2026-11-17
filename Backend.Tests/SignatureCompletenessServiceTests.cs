@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Data;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
@@ -93,7 +94,7 @@ public class SignatureCompletenessServiceTests
             RequiresSignatureId = Guid.NewGuid(),
             OperationalRestrictionId = restrictionId,
             SigneeId = DbSeeder.LarsId,
-            SigneeRole = UserRole.Operator,
+            SigneeRole = RoleNames.Operator,
             SignedAt = signedAt
         });
         await _appDbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -121,7 +122,7 @@ public class SignatureCompletenessServiceTests
             RequiresSignatureId = Guid.NewGuid(),
             OperationalRestrictionId = draftId,
             SigneeId = DbSeeder.LarsId,
-            SigneeRole = UserRole.Operator,
+            SigneeRole = RoleNames.Operator,
             SignedAt = DateTime.UtcNow
         });
         await _appDbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
