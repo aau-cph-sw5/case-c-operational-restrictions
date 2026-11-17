@@ -19,6 +19,7 @@ export function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [lastUpdated, setLastUpdated] = useState<string>();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -37,6 +38,7 @@ export function OverviewPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
 
+    setLastUpdated(clockTimeNow());
     return () => controller.abort();
   }, []);
 
@@ -65,8 +67,8 @@ export function OverviewPage() {
 
   const sortedItems = useMemo(() => {
     return filteredItems.sort((a, b) => {
-      if (a.category === "arkiv") return 1;
-      else if (b.category === "arkiv") return -1;
+      if (a.category === "arkiv" && b.category !== "arkiv") return 1;
+      else if (b.category === "arkiv" && a.category !== "arkiv") return -1;
 
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
@@ -74,8 +76,6 @@ export function OverviewPage() {
       return dateB.getTime() - dateA.getTime();
     });
   }, [filteredItems]);
-
-  var lastUpdated = clockTimeNow();
 
   return (
     <div className="h-screen w-screen bg-[#F8FAFC] flex justify-center items-center overflow-hidden antialiased text-foreground overscroll-none">

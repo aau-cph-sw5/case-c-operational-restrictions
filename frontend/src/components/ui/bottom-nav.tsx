@@ -9,7 +9,7 @@ export function BottomNav() {
   const navItems = [
     { label: "Notifikationer", icon: Bell, path: "/notifications" },
     { label: "Opret DR", icon: PlusCircle, path: "/restrictions/new" },
-    { label: "DR Liste", icon: ListTodo, path: "/" },
+    { label: "DR Liste", icon: ListTodo, path: "/overview" },
     { label: "Indstillinger", icon: Settings, path: "/settings" },
   ];
 

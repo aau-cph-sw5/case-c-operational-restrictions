@@ -11,6 +11,7 @@ import {
 } from "../types/overviewRestriction";
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import { getStoredToken } from "./tokenStorage";
+import { getCurrentUser } from "./authApi";
 
 function createApiError(status: number, message: string): RestrictionApiError {
   return Object.assign(new Error(message), { status });
@@ -19,6 +20,13 @@ function createApiError(status: number, message: string): RestrictionApiError {
 function authHeaders(): HeadersInit {
   const token = getStoredToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function getCurrentUserId(): Promise<string | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+  const user = await getCurrentUser(token);
+  return user?.id ?? null;
 }
 
 function normalizeBackendState(raw: unknown): BackendRestrictionState {
@@ -68,7 +76,7 @@ const CARD_STATUS: Record<
   Unknown: { statusKey: "arkiv", category: "alle" },
 };
 
-function toDrItem(dto: OverviewRestrictionDto): DrItem {
+function toDrItem(dto: OverviewRestrictionDto, currentUserId: string | null): DrItem {
   const { statusKey, category } = CARD_STATUS[normalizeBackendState(dto.state)];
 
   return {
@@ -76,7 +84,7 @@ function toDrItem(dto: OverviewRestrictionDto): DrItem {
     referenceId: dto.reference ?? "",
     title: dto.title,
     date: dto.startDate,
-    signed: dto.originatorSignature != null || dto.signatures.length > 0,
+    signed: currentUserId !== null && dto.signatures.some(signature => signature.signeeId === currentUserId),
     statusKey,
     category,
   };
@@ -96,6 +104,8 @@ export async function getOverviewRestrictions(
     throw createApiError(response.status, `HTTP ${response.status}`);
   }
 
+  
+  const currentUserId = await getCurrentUserId();
   const body = (await response.json()) as OverviewRestrictionDto[];
-  return body.map(toDrItem);
+  return body.map((dto) => toDrItem(dto, currentUserId));
 }

@@ -1,7 +1,7 @@
 // TYPES / MODELS:
 // Types used by the overview page (register of restrictions).
 import type { DRStatus } from "@/components/OverviewNotificationCard";
-
+import type { SignatureDto } from "./restrictionDto";
 // Backend RestrictionState enum, in declaration order. ASP.NET serialises
 // enums as their numeric index unless a JsonStringEnumConverter is registered.
 export const BACKEND_RESTRICTION_STATES = [
@@ -31,8 +31,8 @@ export interface OverviewRestrictionDto {
   state: number | string;
   startDate: string;
   endDate: string | null;
-  originatorSignature: unknown | null;
-  signatures: unknown[];
+  originatorSignature: SignatureDto | null;
+  signatures: SignatureDto[];
 }
 
 export type OverviewCategory = "kladde" | "alle" | "aktiv" | "arkiv";
