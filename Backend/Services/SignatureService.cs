@@ -1,9 +1,9 @@
 using Backend.Authorization;
 using Backend.Data;
 using Backend.Exceptions;
+using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
-using Backend.Models.DTOs;
 
 using Microsoft.EntityFrameworkCore;
 

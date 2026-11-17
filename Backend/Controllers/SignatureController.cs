@@ -1,7 +1,7 @@
+using Backend.Authorization;
 using Backend.Exceptions;
 using Backend.Models.DTOs;
 using Backend.Services;
-using Backend.Authorization;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
