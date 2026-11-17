@@ -134,6 +134,20 @@ export async function getRestrictionById(id: string): Promise<RestrictionDto> {
   return toRestriction(await response.json());
 }
 
+export async function getAllRestrictions(): Promise<RestrictionDto[]> {
+  const response = await fetch("/api/restrictions", {
+    headers: authHeaders(),
+  });
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  const restrictions: Record<string, unknown>[] = await response.json();
+
+  return restrictions.map(toRestriction);
+}
+
 // POST /api/restrictions/{id}/request-changes
 // DOM returns a pending restriction to its originator with a mandatory comment.
 // Resolves with the new ReturnedForChanges version.
@@ -182,4 +196,31 @@ export async function signRestriction(
   }
 
   return null;
+}
+
+// GET /api/Signature/restriction/{id}/status
+// Returns completed and missing required signatures.
+export interface SignatureStatusDto {
+  requiresSignatureId: string;
+  signeeId: string;
+  signeeName: string;
+  signeeRole: string;
+  status: string;
+}
+
+export async function getSignatureStatuses(
+  restrictionId: string,
+): Promise<SignatureStatusDto[]> {
+  const response = await fetch(
+    `/api/Signature/restriction/${encodeURIComponent(restrictionId)}/status`,
+    {
+      headers: authHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return response.json();
 }

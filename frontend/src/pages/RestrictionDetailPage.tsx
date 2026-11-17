@@ -23,8 +23,10 @@ import { restrictionTexts as t } from "../lib/restrictionTexts";
 import { authService } from "../services/authService";
 import {
   getRestrictionById,
+  getSignatureStatuses,
   requestChanges,
   signRestriction,
+  type SignatureStatusDto,
 } from "../services/restrictionApi";
 import { isRestrictionApiError } from "../types/restrictionApiError";
 import type { RestrictionDto } from "../types/restrictionDto";
@@ -109,6 +111,9 @@ export function RestrictionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const [restriction, setRestriction] = useState<RestrictionDto | null>(null);
+  const [signatureStatuses, setSignatureStatuses] = useState<
+    SignatureStatusDto[]
+  >([]);
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -147,10 +152,19 @@ export function RestrictionDetailPage() {
 
     // Only the requested restriction and the current user are fetched.
     Promise.all([getRestrictionById(id), authService.getCurrentUser()])
-      .then(([loadedRestriction, user]) => {
+      .then(async ([loadedRestriction, user]) => {
         if (cancelled) return;
+
         setRestriction(loadedRestriction);
         setCurrentUser(user);
+
+        try {
+          const statuses = await getSignatureStatuses(id);
+          if (!cancelled) setSignatureStatuses(statuses);
+        } catch (error) {
+          console.error("Failed to load signature statuses:", error);
+          if (!cancelled) setSignatureStatuses([]);
+        }
       })
       .catch((error: unknown) => {
         if (!cancelled) setLoadError(loadErrorMessage(error));
@@ -176,7 +190,16 @@ export function RestrictionDetailPage() {
       const updated =
         (await signRestriction(restriction.id)) ??
         (await getRestrictionById(restriction.id));
+
       setRestriction(updated);
+
+      try {
+        const statuses = await getSignatureStatuses(updated.id);
+        setSignatureStatuses(statuses);
+      } catch (error) {
+        console.error("Failed to refresh signature statuses:", error);
+        setSignatureStatuses([]);
+      }
     } catch (error) {
       // State stays Draft; the restriction in memory is left untouched.
       setSignError(signErrorMessage(error));
@@ -377,7 +400,9 @@ export function RestrictionDetailPage() {
 
       <SignatureSection
         signatures={restriction.signatures}
+        signatureStatuses={signatureStatuses}
         knownUsers={knownUsers}
+        isDraft={isDraft}
       />
 
       {signError && <ErrorAlert>{signError}</ErrorAlert>}
