@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+using Backend.Authorization;
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
@@ -9,6 +10,7 @@ using Backend.Services;
 
 namespace Backend.Tests;
 
+[Collection("SignatureService")]
 public class SignatureServiceTests
 {
     // Users come from a seeded in-memory database, but required signatures and signatures are still kept
@@ -49,7 +51,12 @@ public class SignatureServiceTests
 
         Assert.Equal(required.SigneeId, signature.SigneeId);
         Assert.Equal(restrictionVersionId, signature.OperationalRestrictionId);
-        Assert.Equal(_appDbContext.Users.Single(x => x.Id == required.SigneeId).Role, signature.SigneeRole);
+        var expectedRoles = _appDbContext.UserRoleAssignments
+            .Where(a => a.UserId == required.SigneeId)
+            .Join(_appDbContext.Roles, a => a.RoleId, r => r.Id, (a, r) => r.Name)
+            .OrderBy(name => name)
+            .ToList();
+        Assert.Equal(string.Join(", ", expectedRoles), signature.SigneeRole);
         Assert.True(signature.SignedAt >= before);
     }
 
@@ -63,7 +70,7 @@ public class SignatureServiceTests
         var signature = _service.SignOriginator(restrictionId, originatorId);
 
         Assert.Equal(originatorId, signature.SigneeId);
-        Assert.Equal(UserRole.Originator, signature.SigneeRole);
+        Assert.Equal(RoleNames.Originator, signature.SigneeRole);
         Assert.Equal(restrictionId, signature.OperationalRestrictionId);
         Assert.True(signature.SignedAt >= before);
         Assert.True(_service.IsSignatureValid(signature.Id));
