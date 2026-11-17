@@ -19,8 +19,14 @@ export function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<App />} />
-            <Route path="/restrictions/new" element={<CreateRestrictionPage />} />
-            <Route path="/restrictions/:id" element={<RestrictionDetailPage />} />
+            <Route
+              path="/restrictions/new"
+              element={<CreateRestrictionPage />}
+            />
+            <Route
+              path="/restrictions/:id"
+              element={<RestrictionDetailPage />}
+            />
             <Route path="/overview" element={<OverviewPage />} />
             <Route path="*" element={<App />} />
           </Route>
