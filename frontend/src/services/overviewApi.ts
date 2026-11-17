@@ -76,7 +76,10 @@ const CARD_STATUS: Record<
   Unknown: { statusKey: "arkiv", category: "alle" },
 };
 
-function toDrItem(dto: OverviewRestrictionDto, currentUserId: string | null): DrItem {
+function toDrItem(
+  dto: OverviewRestrictionDto,
+  currentUserId: string | null,
+): DrItem {
   const { statusKey, category } = CARD_STATUS[normalizeBackendState(dto.state)];
 
   return {
@@ -84,7 +87,9 @@ function toDrItem(dto: OverviewRestrictionDto, currentUserId: string | null): Dr
     referenceId: dto.reference ?? "",
     title: dto.title,
     date: dto.startDate,
-    signed: currentUserId !== null && dto.signatures.some(signature => signature.signeeId === currentUserId),
+    signed:
+      currentUserId !== null &&
+      dto.signatures.some((signature) => signature.signeeId === currentUserId),
     statusKey,
     category,
   };
@@ -104,7 +109,6 @@ export async function getOverviewRestrictions(
     throw createApiError(response.status, `HTTP ${response.status}`);
   }
 
-  
   const currentUserId = await getCurrentUserId();
   const body = (await response.json()) as OverviewRestrictionDto[];
   return body.map((dto) => toDrItem(dto, currentUserId));
