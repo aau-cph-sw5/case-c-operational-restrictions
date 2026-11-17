@@ -218,11 +218,18 @@ public class OperationalRestrictionService
         return OperationalRestrictionDto.FromOperationalRestrictionToDto(newVersion);
     }
 
-    public Task<OperationalRestrictionDto> ApproveRestrictionAsync(
+    public async Task<OperationalRestrictionDto> ApproveRestrictionAsync(
         Guid id,
         Guid approverId)
     {
-        return TransitionAsync(id, RestrictionAction.Approved, approverId);
+        var restriction = await GetRestrictionOrThrowAsync(id);
+
+        // Separation of duties: even with an approving role, the originator
+        // of a restriction must not approve it themselves.
+        if (restriction.OriginatorUserId == approverId)
+            throw new SelfApprovalNotAllowedException(id, approverId);
+
+        return await TransitionAsync(id, RestrictionAction.Approved, approverId);
     }
 
     public Task<OperationalRestrictionDto> SubmitForControlRoomSupervisorApprovalAsync(
