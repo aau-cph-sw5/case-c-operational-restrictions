@@ -402,6 +402,7 @@ export function RestrictionDetailPage() {
         signatures={restriction.signatures}
         signatureStatuses={signatureStatuses}
         knownUsers={knownUsers}
+        isDraft={isDraft}
       />
 
       {signError && <ErrorAlert>{signError}</ErrorAlert>}

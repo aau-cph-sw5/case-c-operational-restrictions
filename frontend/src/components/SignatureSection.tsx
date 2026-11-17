@@ -11,6 +11,7 @@ import { CheckCircle2, CircleX, AlertTriangle } from "lucide-react";
 interface SignatureSectionProps {
   signatures: SignatureDto[];
   signatureStatuses?: SignatureStatusDto[];
+  isDraft: boolean;
   // Used as a display-name fallback when the signature only carries an id.
   knownUsers?: Record<string, string>;
 }
@@ -19,6 +20,7 @@ export function SignatureSection({
   signatures,
   signatureStatuses = [],
   knownUsers = {},
+  isDraft,
 }: SignatureSectionProps) {
   return (
     <section aria-labelledby="signatures-heading" className="space-y-2">
@@ -34,7 +36,7 @@ export function SignatureSection({
             variant="outline"
             className="h-auto border-[#EF7D00] bg-[#FEF3C7] px-3 py-0.5 font-['Inter_Variable','Inter',sans-serif] text-base text-[#EF7D00]"
           >
-            {t.notSignedYet}
+            {isDraft ? t.unsignedDraft : t.notSignedYet}
           </Badge>
         )}
       </div>
