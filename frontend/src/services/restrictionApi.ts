@@ -184,7 +184,7 @@ export async function signRestriction(
 export async function signForImplementation(id: string): Promise<SignatureDto> {
   const response = await fetch(
     `/api/restrictions/${encodeURIComponent(id)}/sign-for-implementation`,
-    { method: "POST", headers: authHeaders() },
+    { method: "POST", headers: getAuthHeaders() },
   );
 
   if (!response.ok) {
