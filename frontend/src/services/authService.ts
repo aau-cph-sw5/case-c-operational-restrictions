@@ -9,6 +9,7 @@ import {
   requestPasswordReset as requestPasswordResetApi,
   setPassword as setPasswordApi,
 } from "./authApi";
+import { acceptInvite, verifyInvite } from "./invitationApi";
 import type { UserDto } from "../types/userDto";
 import { clearToken, getStoredToken, saveToken } from "./tokenStorage";
 import type { ForgotPasswordRequest } from "../types/forgotPasswordRequest";
@@ -51,7 +52,15 @@ export const authService = {
   },
 
   async validateToken(token: string): Promise<UserDto> {
-    return await getCurrentUser(token);
+    try {
+      return await verifyInvite(token);
+    } catch (inviteError) {
+      try {
+        return await getCurrentUser(token);
+      } catch {
+        throw inviteError;
+      }
+    }
   },
 
   async requestPasswordReset(request: ForgotPasswordRequest): Promise<void> {
@@ -59,7 +68,18 @@ export const authService = {
   },
 
   async setPassword(request: SetPasswordRequest): Promise<void> {
-    await setPasswordApi(request);
+    try {
+      await acceptInvite({
+        token: request.token,
+        password: request.password,
+      });
+    } catch (inviteError) {
+      try {
+        await setPasswordApi(request);
+      } catch {
+        throw inviteError;
+      }
+    }
   },
 
   getStoredToken,
