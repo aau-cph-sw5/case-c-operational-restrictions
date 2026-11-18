@@ -172,7 +172,52 @@ public class OperationalRestrictionService
         catch
         {
             if (signature != null)
-                _signatureService.DiscardUnpersistedOriginatorSignature(signature);
+                _signatureService.DiscardUnpersistedSignature(signature);
+
+            throw;
+        }
+    }
+
+
+    /// <summary>
+    /// The control room supervisor signs the restriction for implementation, which moves it from PendingControlRoomSupervisorApproval to Active.
+    /// Only users with the ControlroomSupervisor role may sign.
+    /// </summary>
+    public async Task<Signature> SignControlRoomSupervisorApprovalAsync(Guid id, Guid signerId)
+    {
+        if (_signatureService == null)
+            throw new InvalidOperationException("SignatureService is not configured.");
+
+        var signatureService = _signatureService;
+
+        var restriction = await _repository.GetByIdAsync(id)
+            ?? throw new OperationalRestrictionNotFoundException(id);
+
+        if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
+            throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
+
+        Signature? signature = null;
+        try
+        {
+            signature = signatureService.SignControlRoomSupervisor(id, signerId);
+            await TransitionAsync(
+                id,
+                RestrictionAction.Active,
+                signerId,
+                newVersion =>
+                {
+                    newVersion.SignatureSheet.Add(signature);
+
+                    newVersion.AssignedOperatorsIds =
+                        signatureService.GetAtWorkAndOffWorkUserIds();
+                });
+
+            return signature;
+        }
+        catch
+        {
+            if (signature != null)
+                signatureService.DiscardUnpersistedSignature(signature);
 
             throw;
         }

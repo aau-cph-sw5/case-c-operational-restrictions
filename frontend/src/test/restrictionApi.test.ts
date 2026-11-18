@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getRestrictionById,
   requestChanges,
+  signForImplementation,
   signRestriction,
 } from "../services/restrictionApi";
 
@@ -87,5 +88,43 @@ describe("restrictionApi", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/restrictions/restriction-1/sign");
     expect(init.method).toBe("POST");
+  });
+
+  it("posts to the sign-for-implementation endpoint and maps the returned signature", async () => {
+    localStorage.setItem("accessToken", "token-123");
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "signature-9",
+        signeeId: "supervisor-1",
+        signeeRole: "ControlroomSupervisor",
+        signedAt: "2026-11-16T10:00:00Z",
+      }),
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const signature = await signForImplementation("restriction-1");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/restrictions/restriction-1/sign-for-implementation");
+    expect(init.method).toBe("POST");
+    expect(init.headers).toMatchObject({ Authorization: "Bearer token-123" });
+    expect(signature).toEqual({
+      signeeId: "supervisor-1",
+      signeeName: undefined,
+      signeeRole: "ControlroomSupervisor",
+      signedAt: "2026-11-16T10:00:00Z",
+    });
+  });
+
+  it("rejects with the HTTP status when sign-for-implementation fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 409 } as Response),
+    );
+
+    await expect(signForImplementation("restriction-1")).rejects.toMatchObject({
+      status: 409,
+    });
   });
 });

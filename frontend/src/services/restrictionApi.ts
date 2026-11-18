@@ -183,3 +183,17 @@ export async function signRestriction(
 
   return null;
 }
+
+// POST /api/restrictions/{id}/sign-for-implementation
+export async function signForImplementation(id: string): Promise<SignatureDto> {
+  const response = await fetch(
+    `/api/restrictions/${encodeURIComponent(id)}/sign-for-implementation`,
+    { method: "POST", headers: authHeaders() },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return toSignature((await response.json()) as Record<string, unknown>);
+}
