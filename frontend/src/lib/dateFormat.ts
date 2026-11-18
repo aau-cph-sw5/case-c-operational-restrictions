@@ -21,6 +21,15 @@ export function formatUtc(value?: string | null): string {
   );
 }
 
+// DD/MM/YYYY in browser-local time, e.g. "22/10/2026"
+export function formatDayMonthYear(value?: string | null): string {
+  if (!value || value === "null") return "–";
+  const date = parseApiDate(value);
+  if (Number.isNaN(date.getTime())) return "Invalid date";
+
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
 // Browser-local time, e.g. "2026-10-22 14:30:00 GMT+2"
 export function formatLocal(value?: string | null): string {
   if (!value || value === "null") return "–";

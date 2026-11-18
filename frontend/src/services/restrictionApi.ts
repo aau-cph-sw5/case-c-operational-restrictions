@@ -3,9 +3,40 @@
 // Attaches the stored JWT and turns non-2xx responses into errors that carry
 // the HTTP status, so the UI can show a message per status code.
 import { normalizeStatus } from "../lib/restrictionStatus";
+import type {
+  CreateRestrictionRequest,
+  RestrictionDto as CreatedRestrictionDto,
+} from "../types/restriction";
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import type { RestrictionDto, SignatureDto } from "../types/restrictionDto";
 import { getStoredToken } from "./tokenStorage";
+
+// 400 Bad Request so the UI can show every server message.
+export class RestrictionValidationError extends Error {
+  messages: string[];
+
+  constructor(messages: string[]) {
+    super(messages.join(" "));
+    this.name = "RestrictionValidationError";
+    this.messages = messages;
+  }
+}
+
+// Reads ASP.NET ProblemDetails.
+async function readValidationMessages(response: Response): Promise<string[]> {
+  try {
+    const body = await response.json();
+    if (body?.errors && typeof body === "object") {
+      const messages = Object.values(body.errors).flat() as string[];
+      if (messages.length > 0) return messages;
+    }
+    if (typeof body?.detail === "string") return [body.detail];
+    if (typeof body?.title === "string") return [body.title];
+  } catch {
+    // body was not JSON, fall through
+  }
+  return ["The server rejected the restriction as invalid."];
+}
 
 function createApiError(status: number, message: string): RestrictionApiError {
   return Object.assign(new Error(message), { status });
@@ -40,10 +71,12 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
       : [];
 
   return {
-    id: String(raw.id),
-    originatorUserId: String(raw.originatorUserId),
-    status: normalizeStatus(raw.status),
-    startDate: String(raw.startDate),
+    id: String(raw.id ?? ""),
+    originatorUserId: String(raw.originatorUserId ?? ""),
+    status: normalizeStatus(raw.status ?? raw.state),
+    reviewDescription:
+      typeof raw.reviewDescription === "string" ? raw.reviewDescription : null,
+    startDate: String(raw.startDate ?? ""),
     endDate: raw.endDate ? String(raw.endDate) : null,
     restrictionDescription: String(
       raw.restrictionDescription ?? raw.description ?? "",
@@ -61,11 +94,61 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
   };
 }
 
+export async function createRestriction(
+  request: CreateRestrictionRequest,
+  token?: string,
+): Promise<CreatedRestrictionDto> {
+  const authToken = token ?? getStoredToken();
+  const response = await fetch("/api/restrictions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (response.status === 400) {
+    throw new RestrictionValidationError(
+      await readValidationMessages(response),
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(`Could not create restriction (HTTP ${response.status}).`);
+  }
+
+  return response.json();
+}
+
 // GET /api/restrictions/{id}
 export async function getRestrictionById(id: string): Promise<RestrictionDto> {
   const response = await fetch(`/api/restrictions/${encodeURIComponent(id)}`, {
     headers: authHeaders(),
   });
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return toRestriction(await response.json());
+}
+
+// POST /api/restrictions/{id}/request-changes
+// DOM returns a pending restriction to its originator with a mandatory comment.
+// Resolves with the new ReturnedForChanges version.
+export async function requestChanges(
+  id: string,
+  comment: string,
+): Promise<RestrictionDto> {
+  const response = await fetch(
+    `/api/restrictions/${encodeURIComponent(id)}/request-changes`,
+    {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ comment: comment.trim() }),
+    },
+  );
 
   if (!response.ok) {
     throw createApiError(response.status, `HTTP ${response.status}`);

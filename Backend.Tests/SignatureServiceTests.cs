@@ -1,6 +1,9 @@
+
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+using Backend.Authorization;
+using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
@@ -9,14 +12,20 @@ using Backend.Services;
 
 namespace Backend.Tests;
 
+[Collection("SignatureService")]
 public class SignatureServiceTests
 {
-    // The service keeps its data in static lists, so every test uses its own restriction id.
-    // xUnit creates a new test class instance per test, so each test gets a fresh service.
-    private readonly SignatureService _service = new(
-        null!,
-        new FakeNotificationService()
-    );
+    // Each test gets its own seeded database and notification service.
+    private readonly AppDbContext _appDbContext;
+    private readonly FakeNotificationService _notificationService;
+    private readonly SignatureService _service;
+
+    public SignatureServiceTests()
+    {
+        _appDbContext = TestDatabase.CreateSeededContext();
+        _notificationService = new FakeNotificationService();
+        _service = new SignatureService(_appDbContext, _notificationService);
+    }
 
     [Fact]
     public void SignatureHasNoPublicSetters()
@@ -44,8 +53,49 @@ public class SignatureServiceTests
 
         Assert.Equal(required.SigneeId, signature.SigneeId);
         Assert.Equal(restrictionVersionId, signature.OperationalRestrictionId);
-        Assert.NotEqual(default, signature.SigneeRole);
+
+        var expectedRoles = _appDbContext.UserRoleAssignments
+            .Where(a => a.UserId == required.SigneeId)
+            .Join(_appDbContext.Roles, a => a.RoleId, r => r.Id, (a, r) => r.Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        Assert.Equal(string.Join(", ", expectedRoles), signature.SigneeRole);
         Assert.True(signature.SignedAt >= before);
+    }
+
+    [Fact]
+    public void SignOriginatorCreatesImmutableSignatureForRestriction()
+    {
+        var restrictionId = Guid.NewGuid();
+        var originatorId = Guid.NewGuid();
+        var before = DateTime.UtcNow;
+
+        var signature = _service.SignOriginator(restrictionId, originatorId);
+
+        Assert.Equal(originatorId, signature.SigneeId);
+        Assert.Equal(RoleNames.Originator, signature.SigneeRole);
+        Assert.Equal(restrictionId, signature.OperationalRestrictionId);
+        Assert.True(signature.SignedAt >= before);
+        Assert.True(_service.IsSignatureValid(signature.Id));
+        Assert.Same(signature, _service.GetOriginatorSignature(restrictionId));
+    }
+
+    [Fact]
+    public void GetOriginatorSignatureReturnsNullBeforeSigning()
+    {
+        Assert.Null(_service.GetOriginatorSignature(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void SignOriginatorTwiceThrows()
+    {
+        var restrictionId = Guid.NewGuid();
+        var originatorId = Guid.NewGuid();
+        _service.SignOriginator(restrictionId, originatorId);
+
+        Assert.Throws<RequiresSignatureNotSignableException>(
+            () => _service.SignOriginator(restrictionId, originatorId));
     }
 
     [Fact]
@@ -53,7 +103,8 @@ public class SignatureServiceTests
     {
         var required = _service.CreateRequiredSignatures(Guid.NewGuid()).First();
 
-        Assert.Throws<NotRequiredSignerException>(() => _service.Sign(required.Id, Guid.NewGuid()));
+        Assert.Throws<NotRequiredSignerException>(
+            () => _service.Sign(required.Id, Guid.NewGuid()));
     }
 
     [Fact]
@@ -62,7 +113,8 @@ public class SignatureServiceTests
         var required = _service.CreateRequiredSignatures(Guid.NewGuid()).First();
         _service.Sign(required.Id, required.SigneeId);
 
-        Assert.Throws<RequiresSignatureNotSignableException>(() => _service.Sign(required.Id, required.SigneeId));
+        Assert.Throws<RequiresSignatureNotSignableException>(
+            () => _service.Sign(required.Id, required.SigneeId));
     }
 
     [Fact]
@@ -70,12 +122,16 @@ public class SignatureServiceTests
     {
         var restrictionVersionId = Guid.NewGuid();
         var requiredSignatures = _service.CreateRequiredSignatures(restrictionVersionId);
-        var signature = _service.Sign(requiredSignatures[0].Id, requiredSignatures[0].SigneeId);
+        var signature = _service.Sign(
+            requiredSignatures[0].Id,
+            requiredSignatures[0].SigneeId);
+
         Assert.True(_service.IsSignatureValid(signature.Id));
 
         _service.InvalidateRequiredSignatures(restrictionVersionId);
 
         Assert.False(_service.IsSignatureValid(signature.Id));
+
         Assert.Throws<RequiresSignatureNotSignableException>(() =>
             _service.Sign(requiredSignatures[1].Id, requiredSignatures[1].SigneeId));
     }
@@ -83,18 +139,24 @@ public class SignatureServiceTests
     [Fact]
     public void CreateRequiredSignaturesSkipsUsersOnHolidayAndStartsUnsigned()
     {
+        var usersNotOnHoliday = _appDbContext.Users
+            .Count(x => x.WorkingStatus != UserWorkingStatus.OnHoliday);
 
         var required = _service.CreateRequiredSignatures(Guid.NewGuid());
 
-        Assert.Equal(4, required.Count);
-        Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
+        Assert.Equal(usersNotOnHoliday, required.Count);
+        Assert.DoesNotContain(required, x => x.SigneeId == DbSeeder.MikkelId);
+
+        Assert.All(required, x =>
+            Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
     }
 
     [Fact]
     public void CreateRequiredSignaturesCreatesNotificationsForEachSigner()
     {
         var notificationService = new FakeNotificationService();
-        var service = new SignatureService(null!, notificationService);
+        var dbContext = TestDatabase.CreateSeededContext();
+        var service = new SignatureService(dbContext, notificationService);
         var restrictionId = Guid.NewGuid();
 
         var requiredSignatures = service.CreateRequiredSignatures(restrictionId);

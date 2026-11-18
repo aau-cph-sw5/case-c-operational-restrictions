@@ -27,8 +27,7 @@ public class NotificationDatabaseTests
             Id = userId,
             Name = "Integration Test User",
             Email = $"test-{userId}@example.test",
-            PasswordHash = "test-only-hash",
-            Role = UserRole.Originator
+            PasswordHash = "test-only-hash"
         });
 
         db.Notifications.Add(new Notification

@@ -1,8 +1,12 @@
+
+using Backend.Authorization;
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
+
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
@@ -13,63 +17,10 @@ public class SignatureService(
 {
     private readonly AppDbContext _appDbContext = appDbContext;
     private readonly INotificationService _notificationService = notificationService;
-    //Temporary before db
-    private static readonly List<User> _users =
-    [
-        new User
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Name = "Anna Jensen",
-            Email = "anna.jensen@example.com",
-            PasswordHash = "seed-password-hash-1",
-            Role = UserRole.DutyOperationsManager,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Name = "Lars Nielsen",
-            Email = "lars.nielsen@example.com",
-            PasswordHash = "seed-password-hash-2",
-            Role = UserRole.Operator,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Name = "Sofie Hansen",
-            Email = "sofie.hansen@example.com",
-            PasswordHash = "seed-password-hash-3",
-            Role = UserRole.Operator,
-            WorkingStatus = UserWorkingStatus.OffWork,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-            Name = "Mikkel Pedersen",
-            Email = "mikkel.pedersen@example.com",
-            PasswordHash = "seed-password-hash-4",
-            Role = UserRole.ControlroomSupervisor,
-            WorkingStatus = UserWorkingStatus.OnHoliday,
-            InCharge = false
-        },
-        new User
-        {
-            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-            Name = "Camilla Andersen",
-            Email = "camilla.andersen@example.com",
-            PasswordHash = "seed-password-hash-5",
-            Role = UserRole.Betriebsleiter,
-            WorkingStatus = UserWorkingStatus.AtWork,
-            InCharge = true
-        }
-    ];
 
     //Midlertidigt mens der ikke er database
     private static readonly List<RequiresSignature> _requiredSignatures = [];
+
     //Midlertidigt mens der ikke er database
     private static readonly List<Signature> _signatures = [];
 
@@ -82,10 +33,9 @@ public class SignatureService(
         return _requiredSignatures[Random.Shared.Next(_requiredSignatures.Count)].Id;
     }
 
-
     public List<RequiresSignature> CreateRequiredSignatures(Guid operationalRestrictionId)
     {
-        var createdSignatures = _users
+        var createdSignatures = _appDbContext.Users
             .Where(user => user.WorkingStatus != UserWorkingStatus.OnHoliday)
             .Select(user => new RequiresSignature
             {
@@ -110,9 +60,9 @@ public class SignatureService(
                 )
             );
         }
+
         return createdSignatures;
     }
-
 
     public RequiresSignature GetRequiresSignatureById(Guid requiresSignatureId)
     {
@@ -124,7 +74,6 @@ public class SignatureService(
 
         return requiredSignature;
     }
-
 
     /// <summary>
     /// Creates an immutable signature for the given required signature.
@@ -141,29 +90,96 @@ public class SignatureService(
         if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.PendingSignature)
             throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
-        //I fremtiden skal den bruge GetUserById
-        var signee = _users.Single(user => user.Id == signerUserId);
-
         var signature = new Signature
         {
             Id = Guid.NewGuid(),
             RequiresSignatureId = requiredSignature.Id,
             OperationalRestrictionId = requiredSignature.OperationalRestrictionId,
             SigneeId = signerUserId,
-            SigneeRole = signee.Role,
+            SigneeRole = string.Join(", ", GetRoleNames(signerUserId)),
             SignedAt = DateTime.UtcNow
         };
+
         //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
         _signatures.Add(signature);
 
         //dette skal opdateres i databasen
         requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
 
+        return signature;
+    }
+
+    public Signature SignOriginator(Guid operationalRestrictionId, Guid signerUserId)
+    {
+        var existingSignature = _signatures.FirstOrDefault(signature =>
+            signature.OperationalRestrictionId == operationalRestrictionId
+            && signature.SigneeId == signerUserId
+            && signature.SigneeRole == RoleNames.Originator);
+
+        if (existingSignature != null)
+        {
+            throw new RequiresSignatureNotSignableException(
+                existingSignature.RequiresSignatureId,
+                RequiresSignatureStatus.CompletedSignature.ToString());
+        }
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+        };
+
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = RoleNames.Originator,
+            SignedAt = DateTime.UtcNow
+        };
+
+        _signatures.Add(signature);
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
 
         return signature;
     }
 
+    public Signature? GetOriginatorSignature(Guid operationalRestrictionId)
+    {
+        return _signatures.FirstOrDefault(signature =>
+            signature.OperationalRestrictionId == operationalRestrictionId
+            && signature.SigneeRole == RoleNames.Originator);
+    }
 
+    // The signer's current role names, resolved from the database so the
+    // recorded label matches the data-driven role assignments.
+    private List<string> GetRoleNames(Guid userId)
+    {
+        return _appDbContext.UserRoleAssignments
+            .Where(assignment => assignment.UserId == userId)
+            .Join(_appDbContext.Roles,
+                assignment => assignment.RoleId,
+                role => role.Id,
+                (assignment, role) => role.Name)
+            .OrderBy(name => name)
+            .ToList();
+    }
+
+    internal void DiscardUnpersistedOriginatorSignature(Signature signature)
+    {
+        var requiredSignature = GetRequiresSignatureById(signature.RequiresSignatureId);
+
+        if (!_signatures.Remove(signature) || !_requiredSignatures.Remove(requiredSignature))
+        {
+            throw new InvalidOperationException(
+                $"Could not discard unpersisted signature {signature.Id}.");
+        }
+    }
 
     public void InvalidateRequiredSignatures(Guid operationalRestrictionId)
     {
@@ -173,7 +189,6 @@ public class SignatureService(
             requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.Invalid;
         }
     }
-
 
     public bool IsSignatureValid(Guid signatureId)
     {

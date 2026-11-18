@@ -51,6 +51,12 @@ jobs:
             export DOMAIN="${DOMAIN}"
             export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
 
+            if [ "${{ inputs.environment }}" = "dev" ]; then
+              export ASPNETCORE_ENVIRONMENT="Development"
+            else
+              export ASPNETCORE_ENVIRONMENT="Production"
+            fi
+
             echo "Building and starting containers for ${{ inputs.environment }}..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans || true
             # --- SEQUENTIAL BUILD START ---

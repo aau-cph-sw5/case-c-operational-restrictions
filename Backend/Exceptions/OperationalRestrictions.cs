@@ -8,6 +8,14 @@ public class OperationalRestrictionNotFoundException : Exception
     }
 }
 
+public class OperationalRestrictionNotSignableException : Exception
+{
+    public OperationalRestrictionNotSignableException(Guid id, string status)
+        : base($"Operational restriction {id} cannot be signed because it is {status}")
+    {
+    }
+}
+
 public class RequiresSignatureNotFoundException : Exception
 {
     public RequiresSignatureNotFoundException(Guid id)
@@ -20,6 +28,24 @@ public class InvalidRestrictionPeriodException : Exception
 {
     public InvalidRestrictionPeriodException(DateTime startDate, DateTime endDate)
         : base($"End date {endDate:O} must be after start date {startDate:O}")
+    {
+    }
+}
+
+public class MissingRequiredRestrictionFieldException : Exception
+{
+    public MissingRequiredRestrictionFieldException(string fieldName)
+        : base($"{fieldName} is required")
+    {
+    }
+}
+
+// Separation of duties: the user who created a restriction may hold a role
+// that allows approving restrictions, but must not approve their own.
+public class SelfApprovalNotAllowedException : Exception
+{
+    public SelfApprovalNotAllowedException(Guid restrictionId, Guid userId)
+        : base($"User {userId} cannot approve operational restriction {restrictionId} because they created it")
     {
     }
 }

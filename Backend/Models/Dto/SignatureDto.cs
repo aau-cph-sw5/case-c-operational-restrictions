@@ -8,6 +8,7 @@ public class SignatureDto
     public Guid RequiresSignatureId { get; set; }
     public Guid OperationalRestrictionId { get; set; }
     public Guid SigneeId { get; set; }
+    public string SigneeRole { get; set; } = string.Empty;
     public DateTime SignedAt { get; set; }
 
     public static SignatureDto FromDalEntity(Signature signature) =>
@@ -17,6 +18,7 @@ public class SignatureDto
           RequiresSignatureId = signature.RequiresSignatureId,
           OperationalRestrictionId = signature.OperationalRestrictionId,
           SigneeId = signature.SigneeId,
+          SigneeRole = signature.SigneeRole,
           SignedAt = signature.SignedAt
       };
 }

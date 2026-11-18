@@ -4,11 +4,16 @@ export type RestrictionStatus =
   | "Draft"
   | "PendingApproval"
   | "PendingDOMApproval"
+  | "PendingControlRoomSupervisorApproval"
+  | "ReturnedForChanges"
   | "Approved"
   | "Active"
   | "Archived"
   | "Cancelled"
   | "Closing"
+  | "OutOfForce"
+  | "AwaitingOperatorSignatures"
+  | "AwaitingOperatorSignOut"
   | "Unknown";
 
 export interface SignatureDto {
@@ -21,8 +26,10 @@ export interface SignatureDto {
 
 export interface RestrictionDto {
   id: string;
+  title?: string;
   originatorUserId: string;
   status: RestrictionStatus;
+  reviewDescription?: string | null;
   startDate: string;
   endDate: string | null;
   restrictionDescription: string;
