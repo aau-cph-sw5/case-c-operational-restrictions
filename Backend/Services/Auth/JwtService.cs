@@ -48,6 +48,64 @@ public class JwtService
         return new MintedToken(accessToken, expiresAt);
     }
 
+    private const string InvitePurposeClaim = "purpose";
+    private const string InvitePurposeValue = "invite";
+    private string InviteAudience => $"{_options.Audience}-invite";
+
+    public MintedToken MintInviteToken(User user, TimeSpan lifetime)
+    {
+        var issuedAt = DateTime.UtcNow;
+        var expiresAt = issuedAt.Add(lifetime);
+
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(InvitePurposeClaim, InvitePurposeValue)
+        };
+
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
+        var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _options.Issuer,
+            audience: InviteAudience,
+            claims: claims,
+            notBefore: issuedAt,
+            expires: expiresAt,
+            signingCredentials: credentials);
+
+        return new MintedToken(new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
+    }
+
+    public ClaimsPrincipal? ValidateInviteToken(string token)
+    {
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = _options.Issuer,
+            ValidateAudience = true,
+            ValidAudience = InviteAudience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+        try
+        {
+            var principal = handler.ValidateToken(token, parameters, out _);
+            return principal.FindFirst(InvitePurposeClaim)?.Value == InvitePurposeValue ? principal : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     // Same manual validation SimpleForge's JwtService.ValidateInviteToken uses:
     // run the token through the real signature/issuer/audience/lifetime checks
     // instead of trusting anything read out of it, and hand back null on any failure.
