@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { Button } from "../components/ui/button";
+import { AuthHeader } from "../components/auth/AuthHeader";
 import {
   Card,
   CardContent,
@@ -53,17 +54,7 @@ export function LoginPage() {
   return (
     <main className="flex min-h-[calc(100svh-4rem)] w-full items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        <header className="text-center space-y-1">
-          <img
-            src="/pwa-192x192.png" // replace once we have their actual logo
-            alt="Metro Service logo"
-            className="size-12 rounded-xl shadow-xs mx-auto mb-2"
-          />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground font-ui">
-            Metro Service
-          </h1>
-          <p className="text-sm text-muted-foreground">Driftsrestriktioner</p>
-        </header>
+        <AuthHeader />
 
         <Card className="border border-border/80 shadow-sm rounded-2xl">
           <form onSubmit={handleLogin} noValidate>

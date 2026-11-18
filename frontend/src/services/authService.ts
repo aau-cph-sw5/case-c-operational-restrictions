@@ -3,11 +3,7 @@
 // Composes the raw HTTP layer (authApi) with token persistence
 // (tokenStorage), so callers only need to know about this one object —
 // the closest React equivalent to injecting an Angular AuthService.
-import {
-  getCurrentUser,
-  login as loginRequest,
-  setPassword as setPasswordApi,
-} from "./authApi";
+import { getCurrentUser, login as loginRequest } from "./authApi";
 import { acceptInvite, verifyInvite } from "./invitationApi";
 import type { UserDto } from "../types/userDto";
 import { clearToken, getStoredToken, saveToken } from "./tokenStorage";
@@ -50,30 +46,14 @@ export const authService = {
   },
 
   async validateToken(token: string): Promise<UserDto> {
-    try {
-      return await verifyInvite(token);
-    } catch (inviteError) {
-      try {
-        return await getCurrentUser(token);
-      } catch {
-        throw inviteError;
-      }
-    }
+    return await verifyInvite(token);
   },
 
   async setPassword(request: SetPasswordRequest): Promise<void> {
-    try {
-      await acceptInvite({
-        token: request.token,
-        password: request.password,
-      });
-    } catch (inviteError) {
-      try {
-        await setPasswordApi(request);
-      } catch {
-        throw inviteError;
-      }
-    }
+    await acceptInvite({
+      token: request.token,
+      password: request.password,
+    });
   },
 
   getStoredToken,
