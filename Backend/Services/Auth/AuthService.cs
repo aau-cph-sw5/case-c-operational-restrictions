@@ -28,6 +28,11 @@ public class AuthService
         LoginRequestDto request,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return LoginResult.Failure();
+        }
+
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await _db.Users.SingleOrDefaultAsync(
             user => user.Email == email,
@@ -38,8 +43,8 @@ public class AuthService
             return LoginResult.Failure();
         }
 
-        var token = _jwtService.Mint(user);
         var roles = await GetRoleNamesAsync(user.Id, cancellationToken);
+        var token = _jwtService.Mint(user, roles);
 
         return LoginResult.Success(new LoginResponseDto
         {
