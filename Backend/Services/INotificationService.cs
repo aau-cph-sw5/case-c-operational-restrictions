@@ -9,6 +9,8 @@ public interface INotificationService
 
     Task ResolveActionRequiredAsync(Guid operationalRestrictionId, Guid recipientUserId);
 
+    Task NotifyRestrictionTransitionAsync(OperationalRestriction newVersion, Guid actorId);
+
     Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId);
 
     Task<bool> MarkAsReadAsync(Guid notificationId, Guid recipientUserId);

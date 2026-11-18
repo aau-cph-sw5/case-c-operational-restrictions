@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
@@ -72,6 +73,7 @@ public class NotificationService(
     public async Task ResolveActionRequiredAsync(Guid operationalRestrictionId, Guid recipientUserId)
     {
         var openNotifications = await _appDbContext.Notifications
+          .Include(x => x.Deliveries)
           .Where(x => x.OperationalRestrictionId == operationalRestrictionId
             && x.RecipientUserId == recipientUserId
             && x.RequiresAction
@@ -81,8 +83,113 @@ public class NotificationService(
         var now = DateTime.UtcNow;
         foreach (var notification in openNotifications)
         {
-            notification.ResolvedAt = now;
-            AddAuditEntry(notification, NotificationAuditEventType.Resolved, now);
+            Resolve(notification, now);
+        }
+    }
+
+    /// <summary>
+    /// Reacts to a restriction moving to a new lifecycle step (MET-C-019):
+    /// the previous step is done, so its open action-required notifications are resolved for every
+    /// recipient, and the holders of the role the new step waits on are notified.
+    /// Saves its changes on the shared AppDbContext, so when the caller has a transaction open the
+    /// notifications are committed together with the state change, or not at all.
+    /// </summary>
+    public async Task NotifyRestrictionTransitionAsync(OperationalRestriction newVersion, Guid actorId)
+    {
+        var now = DateTime.UtcNow;
+
+        await ResolveOpenForRestrictionAsync(newVersion, now);
+
+        switch (newVersion.State)
+        {
+            case RestrictionState.PendingDutyOperationsManagerApproval:
+                await NotifyRoleAsync(
+                  RoleNames.DutyOperationsManager,
+                  newVersion,
+                  actorId,
+                  $"Driftsrestriktionen \"{newVersion.Title}\" afventer din godkendelse og underskrift.");
+                break;
+
+            case RestrictionState.PendingControlRoomSupervisorApproval:
+                await NotifyRoleAsync(
+                  RoleNames.ControlroomSupervisor,
+                  newVersion,
+                  actorId,
+                  $"Driftsrestriktionen \"{newVersion.Title}\" afventer din underskrift.");
+                break;
+
+            case RestrictionState.ReturnedForChanges:
+                var reason = string.IsNullOrWhiteSpace(newVersion.ReviewDescription)
+                  ? string.Empty
+                  : $" Begrundelse: {newVersion.ReviewDescription}";
+                AddNotification(new CreateNotificationRequest(
+                  RecipientUserId: newVersion.OriginatorUserId,
+                  Type: NotificationType.ChangesRequested,
+                  RequiresAction: true,
+                  OperationalRestrictionId: newVersion.RestrictionId,
+                  Message: $"Driftsrestriktionen \"{newVersion.Title}\" er sendt retur med ønske om ændringer.{reason}"));
+                break;
+        }
+
+        await _appDbContext.SaveChangesAsync();
+    }
+
+    // Every version of a restriction has its own id, so open notifications may point at an older
+    // version of the same restriction. All versions share the original id.
+    private async Task ResolveOpenForRestrictionAsync(OperationalRestriction newVersion, DateTime now)
+    {
+        var originalId = newVersion.OriginalOperationalRestrictionId ?? newVersion.RestrictionId;
+
+        var versionIds = await _appDbContext.OperationalRestrictions
+          .Where(r => r.RestrictionId == originalId || r.OriginalOperationalRestrictionId == originalId)
+          .Select(r => r.RestrictionId)
+          .ToListAsync();
+
+        var openNotifications = await _appDbContext.Notifications
+          .Include(x => x.Deliveries)
+          .Where(x => x.OperationalRestrictionId != null
+            && versionIds.Contains(x.OperationalRestrictionId.Value)
+            && x.RequiresAction
+            && x.ResolvedAt == null)
+          .ToListAsync();
+
+        foreach (var notification in openNotifications)
+        {
+            Resolve(notification, now);
+        }
+    }
+
+    // Notifies every holder of the role, except the user who caused the transition.
+    private async Task NotifyRoleAsync(string roleName, OperationalRestriction restriction, Guid actorId, string message)
+    {
+        var recipientIds = await _appDbContext.UserRoleAssignments
+          .Where(a => a.Role.Name == roleName && a.UserId != actorId)
+          .Select(a => a.UserId)
+          .Distinct()
+          .ToListAsync();
+
+        foreach (var recipientId in recipientIds)
+        {
+            AddNotification(new CreateNotificationRequest(
+              RecipientUserId: recipientId,
+              Type: NotificationType.SignatureRequired,
+              RequiresAction: true,
+              OperationalRestrictionId: restriction.RestrictionId,
+              Message: message));
+        }
+    }
+
+    // Resolving stops further reminders: pushes that have not gone out yet are cancelled.
+    private void Resolve(Notification notification, DateTime now)
+    {
+        notification.ResolvedAt = now;
+        AddAuditEntry(notification, NotificationAuditEventType.Resolved, now);
+
+        foreach (var delivery in notification.Deliveries
+          .Where(d => d.Status == DeliveryStatus.Pending || d.Status == DeliveryStatus.Failed))
+        {
+            delivery.Status = DeliveryStatus.Cancelled;
+            delivery.NextAttemptAt = null;
         }
     }
 
@@ -137,6 +244,7 @@ public class NotificationService(
     public async Task UpdateAllNotificationsAsync()
     {
         var openNotifications = await _appDbContext.Notifications
+          .Include(x => x.Deliveries)
           .Where(x => x.RequiresAction && x.ResolvedAt == null)
           .ToListAsync();
 
@@ -152,8 +260,7 @@ public class NotificationService(
                 if (requiresSignatures.Any(rs => rs.SigneeId == notification.RecipientUserId
                     && rs.RequiresSignatureStatus == RequiresSignatureStatus.CompletedSignature))
                 {
-                    notification.ResolvedAt = now;
-                    AddAuditEntry(notification, NotificationAuditEventType.Resolved, now);
+                    Resolve(notification, now);
                 }
             }
         }

@@ -33,6 +33,11 @@ public class StubNotificationService : INotificationService
         Guid recipientUserId) =>
         throw new NotSupportedException();
 
+    public Task NotifyRestrictionTransitionAsync(
+        OperationalRestriction newVersion,
+        Guid actorId) =>
+        throw new NotSupportedException();
+
     public Task<List<Notification>> GetNotificationsForUserAsync(
         Guid recipientUserId)
     {

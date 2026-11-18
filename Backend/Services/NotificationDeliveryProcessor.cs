@@ -36,7 +36,9 @@ public partial class NotificationDeliveryProcessor(
         var dueDeliveries = await _appDbContext.NotificationDeliveries
           .Include(x => x.Notification)
           .Where(x => (x.Status == DeliveryStatus.Pending || x.Status == DeliveryStatus.Failed)
-            && x.NextAttemptAt <= now)
+            && x.NextAttemptAt <= now
+            // A resolved notification's action is done, so it is not pushed any more.
+            && x.Notification.ResolvedAt == null)
           .OrderBy(x => x.NextAttemptAt)
           .Take(_options.BatchSize)
           .ToListAsync(cancellationToken);
