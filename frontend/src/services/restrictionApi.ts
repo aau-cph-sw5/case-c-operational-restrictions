@@ -10,6 +10,7 @@ import type {
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import type { RestrictionDto, SignatureDto } from "../types/restrictionDto";
 import { getStoredToken } from "./tokenStorage";
+import { getAuthHeaders } from "./authApi";
 
 // 400 Bad Request so the UI can show every server message.
 export class RestrictionValidationError extends Error {
@@ -40,11 +41,6 @@ async function readValidationMessages(response: Response): Promise<string[]> {
 
 function createApiError(status: number, message: string): RestrictionApiError {
   return Object.assign(new Error(message), { status });
-}
-
-function authHeaders(): HeadersInit {
-  const token = getStoredToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 // Backend enum order for UserRole (Originator, Dom, Operator).
@@ -124,7 +120,7 @@ export async function createRestriction(
 // GET /api/restrictions/{id}
 export async function getRestrictionById(id: string): Promise<RestrictionDto> {
   const response = await fetch(`/api/restrictions/${encodeURIComponent(id)}`, {
-    headers: authHeaders(),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -145,7 +141,7 @@ export async function requestChanges(
     `/api/restrictions/${encodeURIComponent(id)}/request-changes`,
     {
       method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({ comment: comment.trim() }),
     },
   );
@@ -165,7 +161,7 @@ export async function signRestriction(
 ): Promise<RestrictionDto | null> {
   const response = await fetch(
     `/api/restrictions/${encodeURIComponent(id)}/sign`,
-    { method: "POST", headers: authHeaders() },
+    { method: "POST", headers: getAuthHeaders() },
   );
 
   if (!response.ok) {

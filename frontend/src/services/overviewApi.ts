@@ -10,25 +10,11 @@ import {
   type OverviewRestrictionDto,
 } from "../types/overviewRestriction";
 import type { RestrictionApiError } from "../types/restrictionApiError";
-import { getStoredToken } from "./tokenStorage";
-import { getCurrentUser } from "./authApi";
+import { getAuthHeaders, getCurrentUserId } from "./authApi";
 
 function createApiError(status: number, message: string): RestrictionApiError {
   return Object.assign(new Error(message), { status });
 }
-
-function authHeaders(): HeadersInit {
-  const token = getStoredToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-async function getCurrentUserId(): Promise<string | null> {
-  const token = getStoredToken();
-  if (!token) return null;
-  const user = await getCurrentUser(token);
-  return user?.id ?? null;
-}
-
 function normalizeBackendState(raw: unknown): BackendRestrictionState {
   if (typeof raw === "number") {
     return BACKEND_RESTRICTION_STATES[raw] ?? "Unknown";
@@ -101,7 +87,7 @@ export async function getOverviewRestrictions(
   signal?: AbortSignal,
 ): Promise<DrItem[]> {
   const response = await fetch("/api/restrictions", {
-    headers: authHeaders(),
+    headers: getAuthHeaders(),
     signal,
   });
 
