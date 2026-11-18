@@ -4,7 +4,6 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ORNotificationCard } from "@/components/OverviewNotificationCard";
-import { BottomNav } from "@/components/ui/bottom-nav";
 import { getOverviewRestrictions } from "@/services/overviewApi";
 import type { DrItem } from "@/types/overviewRestriction";
 import { isRestrictionApiError } from "@/types/restrictionApiError";
