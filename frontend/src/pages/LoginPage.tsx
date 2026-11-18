@@ -83,7 +83,7 @@ export function LoginPage() {
         </div>
       )}
       <p>
-        <Link to="/overview">Go to Overview page</Link>
+        <Link to="/restrictions">Go to Overview page</Link>
       </p>
     </div>
   );

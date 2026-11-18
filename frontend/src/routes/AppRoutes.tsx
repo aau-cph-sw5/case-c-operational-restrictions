@@ -19,7 +19,7 @@ export function AppRoutes() {
           <Route path="/home" element={<App />} />
           <Route path="/restrictions/new" element={<CreateRestrictionPage />} />
           <Route path="/restrictions/:id" element={<RestrictionDetailPage />} />
-          <Route path="/overview" element={<OverviewPage />} />
+          <Route path="/restrictions" element={<OverviewPage />} />
         </Route>
       </Routes>
     </>
