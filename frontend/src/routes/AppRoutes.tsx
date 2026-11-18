@@ -18,7 +18,6 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<LoginPage />} />
         <Route path="/set-password" element={<SetPasswordPage />} />
-        <Route path="/reset-password" element={<SetPasswordPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>

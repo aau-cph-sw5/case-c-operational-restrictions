@@ -18,7 +18,7 @@ describe("LoginPage", () => {
     vi.clearAllMocks();
   });
 
-  it("renders login form by default with Danish labels", () => {
+  it("renders login form with Danish labels and inputs", () => {
     render(
       <MemoryRouter>
         <LoginPage />
@@ -31,9 +31,6 @@ describe("LoginPage", () => {
     expect(screen.getByLabelText(/^e-mail/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^adgangskode/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Log ind" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /glemt adgangskode\?/i }),
-    ).toBeInTheDocument();
   });
 
   it("disables login button until both a valid email and password are provided", () => {
@@ -122,90 +119,6 @@ describe("LoginPage", () => {
       expect(
         screen.getByText("Forkert e-mail eller adgangskode."),
       ).toBeInTheDocument();
-    });
-  });
-
-  it("transitions between login and forgot password views", () => {
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /glemt adgangskode\?/i }),
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Glemt adgangskode" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Send nulstillingslink" }),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Tilbage til login" }));
-
-    expect(
-      screen.getByRole("heading", { name: "Log ind" }),
-    ).toBeInTheDocument();
-  });
-
-  it("disables reset link button until a valid email is provided", () => {
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /glemt adgangskode\?/i }),
-    );
-
-    const sendBtn = screen.getByRole("button", {
-      name: "Send nulstillingslink",
-    });
-    const emailInput = screen.getByLabelText(/^e-mail/i);
-
-    expect(sendBtn).toBeDisabled();
-
-    // Invalid email without @ or domain dot
-    fireEvent.change(emailInput, { target: { value: "invalidemail" } });
-    expect(sendBtn).toBeDisabled();
-
-    fireEvent.change(emailInput, { target: { value: "invalid@nodot" } });
-    expect(sendBtn).toBeDisabled();
-
-    // Valid email
-    fireEvent.change(emailInput, { target: { value: "user@metroservice.dk" } });
-    expect(sendBtn).not.toBeDisabled();
-  });
-
-  it("submits forgot password request and displays success alert", async () => {
-    vi.spyOn(authService, "requestPasswordReset").mockResolvedValue();
-
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /glemt adgangskode\?/i }),
-    );
-
-    fireEvent.change(screen.getByLabelText(/^e-mail/i), {
-      target: { value: "user@metroservice.dk" },
-    });
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Send nulstillingslink" }),
-    );
-
-    await waitFor(() => {
-      expect(authService.requestPasswordReset).toHaveBeenCalledWith({
-        email: "user@metroservice.dk",
-      });
-      expect(screen.getByText(/link afsendt/i)).toBeInTheDocument();
     });
   });
 });

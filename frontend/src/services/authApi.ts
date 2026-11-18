@@ -1,7 +1,6 @@
 // API:
 // Raw HTTP calls to the .NET backend's auth endpoints.
 // No side effects and no storage — just request in, response out.
-import type { ForgotPasswordRequest } from "../types/forgotPasswordRequest";
 import type { LoginRequest } from "../types/loginRequest";
 import type { LoginResponse } from "../types/loginResponse";
 import type { SetPasswordRequest } from "../types/setPasswordRequest";
@@ -34,20 +33,6 @@ export async function getCurrentUser(token: string): Promise<UserDto> {
   }
 
   return response.json();
-}
-
-export async function requestPasswordReset(
-  request: ForgotPasswordRequest,
-): Promise<void> {
-  const response = await fetch("/api/auth/forgot-password", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
-
-  if (!response.ok) {
-    throw new Error("Kunne ikke sende link til nulstilling af adgangskode.");
-  }
 }
 
 export async function setPassword(request: SetPasswordRequest): Promise<void> {
