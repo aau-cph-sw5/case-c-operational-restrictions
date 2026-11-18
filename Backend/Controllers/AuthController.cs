@@ -51,6 +51,6 @@ public class AuthController : ApiControllerBase
     }
         return user is not null
             ? Ok(user)
-            : Unauthorized(new { error = "Invalid or expired token." });
+            : Unauthorized({ error = "Invalid or expired token." });
     }
 }
