@@ -8,7 +8,7 @@ import {
   type OverviewCategory,
   type OverviewRestrictionDto,
 } from "../types/overviewRestriction";
-import {BACKEND_RESTRICTION_STATES } from "@/constants/restrictionStates";
+import { BACKEND_RESTRICTION_STATES } from "@/constants/restrictionStates";
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import { getAuthHeaders, getCurrentUserId } from "./authApi";
 

@@ -149,7 +149,7 @@ export function OverviewPage() {
 
         {/* Scrollable Card List Container */}
         <main className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-white p-3.5 pb-6">
-         {loading ? (
+          {loading ? (
             <p className="text-center py-16 text-muted-foreground">
               Henter driftsrestriktioner...
             </p>

@@ -2,7 +2,7 @@
 // Types used by the overview page (register of restrictions).
 import type { DRStatus } from "@/components/OverviewNotificationCard";
 import type { SignatureDto } from "./restrictionDto";
-import {BACKEND_RESTRICTION_STATES } from "@/constants/restrictionStates";
+import { BACKEND_RESTRICTION_STATES } from "@/constants/restrictionStates";
 // Backend RestrictionState enum, in declaration order. ASP.NET serialises
 // enums as their numeric index unless a JsonStringEnumConverter is registered.
 
