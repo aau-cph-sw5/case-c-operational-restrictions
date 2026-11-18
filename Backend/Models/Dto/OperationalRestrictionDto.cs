@@ -36,6 +36,8 @@ public class OperationalRestrictionDto
 
     public string ReviewDescription { get; set; } = string.Empty;
 
+    public List<Guid> AssignedOperatorsIds { get; set; } = new();
+
     public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction)
     {
         var signatures = operationalRestriction.SignatureSheet?
@@ -61,6 +63,7 @@ public class OperationalRestrictionDto
             OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId,
             ReviewerId = operationalRestriction.ReviewerId,
             ReviewDescription = operationalRestriction.ReviewDescription,
+            AssignedOperatorsIds = new List<Guid>(operationalRestriction.AssignedOperatorsIds),
             Signatures = signatures,
             OriginatorSignature = originatorSignature
         };
