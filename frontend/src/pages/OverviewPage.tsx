@@ -6,7 +6,7 @@ import {
   ORNotificationCard,
   type DRStatus,
 } from "@/components/OverviewNotificationCard";
-import { BottomNav } from "@/components/ui/bottom-nav";
+import { AppHeader } from "../components/AppHeader";
 
 export interface DrItem {
   id: string;
@@ -182,15 +182,10 @@ export function OverviewPage() {
   }, [activeTab, searchQuery]);
 
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] flex justify-center items-center overflow-hidden antialiased text-foreground">
-      {/* Permanent Fixed Mobile Shell Container */}
-      <div className="w-full max-w-md h-full bg-white flex flex-col shadow-xl relative border-x border-border/40 overflow-hidden">
+    <div className="flex min-h-0 w-full justify-center bg-[#F8FAFC] antialiased text-foreground">
+      <div className="flex h-[calc(100svh-5rem)] w-full max-w-md flex-col overflow-hidden border-x border-border/40 bg-white shadow-xl">
         {/* Header*/}
-        <header className="shrink-0 bg-[#E0F3FF] pt-5 pb-4 px-4 flex flex-col gap-4 border-b border-border/50 z-30">
-          <h1 className="text-xl md:text-2xl font-bold text-center text-foreground font-heading">
-            Alle Driftsrestriktioner
-          </h1>
-
+        <AppHeader title="Alle Driftsrestriktioner">
           {/* Subheader Filter Tabs*/}
           <div className="grid grid-cols-4 gap-1 p-1 bg-white/60 backdrop-blur-sm rounded-full border border-border/40">
             <button
@@ -250,10 +245,10 @@ export function OverviewPage() {
               className="pl-9 bg-white border-border/80 h-11 text-base rounded-full shadow-xs focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
-        </header>
+        </AppHeader>
 
         {/* Scrollable Card List Container */}
-        <main className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-white pb-20">
+        <main className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-white p-3.5 pb-6">
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
               <ORNotificationCard
@@ -278,7 +273,6 @@ export function OverviewPage() {
         </main>
 
         {/* Embedded Bottom Navigation  */}
-        <BottomNav />
       </div>
     </div>
   );

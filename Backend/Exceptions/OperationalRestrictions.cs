@@ -72,3 +72,11 @@ public class RequiresSignatureNotSignableException : Exception
     {
     }
 }
+
+public class NotControlRoomSupervisorException : Exception
+{
+    public NotControlRoomSupervisorException(Guid userId)
+        : base($"User {userId} is not a control room supervisor and cannot sign for implementation")
+    {
+    }
+}
