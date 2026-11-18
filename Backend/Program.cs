@@ -9,6 +9,8 @@ using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Services;
 using Backend.Services.Auth;
+using Backend.Services.Email;
+using Backend.Services.Users;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +24,6 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IExampleService, ExampleService>();
-
 
 // Register Lifecycle services
 builder.Services.AddScoped<RestrictionLifecycleService>();
@@ -52,6 +53,12 @@ TinyMapper.Bind<User, UserDto>();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
+
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.Configure<InviteOptions>(builder.Configuration.GetSection(InviteOptions.SectionName));
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IUserInvitationService, UserInvitationService>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))

@@ -7,6 +7,8 @@ import { InstallButton } from "../components/InstallButton";
 import { CreateRestrictionPage } from "../pages/CreateRestrictionPage";
 import { OverviewPage } from "../pages/OverviewPage";
 import { AppLayout } from "../components/AppLayout";
+import { InviteUserPage } from "../pages/InviteUserPage";
+import { SetPasswordPage } from "../pages/SetPasswordPage";
 
 export function AppRoutes() {
   return (
@@ -15,10 +17,13 @@ export function AppRoutes() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<LoginPage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<App />} />
+            <Route path="/invite" element={<InviteUserPage />} />
+            <Route path="/invite-user" element={<InviteUserPage />} />
             <Route
               path="/restrictions/new"
               element={<CreateRestrictionPage />}

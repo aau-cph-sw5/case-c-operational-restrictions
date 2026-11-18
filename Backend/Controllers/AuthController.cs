@@ -25,6 +25,8 @@ public class AuthController : ApiControllerBase
     /// <returns></returns>
     [HttpPost("login")]
     [AllowAnonymous]
+    [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDto>> Login(
         LoginRequestDto request,
         CancellationToken cancellationToken)
@@ -36,7 +38,6 @@ public class AuthController : ApiControllerBase
             : Unauthorized(new { error = "Invalid email or password." });
     }
 
-
     [HttpPost("check-token/{token}")]
     [AllowAnonymous]
     public async Task<ActionResult<UserDto>> CheckValidityOfToken(
@@ -44,6 +45,10 @@ public class AuthController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         var user = await _authService.CheckValidityOfTokenAsync(token, cancellationToken);
+        return user is not null
+            ? Ok(user)
+            : Unauthorized(new { error = "Invalid or expired token." });
+    }
         return user is not null
             ? Ok(user)
             : Unauthorized(new { error = "Invalid or expired token." });
