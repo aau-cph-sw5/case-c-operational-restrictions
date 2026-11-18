@@ -72,7 +72,10 @@ export function RestrictionDetails({
         </RestrictionInfoCard>
       )}
 
-      <section aria-labelledby="restriction-history-heading" className="space-y-2">
+      <section
+        aria-labelledby="restriction-history-heading"
+        className="space-y-2"
+      >
         <h2
           id="restriction-history-heading"
           className="font-['Instrument_Sans',sans-serif] text-base font-bold text-[#6B6B6B]"

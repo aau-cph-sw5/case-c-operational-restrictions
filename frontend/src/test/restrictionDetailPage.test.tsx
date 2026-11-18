@@ -415,18 +415,18 @@ describe("RestrictionDetailPage", () => {
 
       fireEvent.click(approveButton()!);
 
-      expect(
-        await screen.findByTestId("approve-success"),
-      ).toHaveTextContent(/afventer implementering/i);
+      expect(await screen.findByTestId("approve-success")).toHaveTextContent(
+        /afventer implementering/i,
+      );
       expect(mocks.approveRestriction).toHaveBeenCalledWith("restriction-1");
       expect(screen.getByTestId("status-badge")).toHaveTextContent(
         "Afventer kontrolrumsgodkendelse",
       );
       expect(screen.getAllByTestId("signature-block")).toHaveLength(2);
       expect(approveButton()).not.toBeInTheDocument();
-      expect(
-        screen.getAllByTestId("restriction-history-entry"),
-      ).toHaveLength(3);
+      expect(screen.getAllByTestId("restriction-history-entry")).toHaveLength(
+        3,
+      );
     });
 
     it("shows server authorization failures without changing pending state", async () => {

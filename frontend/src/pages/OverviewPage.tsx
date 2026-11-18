@@ -165,7 +165,10 @@ export function OverviewPage() {
         {/* Scrollable Card List Container */}
         <main className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-white p-3.5 pb-6">
           {loading ? (
-            <p role="status" className="py-16 text-center text-muted-foreground">
+            <p
+              role="status"
+              className="py-16 text-center text-muted-foreground"
+            >
               Henter driftsrestriktioner...
             </p>
           ) : loadError ? (

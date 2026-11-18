@@ -141,9 +141,7 @@ describe("restrictionApi", () => {
     );
     expect(fetchMock.mock.calls[0][1].method).toBe("POST");
     expect(restriction.status).toBe("PendingControlRoomSupervisorApproval");
-    expect(restriction.signatures[0].signeeRole).toBe(
-      "DutyOperationsManager",
-    );
+    expect(restriction.signatures[0].signeeRole).toBe("DutyOperationsManager");
     expect(restriction.history?.[0].action).toBe("Approved");
   });
 

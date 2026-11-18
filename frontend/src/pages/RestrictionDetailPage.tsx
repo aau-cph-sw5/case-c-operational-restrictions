@@ -226,9 +226,7 @@ export function RestrictionDetailPage() {
         knownUsers={knownUsers}
       />
       {approveSuccess && (
-        <SuccessAlert testId="approve-success">
-          {t.approveSuccess}
-        </SuccessAlert>
+        <SuccessAlert testId="approve-success">{t.approveSuccess}</SuccessAlert>
       )}
       {signForImplementationSuccess && (
         <SuccessAlert testId="sign-for-implementation-success">

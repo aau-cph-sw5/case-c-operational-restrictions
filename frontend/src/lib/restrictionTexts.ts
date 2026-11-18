@@ -23,8 +23,7 @@ export const restrictionTexts = {
   sign: "Underskriv",
   approve: "Godkend og send til implementering",
   approving: "Godkender...",
-  approveSuccess:
-    "Restriktionen er godkendt og afventer implementering.",
+  approveSuccess: "Restriktionen er godkendt og afventer implementering.",
   approveForbidden:
     "Kun en Duty Operations Manager kan godkende denne restriktion.",
   approveConflict:
