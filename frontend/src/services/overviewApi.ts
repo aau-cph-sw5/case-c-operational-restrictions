@@ -3,12 +3,12 @@
 // (GET /api/restrictions) and maps them to the card view model.
 import type { DRStatus } from "@/components/OverviewNotificationCard";
 import {
-  BACKEND_RESTRICTION_STATES,
   type BackendRestrictionState,
   type DrItem,
   type OverviewCategory,
   type OverviewRestrictionDto,
 } from "../types/overviewRestriction";
+import {BACKEND_RESTRICTION_STATES } from "@/constants/restrictionStates";
 import type { RestrictionApiError } from "../types/restrictionApiError";
 import { getAuthHeaders, getCurrentUserId } from "./authApi";
 
