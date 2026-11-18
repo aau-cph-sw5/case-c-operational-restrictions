@@ -80,3 +80,11 @@ public class NotControlRoomSupervisorException : Exception
     {
     }
 }
+
+public class NotDutyOperationsManagerException : Exception
+{
+    public NotDutyOperationsManagerException(Guid userId)
+        : base($"User {userId} is not a duty operations manager and cannot approve restrictions")
+    {
+    }
+}

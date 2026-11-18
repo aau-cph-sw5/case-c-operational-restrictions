@@ -31,6 +31,7 @@ public class OperationalRestrictionDto
     public Guid? OriginalOperationalRestrictionId { get; set; }
     public SignatureDto? OriginatorSignature { get; set; }
     public List<SignatureDto> Signatures { get; set; } = new();
+    public List<RestrictionTransitionEventDto> History { get; set; } = new();
 
     public Guid ReviewerId { get; set; }
 
@@ -68,4 +69,13 @@ public class OperationalRestrictionDto
             OriginatorSignature = originatorSignature
         };
     }
+}
+
+public sealed class RestrictionTransitionEventDto
+{
+    public string Action { get; init; } = string.Empty;
+    public string? FromState { get; init; }
+    public string ToState { get; init; } = string.Empty;
+    public Guid ActorId { get; init; }
+    public DateTime OccurredAt { get; init; }
 }

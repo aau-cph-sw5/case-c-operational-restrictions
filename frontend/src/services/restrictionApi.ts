@@ -63,6 +63,16 @@ function toSignature(raw: Record<string, unknown>): SignatureDto {
   };
 }
 
+function toHistoryEntry(raw: Record<string, unknown>) {
+  return {
+    action: String(raw.action ?? ""),
+    fromState: typeof raw.fromState === "string" ? raw.fromState : null,
+    toState: String(raw.toState ?? ""),
+    actorId: String(raw.actorId ?? ""),
+    occurredAt: String(raw.occurredAt ?? ""),
+  };
+}
+
 function toRestriction(raw: Record<string, unknown>): RestrictionDto {
   const signatures = Array.isArray(raw.signatures)
     ? raw.signatures
@@ -72,6 +82,7 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
 
   return {
     id: String(raw.id ?? ""),
+    title: typeof raw.title === "string" ? raw.title : undefined,
     originatorUserId: String(raw.originatorUserId ?? ""),
     status: normalizeStatus(raw.status ?? raw.state),
     reviewDescription:
@@ -91,6 +102,11 @@ function toRestriction(raw: Record<string, unknown>): RestrictionDto {
     signatures: signatures.map((s) =>
       toSignature(s as Record<string, unknown>),
     ),
+    history: Array.isArray(raw.history)
+      ? raw.history.map((entry) =>
+          toHistoryEntry(entry as Record<string, unknown>),
+        )
+      : [],
   };
 }
 
@@ -134,6 +150,29 @@ export async function getRestrictionById(id: string): Promise<RestrictionDto> {
   return toRestriction(await response.json());
 }
 
+export async function getRestrictions(): Promise<RestrictionDto[]> {
+  const response = await fetch("/api/restrictions", {
+    headers: authHeaders(),
+  });
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  const rawRestrictions: unknown = await response.json();
+  if (!Array.isArray(rawRestrictions)) {
+    throw new Error("The server returned an invalid restrictions list.");
+  }
+
+  return rawRestrictions.map((restriction) => {
+    if (restriction === null || typeof restriction !== "object") {
+      throw new Error("The server returned an invalid restriction.");
+    }
+
+    return toRestriction(restriction as Record<string, unknown>);
+  });
+}
+
 // POST /api/restrictions/{id}/request-changes
 // DOM returns a pending restriction to its originator with a mandatory comment.
 // Resolves with the new ReturnedForChanges version.
@@ -148,6 +187,21 @@ export async function requestChanges(
       headers: { ...authHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({ comment: comment.trim() }),
     },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return toRestriction(await response.json());
+}
+
+// POST /api/restrictions/{id}/approve
+// Returns the signed restriction after it advances to implementation approval.
+export async function approveRestriction(id: string): Promise<RestrictionDto> {
+  const response = await fetch(
+    `/api/restrictions/${encodeURIComponent(id)}/approve`,
+    { method: "POST", headers: authHeaders() },
   );
 
   if (!response.ok) {

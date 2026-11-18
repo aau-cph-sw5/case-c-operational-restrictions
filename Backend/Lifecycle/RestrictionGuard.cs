@@ -1,6 +1,7 @@
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
+using Backend.Authorization;
 namespace Backend.Lifecycle;
 
 // Guards for the operational restriction lifecycle
@@ -83,8 +84,9 @@ public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard<Op
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        // TODO: Check data.DutyOperationsManagerSignature when added to DTO
-        return true;
+        return data.Signatures.Any(signature =>
+            signature.SigneeRole.Split(", ")
+                .Contains(RoleNames.DutyOperationsManager));
     }
 }
 

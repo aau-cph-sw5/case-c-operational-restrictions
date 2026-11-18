@@ -7,6 +7,9 @@ interface RestrictionActionsProps {
   canSign: boolean;
   signing: boolean;
   onSign: () => void;
+  canApprove: boolean;
+  approving: boolean;
+  onApprove: () => void;
   canRequestChanges: boolean;
   submittingChanges: boolean;
   onRequestChanges: (comment: string) => Promise<boolean>;
@@ -19,6 +22,9 @@ export function RestrictionActions({
   canSign,
   signing,
   onSign,
+  canApprove,
+  approving,
+  onApprove,
   canRequestChanges,
   submittingChanges,
   onRequestChanges,
@@ -28,6 +34,18 @@ export function RestrictionActions({
 }: RestrictionActionsProps) {
   return (
     <>
+      {canApprove && (
+        <div className="flex flex-wrap gap-3 pb-4">
+          <RestrictionActionButton
+            onClick={onApprove}
+            loading={approving}
+            loadingLabel={t.approving}
+          >
+            {t.approve}
+          </RestrictionActionButton>
+        </div>
+      )}
+
       {canRequestChanges && (
         <RequestChangesForm
           submitting={submittingChanges}

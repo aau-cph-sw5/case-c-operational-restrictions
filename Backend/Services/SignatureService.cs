@@ -8,9 +8,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
+public interface ISignatureService
+{
+    Signature SignOriginator(Guid operationalRestrictionId, Guid signerUserId);
+    Signature? GetOriginatorSignature(Guid operationalRestrictionId);
+    Signature SignDutyOperationsManager(Guid operationalRestrictionId, Guid signerUserId);
+    Signature SignControlRoomSupervisor(Guid operationalRestrictionId, Guid signerUserId);
+    List<Guid> GetAtWorkAndOffWorkUserIds();
+    void DiscardUnpersistedSignature(Signature signature);
+}
+
 public class SignatureService(
     AppDbContext appDbContext
-)
+) : ISignatureService
 {
     private readonly AppDbContext _appDbContext = appDbContext;
     //Midlertidigt mens der ikke er database
@@ -143,6 +153,44 @@ public class SignatureService(
         return signature;
     }
 
+    public Signature SignDutyOperationsManager(Guid operationalRestrictionId, Guid signerUserId)
+    {
+        if (!GetRoleNames(signerUserId).Contains(RoleNames.DutyOperationsManager))
+            throw new NotDutyOperationsManagerException(signerUserId);
+
+        if (_signatures.Any(signature =>
+                signature.OperationalRestrictionId == operationalRestrictionId
+                && signature.SigneeRole.Split(", ")
+                    .Contains(RoleNames.DutyOperationsManager)))
+        {
+            throw new InvalidOperationException(
+                "A duty operations manager has already signed this restriction.");
+        }
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+        };
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = string.Join(", ", GetRoleNames(signerUserId)),
+            SignedAt = DateTime.UtcNow
+        };
+        _signatures.Add(signature);
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+
+        return signature;
+    }
+
     public Signature? GetOriginatorSignature(Guid operationalRestrictionId)
     {
         return _signatures.FirstOrDefault(signature =>
@@ -218,7 +266,7 @@ public class SignatureService(
             .ToList();
     }
 
-    internal void DiscardUnpersistedSignature(Signature signature)
+    public void DiscardUnpersistedSignature(Signature signature)
     {
         var requiredSignature = GetRequiresSignatureById(signature.RequiresSignatureId);
 

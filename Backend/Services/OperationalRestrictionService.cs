@@ -15,14 +15,14 @@ public class OperationalRestrictionService
     private readonly IOperationalRestrictionRepository _repository;
     private readonly IRestrictionTransitionEventRepository _transitionEventRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly SignatureService? _signatureService;
+    private readonly ISignatureService? _signatureService;
 
     public OperationalRestrictionService(
         RestrictionLifecycleService lifecycleService,
         IOperationalRestrictionRepository repository,
         IRestrictionTransitionEventRepository transitionEventRepository,
         IUnitOfWork unitOfWork,
-        SignatureService? signatureService = null)
+        ISignatureService? signatureService = null)
     {
         _lifecycleService = lifecycleService;
         _repository = repository;
@@ -104,24 +104,36 @@ public class OperationalRestrictionService
         if (restriction.State == RestrictionState.Draft && restriction.OriginatorUserId != currentUserId)
             throw new OperationalRestrictionNotFoundException(id);
 
-        var restrictionDto = OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
-        var originatorSignature = _signatureService?.GetOriginatorSignature(restriction.RestrictionId);
-        if (originatorSignature != null && restrictionDto.OriginatorSignature == null)
-            restrictionDto.OriginatorSignature = SignatureDto.FromDalEntity(originatorSignature);
-
-        return restrictionDto;
+        return await CreateDtoWithHistoryAsync(restriction);
     }
 
     public async Task<OperationalRestrictionDto> GetByIdAsync(Guid id)
     {
         var restriction = await GetLatestRestrictionOrThrowAsync(id);
 
-        var restrictionDto = OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
-        var originatorSignature = _signatureService?.GetOriginatorSignature(restriction.RestrictionId);
-        if (originatorSignature != null && restrictionDto.OriginatorSignature == null)
-            restrictionDto.OriginatorSignature = SignatureDto.FromDalEntity(originatorSignature);
+        return await CreateDtoWithHistoryAsync(restriction);
+    }
 
-        return restrictionDto;
+    private async Task<OperationalRestrictionDto> CreateDtoWithHistoryAsync(
+        OperationalRestriction restriction)
+    {
+        var dto = OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
+        var originatorSignature = _signatureService?.GetOriginatorSignature(restriction.RestrictionId);
+        if (originatorSignature != null && dto.OriginatorSignature == null)
+            dto.OriginatorSignature = SignatureDto.FromDalEntity(originatorSignature);
+
+        var originalId = restriction.OriginalOperationalRestrictionId ?? restriction.RestrictionId;
+        var events = await _transitionEventRepository.GetByOriginalRestrictionIdAsync(originalId);
+        dto.History = events.Select(transitionEvent => new RestrictionTransitionEventDto
+        {
+            Action = transitionEvent.Action.ToString(),
+            FromState = transitionEvent.FromState?.ToString(),
+            ToState = transitionEvent.ToState.ToString(),
+            ActorId = transitionEvent.ActorId,
+            OccurredAt = transitionEvent.OccurredAt
+        }).ToList();
+
+        return dto;
     }
 
     private async Task<OperationalRestriction> GetLatestRestrictionOrThrowAsync(Guid id)
@@ -267,6 +279,9 @@ public class OperationalRestrictionService
         Guid id,
         Guid approverId)
     {
+        if (_signatureService == null)
+            throw new InvalidOperationException("SignatureService is not configured.");
+
         var restriction = await GetRestrictionOrThrowAsync(id);
 
         // Separation of duties: even with an approving role, the originator
@@ -274,7 +289,26 @@ public class OperationalRestrictionService
         if (restriction.OriginatorUserId == approverId)
             throw new SelfApprovalNotAllowedException(id, approverId);
 
-        return await TransitionAsync(id, RestrictionAction.Approved, approverId);
+        var signature = _signatureService.SignDutyOperationsManager(id, approverId);
+        OperationalRestrictionDto approved;
+        try
+        {
+            approved = await TransitionAsync(
+                id,
+                RestrictionAction.Approved,
+                approverId,
+                version => version.SignatureSheet.Add(signature));
+        }
+        catch
+        {
+            _signatureService.DiscardUnpersistedSignature(signature);
+            throw;
+        }
+
+        return await TransitionAsync(
+            approved.Id,
+            RestrictionAction.PendingControlRoomSupervisorApproval,
+            approverId);
     }
 
     public Task<OperationalRestrictionDto> SubmitForControlRoomSupervisorApprovalAsync(
@@ -401,7 +435,7 @@ public class OperationalRestrictionService
 
         await transaction.CommitAsync();
 
-        return OperationalRestrictionDto.FromOperationalRestrictionToDto(newVersion);
+        return await CreateDtoWithHistoryAsync(newVersion);
     }
 
     // Transitioning an older version would fork the history, so only the
