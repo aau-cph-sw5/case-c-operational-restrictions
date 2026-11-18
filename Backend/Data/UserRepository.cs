@@ -35,8 +35,29 @@ public class UserRepository : IUserRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task AddWithRoleAsync(User user, string roleName)
+    {
+        await _context.Users.AddAsync(user);
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+        if (role == null)
+        {
+            throw new InvalidOperationException($"Role '{roleName}' does not exist.");
+        }
+
+        await _context.UserRoleAssignments.AddAsync(new UserRoleAssignment
+        {
+            UserId = user.Id,
+            RoleId = role.Id
+        });
+        await _context.SaveChangesAsync();
+    }
+
     public async Task DeleteAsync(User user)
     {
+        var assignments = await _context.UserRoleAssignments
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync();
+        _context.UserRoleAssignments.RemoveRange(assignments);
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
     }

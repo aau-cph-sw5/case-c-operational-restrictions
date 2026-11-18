@@ -10,8 +10,6 @@ using Backend.Services.Email;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-using Nelibur.ObjectMapper;
-
 namespace Backend.Services.Users;
 
 public class UserInvitationService : IUserInvitationService
@@ -45,18 +43,18 @@ public class UserInvitationService : IUserInvitationService
             return null;
         }
 
+        var roleName = request.Role.ToString();
         var user = new User
         {
             Id = Guid.NewGuid(),
             Name = $"{request.FirstName.Trim()} {request.LastName.Trim()}",
             Email = email,
-            PasswordHash = string.Empty,
-            Role = request.Role
+            PasswordHash = string.Empty
         };
 
         try
         {
-            await _userRepository.AddAsync(user);
+            await _userRepository.AddWithRoleAsync(user, roleName);
         }
         catch (DbUpdateException)
         {
@@ -77,13 +75,26 @@ public class UserInvitationService : IUserInvitationService
             throw;
         }
 
-        return TinyMapper.Map<UserDto>(user);
+        return new UserDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Roles = [roleName]
+        };
     }
 
     public async Task<UserDto?> VerifyAsync(string token)
     {
         var user = await GetPendingUserFromTokenAsync(token);
-        return user is null ? null : TinyMapper.Map<UserDto>(user);
+        return user is null
+            ? null
+            : new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email
+            };
     }
 
     public async Task<bool> AcceptAsync(AcceptInviteDto request)

@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
 
-
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ApiControllerBase
@@ -22,9 +21,8 @@ public class AuthController : ApiControllerBase
     ///
     /// </summary>
     /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpPost("login")]
-    [AllowAnonymous]
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDto>> Login(
@@ -48,9 +46,5 @@ public class AuthController : ApiControllerBase
         return user is not null
             ? Ok(user)
             : Unauthorized(new { error = "Invalid or expired token." });
-    }
-        return user is not null
-            ? Ok(user)
-            : Unauthorized({ error = "Invalid or expired token." });
     }
 }

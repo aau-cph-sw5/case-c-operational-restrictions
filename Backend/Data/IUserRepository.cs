@@ -8,6 +8,7 @@ public interface IUserRepository
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByIdAsync(Guid id);
     Task AddAsync(User user);
+    Task AddWithRoleAsync(User user, string roleName);
     Task DeleteAsync(User user);
     Task<bool> SetPasswordIfUnsetAsync(Guid userId, string passwordHash);
 }
