@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import App from "../App";
 import { LoginPage } from "../pages/LoginPage";
+import { SetPasswordPage } from "../pages/SetPasswordPage";
 import { RestrictionDetailPage } from "../pages/RestrictionDetailPage";
 import { ProtectedRoute } from "../hooks/ProtectedRoute";
 import { InstallButton } from "../components/InstallButton";
@@ -16,6 +17,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<LoginPage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>

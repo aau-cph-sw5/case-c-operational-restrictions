@@ -4,10 +4,12 @@
 // (tokenStorage), so callers only need to know about this one object —
 // the closest React equivalent to injecting an Angular AuthService.
 import { getCurrentUser, login as loginRequest } from "./authApi";
+import { acceptInvite, verifyInvite } from "./invitationApi";
 import type { UserDto } from "../types/userDto";
 import { clearToken, getStoredToken, saveToken } from "./tokenStorage";
 import type { LoginRequest } from "../types/loginRequest";
 import type { LoginResponse } from "../types/loginResponse";
+import type { SetPasswordRequest } from "../types/setPasswordRequest";
 
 export const authService = {
   async login(request: LoginRequest): Promise<LoginResponse> {
@@ -43,5 +45,17 @@ export const authService = {
     }
   },
 
+  async validateToken(token: string): Promise<UserDto> {
+    return await verifyInvite(token);
+  },
+
+  async setPassword(request: SetPasswordRequest): Promise<void> {
+    await acceptInvite({
+      token: request.token,
+      password: request.password,
+    });
+  },
+
   getStoredToken,
+  clearToken,
 };

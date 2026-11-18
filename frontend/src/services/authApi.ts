@@ -13,7 +13,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   });
 
   if (!response.ok) {
-    throw new Error("Invalid email or password.");
+    throw new Error("Forkert e-mail eller adgangskode.");
   }
 
   return response.json();
@@ -28,7 +28,7 @@ export async function getCurrentUser(token: string): Promise<UserDto> {
   );
 
   if (!response.ok) {
-    throw new Error("Session is invalid or expired.");
+    throw new Error("Sessionen er ugyldig eller udløbet.");
   }
 
   return response.json();

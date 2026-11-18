@@ -9,6 +9,14 @@ export interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+export function isStandaloneDisplayMode(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true
+  );
+}
+
 export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -17,11 +25,7 @@ export function usePwaInstall() {
 
   useEffect(() => {
     // Check if running in standalone mode (already installed)
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as unknown as { standalone?: boolean }).standalone === true;
-
-    if (isStandalone) {
+    if (isStandaloneDisplayMode()) {
       setIsInstalled(true);
       return;
     }
