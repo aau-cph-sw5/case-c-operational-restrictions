@@ -1,4 +1,3 @@
-
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,10 +66,7 @@ function renderPage(
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
-        <Route
-          path="/restrictions/:id"
-          element={<RestrictionDetailPage />}
-        />
+        <Route path="/restrictions/:id" element={<RestrictionDetailPage />} />
       </Routes>
     </MemoryRouter>,
   );
