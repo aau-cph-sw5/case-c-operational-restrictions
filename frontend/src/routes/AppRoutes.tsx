@@ -7,6 +7,7 @@ import { InstallButton } from "../components/InstallButton";
 import { CreateRestrictionPage } from "../pages/CreateRestrictionPage";
 import { OverviewPage } from "../pages/OverviewPage";
 import { AppLayout } from "../components/AppLayout";
+import { SignatureOverviewPage } from "../pages/SignatureOverviewPage";
 
 export function AppRoutes() {
   return (
@@ -30,6 +31,13 @@ export function AppRoutes() {
             <Route path="/overview" element={<OverviewPage />} />
             <Route path="*" element={<App />} />
           </Route>
+          <Route path="/home" element={<App />} />
+          <Route path="/restrictions/new" element={<CreateRestrictionPage />} />
+          <Route path="/restrictions/:id" element={<RestrictionDetailPage />} />
+          <Route
+            path="/signatures/overview"
+            element={<SignatureOverviewPage />}
+          />
         </Route>
       </Routes>
     </>
