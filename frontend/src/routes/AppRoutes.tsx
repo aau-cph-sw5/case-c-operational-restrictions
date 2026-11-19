@@ -29,15 +29,12 @@ export function AppRoutes() {
               element={<RestrictionDetailPage />}
             />
             <Route path="/overview" element={<OverviewPage />} />
+            <Route 
+              path="/signatures/overview"
+              element={<SignatureOverviewPage />}
+            />
             <Route path="*" element={<App />} />
           </Route>
-          <Route path="/home" element={<App />} />
-          <Route path="/restrictions/new" element={<CreateRestrictionPage />} />
-          <Route path="/restrictions/:id" element={<RestrictionDetailPage />} />
-          <Route
-            path="/signatures/overview"
-            element={<SignatureOverviewPage />}
-          />
         </Route>
       </Routes>
     </>
