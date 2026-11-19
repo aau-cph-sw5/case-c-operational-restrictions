@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Models.DTOs;
 using Backend.Services;
 
@@ -25,6 +26,7 @@ public class SignatureCompletenessController : ApiControllerBase
     /// </summary>
     /// <response code="200">Returns the signature completeness report</response>
     [HttpGet]
+    [RequiresPermission(Permissions.OperationalRestrictionRead)]
     public async Task<ActionResult<SignatureCompletenessReportDto>> Get()
     {
         var report = await _completenessService.GetReportAsync();
