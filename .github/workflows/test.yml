@@ -74,7 +74,7 @@ jobs:
         run: pnpm lint
 
       - name: Run backend tests
-        run: dotnet test CaseC.slnx --nologo
+        run: dotnet test CaseC.slnx --slnx
 
       - name: Run frontend tests
         run: pnpm --filter frontend test:run
