@@ -40,7 +40,9 @@ public class SignatureCompletenessService(AppDbContext appDbContext)
         var restrictionsInForce = allRestrictions
             .GroupBy(restriction => restriction.OriginalOperationalRestrictionId ?? restriction.RestrictionId)
             .Select(group => group.OrderByDescending(version => version.Version).First())
-            .Where(restriction => restriction.State == RestrictionState.Active)
+            .Where(restriction => restriction.State is RestrictionState.Active
+                or RestrictionState.AwaitingOperatorSignatures
+                or RestrictionState.PendingCancellation)
             .OrderBy(restriction => restriction.StartDate)
             .ThenBy(restriction => restriction.Title)
             .ToList();
