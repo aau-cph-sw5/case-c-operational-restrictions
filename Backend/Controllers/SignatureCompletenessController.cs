@@ -24,7 +24,8 @@ public class SignatureCompletenessController : ApiControllerBase
     /// every restriction in force, with every unsigned combination identifiable, the
     /// count of outstanding signatures, and the time the report was computed.
     /// </summary>
-    /// <response code="200">Returns the signature completeness report</response>
+    /// <response code="200">The report was computed successfully.</response>
+    /// <response code="403">The user has no role granting OperationalRestriction:Read</response>
     [HttpGet]
     [RequiresPermission(Permissions.OperationalRestrictionRead)]
     public async Task<ActionResult<SignatureCompletenessReportDto>> Get()
