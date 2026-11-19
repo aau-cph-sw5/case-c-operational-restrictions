@@ -33,13 +33,15 @@ function toOverviewItem(restriction: RestrictionDto): DrItem {
           : "alle";
 
   const statusKey: DRStatus =
-    category === "kladde"
-      ? "kladde"
-      : category === "arkiv"
-        ? "arkiv"
-        : restriction.status === "Active"
-          ? "aktiv"
-          : "afventer_deaktivering";
+    restriction.status === "PendingControlRoomSupervisorApproval"
+      ? "afventer_implementering"
+      : category === "kladde"
+        ? "kladde"
+        : category === "arkiv"
+          ? "arkiv"
+          : restriction.status === "Active"
+            ? "aktiv"
+            : "afventer_deaktivering";
 
   return {
     id: restriction.id,
