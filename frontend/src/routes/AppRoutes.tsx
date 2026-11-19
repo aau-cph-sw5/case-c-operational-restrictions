@@ -29,7 +29,7 @@ export function AppRoutes() {
               element={<RestrictionDetailPage />}
             />
             <Route path="/overview" element={<OverviewPage />} />
-            <Route 
+            <Route
               path="/signatures/overview"
               element={<SignatureOverviewPage />}
             />
