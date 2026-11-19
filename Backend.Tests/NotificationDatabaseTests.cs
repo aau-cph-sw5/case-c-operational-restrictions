@@ -51,13 +51,13 @@ public class NotificationDatabaseTests
             LastError = "Simulated delivery failure"
         });
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         db.ChangeTracker.Clear();
 
         var saved = await db.Notifications
             .Include(n => n.Deliveries)
-            .SingleAsync(n => n.Id == notificationId);
+            .SingleAsync(n => n.Id == notificationId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(userId, saved.RecipientUserId);
         Assert.Single(saved.Deliveries);
