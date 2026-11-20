@@ -15,7 +15,7 @@ public class OperationalRestrictionService
     private readonly IOperationalRestrictionRepository _repository;
     private readonly IRestrictionTransitionEventRepository _transitionEventRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ISignatureService? _signatureService;
+    private readonly ISignatureService _signatureService;
 
     public OperationalRestrictionService(
         RestrictionLifecycleService lifecycleService,
@@ -28,7 +28,8 @@ public class OperationalRestrictionService
         _repository = repository;
         _transitionEventRepository = transitionEventRepository;
         _unitOfWork = unitOfWork;
-        _signatureService = signatureService;
+        _signatureService = signatureService
+            ?? throw new ArgumentNullException(nameof(signatureService));
     }
 
     /// <summary>
@@ -118,7 +119,7 @@ public class OperationalRestrictionService
         OperationalRestriction restriction)
     {
         var dto = OperationalRestrictionDto.FromOperationalRestrictionToDto(restriction);
-        var originatorSignature = _signatureService?.GetOriginatorSignature(restriction.RestrictionId);
+        var originatorSignature = _signatureService.GetOriginatorSignature(restriction.RestrictionId);
         if (originatorSignature != null && dto.OriginatorSignature == null)
             dto.OriginatorSignature = SignatureDto.FromDalEntity(originatorSignature);
 
@@ -156,9 +157,6 @@ public class OperationalRestrictionService
 
     public async Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId)
     {
-        if (_signatureService == null)
-            throw new InvalidOperationException("SignatureService is not configured.");
-
         var restriction = await _repository.GetByIdAsync(id)
             ?? throw new OperationalRestrictionNotFoundException(id);
 
@@ -197,9 +195,6 @@ public class OperationalRestrictionService
     /// </summary>
     public async Task<Signature> SignControlRoomSupervisorApprovalAsync(Guid id, Guid signerId)
     {
-        if (_signatureService == null)
-            throw new InvalidOperationException("SignatureService is not configured.");
-
         var signatureService = _signatureService;
 
         var restriction = await _repository.GetByIdAsync(id)
@@ -279,9 +274,6 @@ public class OperationalRestrictionService
         Guid id,
         Guid approverId)
     {
-        if (_signatureService == null)
-            throw new InvalidOperationException("SignatureService is not configured.");
-
         var restriction = await GetRestrictionOrThrowAsync(id);
 
         // Separation of duties: even with an approving role, the originator
