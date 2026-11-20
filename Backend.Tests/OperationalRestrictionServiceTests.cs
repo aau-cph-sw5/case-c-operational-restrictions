@@ -36,7 +36,8 @@ public class OperationalRestrictionCreationTests
             lifecycle,
             new OperationalRestrictionRepository(_appDbContext),
             new RestrictionTransitionEventRepository(_appDbContext),
-            new UnitOfWork(_appDbContext));
+            new UnitOfWork(_appDbContext),
+            new SignatureService(_appDbContext));
     }
 
     [Fact]
