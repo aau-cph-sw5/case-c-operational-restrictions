@@ -1,12 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePwaInstall } from "../hooks/usePwaInstall";
 
 export function InstallButton() {
   const { isInstallable, isIos, canPromptDirectly, promptInstall } =
     usePwaInstall();
-  const [showInstructions, setShowInstructions] = useState(false);
 
-  if (!isInstallable) {
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia("(max-width: 699px)").matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 699px)");
+
+    const handleResize = (event: MediaQueryListEvent) => {
+      setIsMobile(event.matches);
+    };
+
+    setIsMobile(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleResize);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleResize);
+    };
+  }, []);
+
+  if (!isInstallable || isMobile) {
     return null;
   }
 
@@ -96,6 +115,7 @@ export function InstallButton() {
             <strong style={{ color: "#863bff" }}>
               {isIos ? "Install on iOS" : "Install App"}
             </strong>
+
             <button
               type="button"
               onClick={() => setShowInstructions(false)}
@@ -112,11 +132,11 @@ export function InstallButton() {
               ×
             </button>
           </div>
+
           {isIos ? (
             <ol style={{ paddingLeft: "1.2rem", margin: 0 }}>
               <li>
-                Tap the <strong>Share</strong> button (
-                <span aria-hidden="true">⎋</span>) in Safari's toolbar.
+                Tap the <strong>Share</strong> button in Safari's toolbar.
               </li>
               <li style={{ marginTop: "0.25rem" }}>
                 Scroll down and tap <strong>Add to Home Screen</strong>.
@@ -125,13 +145,12 @@ export function InstallButton() {
           ) : (
             <ul style={{ paddingLeft: "1.2rem", margin: 0 }}>
               <li>
-                <strong>Chrome / Edge (Desktop):</strong> Click the install icon
-                (⊕) in your browser address bar, or use the menu (⋮) &rarr;
-                "Install Metro Operational Restrictions".
+                <strong>Chrome / Edge:</strong> Click the install icon in the
+                address bar, or open the browser menu and choose the install
+                option.
               </li>
               <li style={{ marginTop: "0.5rem" }}>
-                <strong>Mobile:</strong> Open in Chrome (Android) or Safari
-                (iOS) to install directly to your device home screen.
+                <strong>Mobile:</strong> Use your browser's install option.
               </li>
             </ul>
           )}

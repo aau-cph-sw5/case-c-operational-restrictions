@@ -85,14 +85,12 @@ describe("RestrictionDetailPage", () => {
   it("fetches only the requested restriction by id", async () => {
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(mocks.getRestrictionById).toHaveBeenCalledTimes(1);
     expect(mocks.getRestrictionById).toHaveBeenCalledWith("restriction-1");
   });
 
   it("renders id, state badge, dates in local and UTC, and description", async () => {
     renderPage();
-
     expect(await screen.findByText("restriction-1")).toBeInTheDocument();
     expect(screen.getByTestId("status-badge")).toHaveTextContent("Kladde");
     expect(screen.getByTestId("start-utc")).toHaveTextContent(
@@ -113,7 +111,6 @@ describe("RestrictionDetailPage", () => {
       reviewDescription: "Please add the affected track section.",
     });
     renderPage();
-
     const notice = await screen.findByTestId("requested-changes-notice");
     expect(notice).toHaveTextContent("Please add the affected track section.");
   });
@@ -121,7 +118,6 @@ describe("RestrictionDetailPage", () => {
   it("does not show a requested-changes notice for a draft", async () => {
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(
       screen.queryByTestId("requested-changes-notice"),
     ).not.toBeInTheDocument();
@@ -139,7 +135,6 @@ describe("RestrictionDetailPage", () => {
     });
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(
       screen.queryByTestId("requested-changes-notice"),
     ).not.toBeInTheDocument();
@@ -156,7 +151,6 @@ describe("RestrictionDetailPage", () => {
       reviewDescription: "Please add the affected track section.",
     });
     renderPage();
-
     expect(await screen.findByTestId("review-comment")).toHaveTextContent(
       "Please add the affected track section.",
     );
@@ -170,7 +164,6 @@ describe("RestrictionDetailPage", () => {
     });
     renderPage();
     await screen.findByTestId("requested-changes-notice");
-
     expect(screen.queryByTestId("review-comment")).not.toBeInTheDocument();
   });
 
@@ -186,7 +179,6 @@ describe("RestrictionDetailPage", () => {
     });
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(screen.queryByTestId("review-comment")).not.toBeInTheDocument();
   });
 
@@ -199,7 +191,6 @@ describe("RestrictionDetailPage", () => {
 
   it("shows the Unsigned Draft badge when there are no signatures", async () => {
     renderPage();
-
     expect(
       await screen.findByText("Ikke underskrevet kladde"),
     ).toBeInTheDocument();
@@ -209,7 +200,6 @@ describe("RestrictionDetailPage", () => {
   it("shows signer, role and UTC timestamp for an existing signature", async () => {
     mocks.getRestrictionById.mockResolvedValue(signed);
     renderPage();
-
     const block = await screen.findByTestId("signature-block");
     expect(block).toHaveTextContent("Olivia Originator");
     expect(block).toHaveTextContent("Originator");
@@ -225,14 +215,12 @@ describe("RestrictionDetailPage", () => {
   it("shows the sign button for the originator of a draft", async () => {
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(signButton()).toBeInTheDocument();
   });
 
   it("shows a temporary, disabled edit button next to sign for the originator", async () => {
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(screen.getByRole("button", { name: /rediger/i })).toBeDisabled();
   });
 
@@ -243,7 +231,6 @@ describe("RestrictionDetailPage", () => {
     });
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(signButton()).not.toBeInTheDocument();
   });
 
@@ -251,7 +238,6 @@ describe("RestrictionDetailPage", () => {
     mocks.getRestrictionById.mockResolvedValue(signed);
     renderPage();
     await screen.findByTestId("signature-block");
-
     expect(signButton()).not.toBeInTheDocument();
   });
 
@@ -264,17 +250,13 @@ describe("RestrictionDetailPage", () => {
     );
     renderPage();
     await screen.findByText("restriction-1");
-
     fireEvent.click(signButton()!);
-
     const pending = await screen.findByRole("button", {
       name: /underskriver/i,
     });
     expect(pending).toBeDisabled();
     expect(mocks.signRestriction).toHaveBeenCalledWith("restriction-1");
-
     resolveSign(signed);
-
     await waitFor(() =>
       expect(screen.getByTestId("status-badge")).toHaveTextContent(
         "Afventer godkendelse",
@@ -293,9 +275,7 @@ describe("RestrictionDetailPage", () => {
       .mockResolvedValueOnce(signed);
     renderPage();
     await screen.findByText("restriction-1");
-
     fireEvent.click(signButton()!);
-
     await waitFor(() =>
       expect(screen.getByTestId("status-badge")).toHaveTextContent(
         "Afventer godkendelse",
@@ -314,9 +294,7 @@ describe("RestrictionDetailPage", () => {
       mocks.signRestriction.mockRejectedValue(apiError(status));
       renderPage();
       await screen.findByText("restriction-1");
-
       fireEvent.click(signButton()!);
-
       expect(await screen.findByRole("alert")).toHaveTextContent(message);
       expect(screen.getByTestId("status-badge")).toHaveTextContent("Kladde");
       expect(screen.getByText("Ikke underskrevet kladde")).toBeInTheDocument();
@@ -327,14 +305,12 @@ describe("RestrictionDetailPage", () => {
   it("shows a not found message on 404", async () => {
     mocks.getRestrictionById.mockRejectedValue(apiError(404));
     renderPage();
-
     expect(await screen.findByRole("alert")).toHaveTextContent(/ikke fundet/i);
   });
 
   it("shows a permission message on 403", async () => {
     mocks.getRestrictionById.mockRejectedValue(apiError(403));
     renderPage();
-
     expect(await screen.findByRole("alert")).toHaveTextContent(/ikke adgang/i);
   });
 
@@ -345,7 +321,6 @@ describe("RestrictionDetailPage", () => {
     });
     renderPage();
     await screen.findByText("restriction-1");
-
     expect(screen.getByTestId("end-local")).toHaveTextContent("–");
     expect(screen.queryByTestId("end-utc")).not.toBeInTheDocument();
   });
@@ -356,7 +331,6 @@ describe("RestrictionDetailPage", () => {
       state: { notification: "Driftsrestriktion oprettet som kladde." },
     });
     await screen.findByText("restriction-1");
-
     expect(screen.getByTestId("navigation-notification")).toHaveTextContent(
       "Driftsrestriktion oprettet som kladde.",
     );
@@ -483,15 +457,19 @@ describe("RestrictionDetailPage", () => {
       email: "dom@example.test",
       roles: ["DutyOperationsManager"],
     };
+
     const pending: RestrictionDto = { ...signed, status: "PendingDOMApproval" };
+
     const returned: RestrictionDto = {
       ...pending,
       id: "restriction-2",
       status: "ReturnedForChanges",
       reviewDescription: "Add the affected track section.",
     };
+
     const requestButton = () =>
       screen.queryByRole("button", { name: /anmod om ændringer/i });
+
     const commentField = () =>
       screen.getByLabelText(/kommentar til originator/i);
 
@@ -503,7 +481,6 @@ describe("RestrictionDetailPage", () => {
     it("shows the request-changes form to a DOM for a pending restriction", async () => {
       renderPage();
       await screen.findByText("restriction-1");
-
       expect(commentField()).toBeInTheDocument();
       expect(requestButton()).toBeEnabled();
     });
@@ -512,7 +489,6 @@ describe("RestrictionDetailPage", () => {
       mocks.getCurrentUser.mockResolvedValue(originator);
       renderPage();
       await screen.findByText("restriction-1");
-
       expect(requestButton()).not.toBeInTheDocument();
     });
 
@@ -520,7 +496,6 @@ describe("RestrictionDetailPage", () => {
       mocks.getCurrentUser.mockResolvedValue({ ...dom, roles: ["Operator"] });
       renderPage();
       await screen.findByText("restriction-1");
-
       expect(requestButton()).not.toBeInTheDocument();
     });
 
@@ -531,17 +506,14 @@ describe("RestrictionDetailPage", () => {
       });
       renderPage();
       await screen.findByText("restriction-1");
-
       expect(requestButton()).not.toBeInTheDocument();
     });
 
     it("requires a comment before sending", async () => {
       renderPage();
       await screen.findByText("restriction-1");
-
       fireEvent.change(commentField(), { target: { value: "   " } });
       fireEvent.click(requestButton()!);
-
       expect(
         await screen.findByText("Skriv en kommentar til originator."),
       ).toBeInTheDocument();
@@ -553,12 +525,10 @@ describe("RestrictionDetailPage", () => {
       mocks.requestChanges.mockResolvedValue(returned);
       renderPage();
       await screen.findByText("restriction-1");
-
       fireEvent.change(commentField(), {
         target: { value: "Add the affected track section." },
       });
       fireEvent.click(requestButton()!);
-
       expect(
         await screen.findByTestId("request-changes-success"),
       ).toHaveTextContent(/returneret til originator/i);
@@ -582,10 +552,8 @@ describe("RestrictionDetailPage", () => {
         mocks.requestChanges.mockRejectedValue(apiError(status));
         renderPage();
         await screen.findByText("restriction-1");
-
         fireEvent.change(commentField(), { target: { value: "Fix it" } });
         fireEvent.click(requestButton()!);
-
         expect(await screen.findByRole("alert")).toHaveTextContent(message);
         expect(screen.getByTestId("status-badge")).toHaveTextContent(
           "Afventer DOM-godkendelse",

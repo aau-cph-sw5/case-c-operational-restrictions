@@ -27,7 +27,8 @@ public class RestrictionSigningTests
     public RestrictionSigningTests()
     {
         _dbContext = TestDatabase.CreateSeededContext();
-        _signatureService = new SignatureService(_dbContext);
+        var notificationService = new NotificationService(_dbContext);
+        _signatureService = new SignatureService(_dbContext, notificationService);
         _logger = new LoggerFactory().CreateLogger<RestrictionsController>();
 
         var lifecycle = new RestrictionLifecycleService(
