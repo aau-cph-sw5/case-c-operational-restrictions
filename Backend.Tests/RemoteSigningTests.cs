@@ -330,14 +330,14 @@ public class RemoteSigningTests
     }
 
     [Fact]
-    public void StatusEndpointReportsSignedWithTheCommittedSignature()
+    public async Task StatusEndpointReportsSignedWithTheCommittedSignature()
     {
         var required = _signatureService.CreateRequiredSignatures(Guid.NewGuid()).First();
         var attemptKey = Guid.NewGuid();
         _signatureService.Sign(required.Id, required.SigneeId, new SigningContext(DeviceClass.Phone, PhoneAgent, attemptKey));
         var controller = CreateSignatureController(required.SigneeId);
 
-        var response = controller.GetAttemptStatus(attemptKey).GetAwaiter().GetResult();
+        var response = await controller.GetAttemptStatus(attemptKey);
 
         var status = Assert.IsType<SigningAttemptStatusDto>(Assert.IsType<OkObjectResult>(response.Result).Value);
         Assert.Equal(SigningAttemptStatusDto.Signed, status.Status);
@@ -345,11 +345,11 @@ public class RemoteSigningTests
     }
 
     [Fact]
-    public void StatusEndpointReportsNotSignedForAnUnknownKey()
+    public async Task StatusEndpointReportsNotSignedForAnUnknownKey()
     {
         var controller = CreateSignatureController(Guid.NewGuid());
 
-        var response = controller.GetAttemptStatus(Guid.NewGuid()).GetAwaiter().GetResult();
+        var response = await controller.GetAttemptStatus(Guid.NewGuid());
 
         var status = Assert.IsType<SigningAttemptStatusDto>(Assert.IsType<OkObjectResult>(response.Result).Value);
         Assert.Equal(SigningAttemptStatusDto.NotSigned, status.Status);
@@ -357,14 +357,14 @@ public class RemoteSigningTests
     }
 
     [Fact]
-    public void StatusEndpointDoesNotRevealAnotherUsersSignature()
+    public async Task StatusEndpointDoesNotRevealAnotherUsersSignature()
     {
         var required = _signatureService.CreateRequiredSignatures(Guid.NewGuid()).First();
         var attemptKey = Guid.NewGuid();
         _signatureService.Sign(required.Id, required.SigneeId, new SigningContext(DeviceClass.Phone, PhoneAgent, attemptKey));
         var controller = CreateSignatureController(Guid.NewGuid());
 
-        var response = controller.GetAttemptStatus(attemptKey).GetAwaiter().GetResult();
+        var response = await controller.GetAttemptStatus(attemptKey);
 
         var status = Assert.IsType<SigningAttemptStatusDto>(Assert.IsType<OkObjectResult>(response.Result).Value);
         Assert.Equal(SigningAttemptStatusDto.NotSigned, status.Status);
