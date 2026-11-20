@@ -4,6 +4,7 @@ import { SuccessAlert } from "@/components/common/SuccessAlert.tsx";
 import { TemporaryBackButton } from "@/components/common/TemporaryBackButton.tsx";
 import { RequestedChangesNotice } from "@/components/RestrictionDetail/RequestedChangesNotice.tsx";
 import { RestrictionActions } from "@/components/RestrictionDetail/RestrictionActions.tsx";
+import { SigningOutcomeNotice } from "@/components/RestrictionDetail/SigningOutcomeNotice.tsx";
 import { RestrictionDetails } from "@/components/RestrictionDetail/RestrictionDetails.tsx";
 import { RestrictionHeader } from "@/components/RestrictionDetail/RestrictionHeader.tsx";
 import { ReviewCommentCard } from "@/components/RestrictionDetail/ReviewCommentCard.tsx";
@@ -20,8 +21,10 @@ import { useLocation, useParams } from "react-router-dom";
 import { SignatureSection } from "../components/SignatureSection";
 import { useRestrictionPermissions } from "../hooks/useRestrictionPermissions";
 import { useCurrentUser } from "../hooks/useCurrentUser";
+import { useSigningAttempt } from "../hooks/useSigningAttempt";
 import { useRestriction } from "../hooks/useRestriction";
 import { restrictionTexts as t } from "../lib/restrictionTexts";
+import type { RestrictionDto, SignatureDto } from "../types/restrictionDto";
 import {
   getRestrictionById,
   requestChanges,
@@ -32,13 +35,6 @@ import {
 export function RestrictionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const [signing, setSigning] = useState(false);
-  const [signError, setSignError] = useState<string | null>(null);
-  const [signingForImplementation, setSigningForImplementation] =
-    useState(false);
-  const [signForImplementationError, setSignForImplementationError] = useState<
-    string | null
-  >(null);
   const [signForImplementationSuccess, setSignForImplementationSuccess] =
     useState(false);
   const [requestingChanges, setRequestingChanges] = useState(false);
@@ -82,48 +78,56 @@ export function RestrictionDetailPage() {
       } | null
     )?.successMessage;
 
-  async function handleSign() {
-    if (!restriction) return;
-
-    setSigning(true);
-    setSignError(null);
-
-    try {
+  // Both signing actions run through useSigningAttempt: the UI only shows a
+  // signature once the server has confirmed it, and a dropped connection is
+  // resolved by asking the server what happened to the attempt.
+  const signAttempt = useSigningAttempt<RestrictionDto | null>({
+    send: (attemptKey) => signRestriction(restriction?.id ?? "", attemptKey),
+    onSigned: async (result) => {
       // The response may or may not carry the updated restriction; if not,
       // re-fetch this one restriction so the signature block is shown.
-      const updated =
-        (await signRestriction(restriction.id)) ??
-        (await getRestrictionById(restriction.id));
-      setRestriction(updated);
-    } catch (error) {
-      // State stays Draft; the restriction in memory is left untouched.
-      setSignError(signErrorMessage(error));
-    } finally {
-      setSigning(false);
-    }
+      if (!restriction) return;
+      setRestriction(result ?? (await getRestrictionById(restriction.id)));
+    },
+    errorMessage: signErrorMessage,
+  });
+
+  const signForImplementationAttempt = useSigningAttempt<SignatureDto>({
+    send: (attemptKey) =>
+      signForImplementation(restriction?.id ?? "", attemptKey),
+    onSigned: async (signature) => {
+      if (!restriction) return;
+      if (signature) {
+        setRestriction({
+          ...restriction,
+          status: "Active",
+          signatures: [...restriction.signatures, signature],
+        });
+      } else {
+        setRestriction(await getRestrictionById(restriction.id));
+      }
+      setSignForImplementationSuccess(true);
+    },
+    errorMessage: signForImplementationErrorMessage,
+  });
+
+  async function handleSign() {
+    if (!restriction) return;
+    await signAttempt.start();
   }
 
   async function handleSignForImplementation() {
     if (!restriction) return;
-
-    setSigningForImplementation(true);
-    setSignForImplementationError(null);
     setSignForImplementationSuccess(false);
-
-    try {
-      const signature = await signForImplementation(restriction.id);
-      setRestriction({
-        ...restriction,
-        status: "Active",
-        signatures: [...restriction.signatures, signature],
-      });
-      setSignForImplementationSuccess(true);
-    } catch (error) {
-      setSignForImplementationError(signForImplementationErrorMessage(error));
-    } finally {
-      setSigningForImplementation(false);
-    }
+    await signForImplementationAttempt.start();
   }
+
+  const outcomeUnknownAttempt =
+    signAttempt.phase === "outcomeUnknown"
+      ? signAttempt
+      : signForImplementationAttempt.phase === "outcomeUnknown"
+        ? signForImplementationAttempt
+        : null;
 
   async function handleRequestChanges(comment: string): Promise<boolean> {
     if (!restriction) return false;
@@ -209,23 +213,34 @@ export function RestrictionDetailPage() {
         </SuccessAlert>
       )}
 
-      {signError && <ErrorAlert>{signError}</ErrorAlert>}
+      {signAttempt.error && <ErrorAlert>{signAttempt.error}</ErrorAlert>}
 
-      {signForImplementationError && (
-        <ErrorAlert>{signForImplementationError}</ErrorAlert>
+      {signForImplementationAttempt.error && (
+        <ErrorAlert>{signForImplementationAttempt.error}</ErrorAlert>
       )}
 
       {requestChangesError && <ErrorAlert>{requestChangesError}</ErrorAlert>}
 
+      {outcomeUnknownAttempt && (
+        <SigningOutcomeNotice
+          checking={false}
+          onCheck={() => void outcomeUnknownAttempt.checkOutcome()}
+        />
+      )}
+
       <RestrictionActions
-        canSign={canSign}
-        signing={signing}
+        canSign={canSign && !outcomeUnknownAttempt}
+        signing={signAttempt.phase === "signing"}
         onSign={handleSign}
         canRequestChanges={canRequestChanges}
         submittingChanges={requestingChanges}
         onRequestChanges={handleRequestChanges}
-        canSignForImplementation={canSignForImplementation}
-        signingForImplementation={signingForImplementation}
+        canSignForImplementation={
+          canSignForImplementation && !outcomeUnknownAttempt
+        }
+        signingForImplementation={
+          signForImplementationAttempt.phase === "signing"
+        }
         onSignForImplementation={handleSignForImplementation}
       />
     </main>

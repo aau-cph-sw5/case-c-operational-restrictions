@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getRestrictionById: vi.fn(),
   signRestriction: vi.fn(),
   signForImplementation: vi.fn(),
+  getSigningAttemptStatus: vi.fn(),
   requestChanges: vi.fn(),
   getCurrentUser: vi.fn(),
 }));
@@ -18,6 +19,7 @@ vi.mock("../services/restrictionApi", () => ({
   getRestrictionById: mocks.getRestrictionById,
   signRestriction: mocks.signRestriction,
   signForImplementation: mocks.signForImplementation,
+  getSigningAttemptStatus: mocks.getSigningAttemptStatus,
   requestChanges: mocks.requestChanges,
 }));
 
@@ -271,7 +273,10 @@ describe("RestrictionDetailPage", () => {
       name: /underskriver/i,
     });
     expect(pending).toBeDisabled();
-    expect(mocks.signRestriction).toHaveBeenCalledWith("restriction-1");
+    expect(mocks.signRestriction).toHaveBeenCalledWith(
+      "restriction-1",
+      expect.any(String),
+    );
 
     resolveSign(signed);
 
@@ -431,7 +436,10 @@ describe("RestrictionDetailPage", () => {
         name: /underskriver/i,
       });
       expect(pending).toBeDisabled();
-      expect(mocks.signForImplementation).toHaveBeenCalledWith("restriction-1");
+      expect(mocks.signForImplementation).toHaveBeenCalledWith(
+        "restriction-1",
+        expect.any(String),
+      );
 
       resolveSign(supervisorSignature);
 

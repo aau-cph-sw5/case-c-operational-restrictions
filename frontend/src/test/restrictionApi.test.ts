@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getRestrictionById,
+  getSigningAttemptStatus,
   requestChanges,
   signForImplementation,
   signRestriction,
@@ -125,6 +126,109 @@ describe("restrictionApi", () => {
 
     await expect(signForImplementation("restriction-1")).rejects.toMatchObject({
       status: 409,
+    });
+  });
+  it("sends the attempt key as an Idempotency-Key header when signing", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: "signature-1" }),
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await signRestriction("restriction-1", "key-1");
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers["Idempotency-Key"]).toBe("key-1");
+  });
+
+  it("sends the attempt key when signing for implementation", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ signeeId: "s", signeeRole: "r", signedAt: "t" }),
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await signForImplementation("restriction-1", "key-2");
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers["Idempotency-Key"]).toBe("key-2");
+  });
+
+  it("maps the recorded device class and ignores unexpected values", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            signeeId: "s",
+            signeeRole: "r",
+            signedAt: "t",
+            deviceClass: "Tablet",
+          }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            signeeId: "s",
+            signeeRole: "r",
+            signedAt: "t",
+            deviceClass: "Toaster",
+          }),
+        } as Response),
+    );
+
+    expect((await signForImplementation("r1")).deviceClass).toBe("Tablet");
+    expect((await signForImplementation("r1")).deviceClass).toBeUndefined();
+  });
+
+  it("reads the status of a signing attempt", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        attemptKey: "key-1",
+        status: "Signed",
+        signature: {
+          signeeId: "s",
+          signeeRole: "Originator",
+          signedAt: "2026-11-18T10:00:00Z",
+          deviceClass: "Phone",
+        },
+      }),
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const status = await getSigningAttemptStatus("key-1");
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/signature/attempts/key-1");
+    expect(status.status).toBe("Signed");
+    expect(status.signature?.deviceClass).toBe("Phone");
+  });
+
+  it("reports NotSigned when the attempt left no signature", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ attemptKey: "key-1", status: "NotSigned" }),
+      } as Response),
+    );
+
+    expect(await getSigningAttemptStatus("key-1")).toEqual({
+      status: "NotSigned",
+      signature: undefined,
+    });
+  });
+
+  it("rejects with the HTTP status when the status check fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 401 } as Response),
+    );
+
+    await expect(getSigningAttemptStatus("key-1")).rejects.toMatchObject({
+      status: 401,
     });
   });
 });

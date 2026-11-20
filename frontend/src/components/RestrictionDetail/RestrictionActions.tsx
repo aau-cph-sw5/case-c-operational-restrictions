@@ -36,8 +36,9 @@ export function RestrictionActions({
       )}
 
       {canSign && (
-        <div className="flex flex-wrap gap-3 pb-4">
+        <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:flex-wrap">
           <RestrictionActionButton
+            className="w-full sm:w-auto"
             onClick={onSign}
             loading={signing}
             loadingLabel={t.signing}
@@ -49,6 +50,7 @@ export function RestrictionActions({
 
           {/* TEMPORARY: edit flow is not implemented yet. */}
           <RestrictionActionButton
+            className="w-full sm:w-auto"
             disabled
             title={t.editComingSoon}
             icon={<FilePen className="size-4" aria-hidden />}
@@ -59,8 +61,9 @@ export function RestrictionActions({
       )}
 
       {canSignForImplementation && (
-        <div className="flex flex-wrap gap-3 pb-4">
+        <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:flex-wrap">
           <RestrictionActionButton
+            className="w-full sm:w-auto"
             onClick={onSignForImplementation}
             loading={signingForImplementation}
             loadingLabel={t.signing}

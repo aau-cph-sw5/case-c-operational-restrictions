@@ -16,7 +16,10 @@ public interface IOperationalRestrictionService
 
     Task<OperationalRestrictionDto> GetRestrictionByIdAsync(Guid id);
     Task<List<OperationalRestrictionDto>> GetAllAsync();
-    Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId);
+    Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(
+          Guid id, Guid signerId, SigningContext? signingContext = null);
+    Task<Signature?> FindReplayedSignatureAsync(
+          Guid attemptKey, Guid signerId, string expectedRole);
 
     Task<List<OperationalRestrictionDto>> GetActiveRestrictionsAsync();
 
@@ -53,5 +56,5 @@ public interface IOperationalRestrictionService
           Guid id,
           Guid actorId);
     Task<Signature> SignControlRoomSupervisorApprovalAsync(
-          Guid id, Guid signerId);
+          Guid id, Guid signerId, SigningContext? signingContext = null);
 }

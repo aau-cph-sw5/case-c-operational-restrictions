@@ -80,3 +80,12 @@ public class NotControlRoomSupervisorException : Exception
     {
     }
 }
+
+// The same attempt key was already used for a different signing action.
+public class AttemptKeyReusedException : Exception
+{
+    public AttemptKeyReusedException(Guid attemptKey)
+        : base($"Attempt key {attemptKey} was already used for a different signing action")
+    {
+    }
+}

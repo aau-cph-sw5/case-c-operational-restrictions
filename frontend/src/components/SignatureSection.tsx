@@ -6,6 +6,20 @@ import type { SignatureDto } from "../types/restrictionDto";
 import { RestrictionInfoCard } from "./RestrictionInfoCard";
 import { Badge } from "./ui/badge";
 
+// Device class is evidence about how the signature was made; Unknown is not shown.
+function deviceLabel(deviceClass: SignatureDto["deviceClass"]): string | null {
+  switch (deviceClass) {
+    case "Phone":
+      return t.deviceClassPhone;
+    case "Tablet":
+      return t.deviceClassTablet;
+    case "Desktop":
+      return t.deviceClassDesktop;
+    default:
+      return null;
+  }
+}
+
 interface SignatureSectionProps {
   signatures: SignatureDto[];
   // Used as a display-name fallback when the signature only carries an id.
@@ -60,6 +74,17 @@ export function SignatureSection({
                     {formatUtc(signature.signedAt)}
                   </span>
                 </p>
+                {deviceLabel(signature.deviceClass) && (
+                  <p
+                    data-testid="signature-device"
+                    className="text-[20px] font-normal text-[#6B6B6B]"
+                  >
+                    {t.signedFromDevice}:{" "}
+                    <span className="text-black">
+                      {deviceLabel(signature.deviceClass)}
+                    </span>
+                  </p>
+                )}
               </RestrictionInfoCard>
             </li>
           ))}

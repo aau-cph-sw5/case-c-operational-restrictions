@@ -225,6 +225,12 @@ namespace Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AttemptKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DeviceClass")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("OperationalRestrictionId")
                         .HasColumnType("uuid");
 
@@ -238,6 +244,10 @@ namespace Backend.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("SigneeRole")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserAgent")
                         .IsRequired()
                         .HasColumnType("text");
 

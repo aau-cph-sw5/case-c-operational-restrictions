@@ -115,6 +115,18 @@ public class RestrictionsController : ApiControllerBase
     [RequiresPermission(Permissions.OperationalRestrictionSign)]
     public async Task<IActionResult> Sign(Guid id)
     {
+        if (!TryGetSigningContext(out var signingContext))
+        {
+            return InvalidAttemptKeyResult();
+        }
+
+        // A retry of an attempt that already committed gets the committed signature back.
+        var replayed = await ReplayCommittedSignatureAsync(signingContext, RoleNames.Originator);
+        if (replayed is not null)
+        {
+            return replayed;
+        }
+
         OperationalRestrictionDto restriction;
         try
         {
@@ -131,7 +143,7 @@ public class RestrictionsController : ApiControllerBase
             return validationResult;
         }
 
-        return await SignRestrictionAsync(restriction.Id);
+        return await SignRestrictionAsync(restriction.Id, signingContext);
     }
 
     [HttpPost("{id:guid}/request-changes")]
@@ -166,8 +178,7 @@ public class RestrictionsController : ApiControllerBase
 
     /// <summary>
     /// Approves a restriction that is pending duty operations manager approval.
-    /// The originator of a restriction can never approve it themselves, even if
-    /// their role grants the approval permission.
+    /// The originator of a restriction can never approve it themselves, even if their role grants the approval permission.
     /// </summary>
     /// <response code="200">Returns the approved restriction</response>
     /// <response code="403">The user has no role granting OperationalRestriction:Approve, or they created the restriction themselves</response>
@@ -204,7 +215,7 @@ public class RestrictionsController : ApiControllerBase
     }
 
     /// <summary>
-    /// Signs an operational restriction for implementation as the control room
+    /// Signs an operational restriction for implementation as the control room 
     /// supervisor, moving it from PendingControlRoomSupervisorApproval to Active.
     /// </summary>
     /// <response code="403">The authenticated user is not a control room supervisor</response>
@@ -215,6 +226,17 @@ public class RestrictionsController : ApiControllerBase
     [HttpPost("{id:guid}/sign-for-implementation")]
     public async Task<IActionResult> SignForImplementation(Guid id)
     {
+        if (!TryGetSigningContext(out var signingContext))
+        {
+            return InvalidAttemptKeyResult();
+        }
+
+        var replayed = await ReplayCommittedSignatureAsync(signingContext, RoleNames.ControlroomSupervisor);
+        if (replayed is not null)
+        {
+            return replayed;
+        }
+
         OperationalRestrictionDto restriction;
         try
         {
@@ -238,7 +260,7 @@ public class RestrictionsController : ApiControllerBase
         try
         {
             var signature =
-                await _operationalRestrictionService.SignControlRoomSupervisorApprovalAsync(id, CurrentUserId);
+                await _operationalRestrictionService.SignControlRoomSupervisorApprovalAsync(id, CurrentUserId, signingContext);
             return Ok(SignatureDto.FromDalEntity(signature));
         }
         catch (OperationalRestrictionNotFoundException exception)
@@ -292,12 +314,34 @@ public class RestrictionsController : ApiControllerBase
             || string.IsNullOrWhiteSpace(restriction.RestrictionDescription);
     }
 
-    private async Task<IActionResult> SignRestrictionAsync(Guid id)
+    // Answers a retry of a signing attempt that already committed. Returns null when the attempt
+    // has no key or left no signature, so the signing action proceeds as normal.
+    private async Task<IActionResult?> ReplayCommittedSignatureAsync(SigningContext signingContext, string expectedRole)
+    {
+        if (signingContext.AttemptKey is not { } attemptKey)
+        {
+            return null;
+        }
+
+        try
+        {
+            var signature = await _operationalRestrictionService
+                .FindReplayedSignatureAsync(attemptKey, CurrentUserId, expectedRole);
+
+            return signature is null ? null : Ok(SignatureDto.FromDalEntity(signature));
+        }
+        catch (AttemptKeyReusedException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+    }
+
+    private async Task<IActionResult> SignRestrictionAsync(Guid id, SigningContext signingContext)
     {
         try
         {
             var signature = await _operationalRestrictionService
-                .SignOriginatorAndAdvanceToPendingApprovalAsync(id, CurrentUserId);
+                .SignOriginatorAndAdvanceToPendingApprovalAsync(id, CurrentUserId, signingContext);
             return Ok(SignatureDto.FromDalEntity(signature));
         }
         catch (OperationalRestrictionNotFoundException exception)

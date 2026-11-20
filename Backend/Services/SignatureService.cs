@@ -3,6 +3,7 @@ using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+using Backend.Models.Requests;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,81 @@ public class SignatureService(
     private static readonly List<RequiresSignature> _requiredSignatures = [];
     //Midlertidigt mens der ikke er database
     private static readonly List<Signature> _signatures = [];
+    // Guards check-and-add on the in-memory lists, so a double tap cannot create two signatures.
+    private static readonly object _syncRoot = new();
+    // Held from the first write to the commit of a signing action, so a status lookup or a retry
+    // can only see a signature that is committed or has been discarded, never one in between.
+    private static readonly SemaphoreSlim _signingGate = new(1, 1);
+
+    public async Task<T> RunExclusiveAsync<T>(Func<Task<T>> signingAction)
+    {
+        await _signingGate.WaitAsync();
+        try
+        {
+            return await signingAction();
+        }
+        finally
+        {
+            _signingGate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Returns the committed signature of an earlier attempt with this key, or null if that attempt
+    /// left no signature. Waits for any signing action in flight. Throws if the key was used for a
+    /// different signing action than the expected one.
+    /// </summary>
+    public async Task<Signature?> FindReplayAsync(
+        Guid attemptKey, Guid signerUserId, string? expectedRole = null)
+    {
+        await _signingGate.WaitAsync();
+        try
+        {
+            return FindReplay(attemptKey, signerUserId, expectedRole);
+        }
+        finally
+        {
+            _signingGate.Release();
+        }
+    }
+
+    public Signature? FindReplay(
+        Guid attemptKey,
+        Guid signerUserId,
+        string? expectedRole = null,
+        Guid? expectedRequiresSignatureId = null)
+    {
+        var existing = FindByAttemptKey(attemptKey, signerUserId);
+        if (existing == null)
+            return null;
+
+        var matchesAction = (expectedRole == null || existing.SigneeRole == expectedRole)
+            && (expectedRequiresSignatureId == null || existing.RequiresSignatureId == expectedRequiresSignatureId);
+
+        if (!matchesAction)
+            throw new AttemptKeyReusedException(attemptKey);
+
+        return existing;
+    }
+
+    // The in-memory list is checked first, then the database, so the answer survives a restart
+    // for signatures that were persisted with their restriction version.
+    public Signature? FindByAttemptKey(Guid attemptKey, Guid signerUserId)
+    {
+        lock (_syncRoot)
+        {
+            var inMemory = _signatures.FirstOrDefault(
+                signature => signature.AttemptKey == attemptKey && signature.SigneeId == signerUserId);
+            if (inMemory != null)
+                return inMemory;
+        }
+
+        return _appDbContext.Set<Signature>()
+            .AsNoTracking()
+            .Where(signature => signature.AttemptKey == attemptKey && signature.SigneeId == signerUserId)
+            .OrderBy(signature => signature.SignedAt)
+            .FirstOrDefault();
+    }
 
     //Midlertidigt mens der ikke er database
     public Guid GetSomeRandomRequiredSignatureId()
@@ -76,36 +152,60 @@ public class SignatureService(
     /// The signer must be the user the signature is required from, and the required
     /// signature must still be unsigned and not invalidated by a newer restriction version.
     /// </summary>
-    public Signature Sign(Guid requiresSignatureId, Guid signerUserId)
+    public Signature Sign(Guid requiresSignatureId, Guid signerUserId, SigningContext? signingContext = null)
     {
+        var context = signingContext ?? SigningContext.Unknown;
         var requiredSignature = GetRequiresSignatureById(requiresSignatureId);
 
         if (requiredSignature.SigneeId != signerUserId)
             throw new NotRequiredSignerException(signerUserId, requiresSignatureId);
 
-        if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.PendingSignature)
-            throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
+        // Role names are read before taking the lock.
+        var roleNames = string.Join(", ", GetRoleNames(signerUserId));
 
-        var signature = new Signature
+        lock (_syncRoot)
         {
-            Id = Guid.NewGuid(),
-            RequiresSignatureId = requiredSignature.Id,
-            OperationalRestrictionId = requiredSignature.OperationalRestrictionId,
-            SigneeId = signerUserId,
-            SigneeRole = string.Join(", ", GetRoleNames(signerUserId)),
-            SignedAt = DateTime.UtcNow
-        };
-        //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
-        _signatures.Add(signature);
+            // A retry of an attempt that already committed gets the same signature back.
+            if (context.AttemptKey is { } attemptKey
+                && FindReplay(attemptKey, signerUserId, expectedRequiresSignatureId: requiredSignature.Id) is { } replayed)
+                return replayed;
 
-        //dette skal opdateres i databasen
-        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+            if (requiredSignature.RequiresSignatureStatus != RequiresSignatureStatus.PendingSignature)
+                throw new RequiresSignatureNotSignableException(requiresSignatureId, requiredSignature.RequiresSignatureStatus.ToString());
 
+            var signature = new Signature
+            {
+                Id = Guid.NewGuid(),
+                RequiresSignatureId = requiredSignature.Id,
+                OperationalRestrictionId = requiredSignature.OperationalRestrictionId,
+                SigneeId = signerUserId,
+                SigneeRole = roleNames,
+                SignedAt = DateTime.UtcNow,
+                DeviceClass = context.DeviceClass,
+                UserAgent = context.UserAgent,
+                AttemptKey = context.AttemptKey
+            };
+            //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
+            _signatures.Add(signature);
 
-        return signature;
+            //dette skal opdateres i databasen
+            requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+
+            return signature;
+        }
     }
 
-    public Signature SignOriginator(Guid operationalRestrictionId, Guid signerUserId)
+    public Signature SignOriginator(Guid operationalRestrictionId, Guid signerUserId, SigningContext? signingContext = null)
+    {
+        var context = signingContext ?? SigningContext.Unknown;
+
+        lock (_syncRoot)
+        {
+            return SignOriginatorLocked(operationalRestrictionId, signerUserId, context);
+        }
+    }
+
+    private static Signature SignOriginatorLocked(Guid operationalRestrictionId, Guid signerUserId, SigningContext context)
     {
         var existingSignature = _signatures.FirstOrDefault(signature =>
             signature.OperationalRestrictionId == operationalRestrictionId
@@ -135,7 +235,10 @@ public class SignatureService(
             OperationalRestrictionId = operationalRestrictionId,
             SigneeId = signerUserId,
             SigneeRole = RoleNames.Originator,
-            SignedAt = DateTime.UtcNow
+            SignedAt = DateTime.UtcNow,
+            DeviceClass = context.DeviceClass,
+            UserAgent = context.UserAgent,
+            AttemptKey = context.AttemptKey
         };
         _signatures.Add(signature);
         requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
@@ -156,13 +259,22 @@ public class SignatureService(
     /// Can only be signed once.
     /// </summary>
 
-    public Signature SignControlRoomSupervisor(Guid operationalRestrictionId, Guid signerUserId)
+    public Signature SignControlRoomSupervisor(Guid operationalRestrictionId, Guid signerUserId, SigningContext? signingContext = null)
     {
+        var context = signingContext ?? SigningContext.Unknown;
         var signer = _appDbContext.Users.SingleOrDefault(user => user.Id == signerUserId);
 
         if (signer == null || !GetRoleNames(signerUserId).Contains(RoleNames.ControlroomSupervisor))
             throw new NotControlRoomSupervisorException(signerUserId);
 
+        lock (_syncRoot)
+        {
+            return SignControlRoomSupervisorLocked(operationalRestrictionId, signerUserId, context);
+        }
+    }
+
+    private static Signature SignControlRoomSupervisorLocked(Guid operationalRestrictionId, Guid signerUserId, SigningContext context)
+    {
         var existingSignature = _signatures.FirstOrDefault(
             signature => signature.OperationalRestrictionId == operationalRestrictionId
                          && signature.SigneeRole == RoleNames.ControlroomSupervisor);
@@ -186,7 +298,10 @@ public class SignatureService(
             SigneeId = signerUserId,
             SigneeRole = RoleNames.ControlroomSupervisor,
             RequiresSignatureId = requiredSignature.Id,
-            SignedAt = DateTime.UtcNow
+            SignedAt = DateTime.UtcNow,
+            DeviceClass = context.DeviceClass,
+            UserAgent = context.UserAgent,
+            AttemptKey = context.AttemptKey
         };
         _signatures.Add(signature);
 
