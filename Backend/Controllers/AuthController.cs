@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
 
-
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ApiControllerBase
@@ -22,6 +21,7 @@ public class AuthController : ApiControllerBase
     ///
     /// </summary>
     /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpPost("login")]
     [AllowAnonymous]
@@ -35,7 +35,6 @@ public class AuthController : ApiControllerBase
             ? Ok(result.Response)
             : Unauthorized(new { error = "Invalid email or password." });
     }
-
 
     [HttpPost("check-token/{token}")]
     [AllowAnonymous]
