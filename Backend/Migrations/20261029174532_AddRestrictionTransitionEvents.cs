@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 
@@ -14,16 +13,12 @@ namespace Backend.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Temporarily remove the notification FK before changing the primary key.
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notifications_OperationalRestrictions_OperationalRestrictio~",
-                table: "Notifications");
-
             migrationBuilder.DropPrimaryKey(
                 name: "PK_OperationalRestrictions",
                 table: "OperationalRestrictions");
 
-            // Rename columns to match the new restriction model.
+            // Renames corrected by hand: EF's scaffold paired Id/Originator/Status
+            // with the wrong new columns.
             migrationBuilder.RenameColumn(
                 name: "Id",
                 table: "OperationalRestrictions",
@@ -43,13 +38,13 @@ namespace Backend.Migrations
             migrationBuilder.Sql(
                 """
                 UPDATE "OperationalRestrictions" SET "State" = CASE "State"
-                    WHEN 0 THEN 0
-                    WHEN 1 THEN 1
-                    WHEN 2 THEN 4
-                    WHEN 3 THEN 6
-                    WHEN 4 THEN 12
-                    WHEN 5 THEN 3
-                    WHEN 6 THEN 8
+                    WHEN 0 THEN 0  -- Draft -> Draft
+                    WHEN 1 THEN 1  -- PendingApproval -> PendingDutyOperationsManagerApproval
+                    WHEN 2 THEN 4  -- Approved -> Approved
+                    WHEN 3 THEN 6  -- Active -> Active
+                    WHEN 4 THEN 12 -- Archived -> Archived
+                    WHEN 5 THEN 3  -- Cancelled -> CancelledRefused
+                    WHEN 6 THEN 8  -- CLOSING -> PendingCancellation
                     ELSE 0
                 END;
                 """);
@@ -143,15 +138,6 @@ namespace Backend.Migrations
                 table: "OperationalRestrictions",
                 column: "RestrictionId");
 
-            // Restore the notification relationship using the renamed primary key.
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notifications_OperationalRestrictions_OperationalRestrictio~",
-                table: "Notifications",
-                column: "OperationalRestrictionId",
-                principalTable: "OperationalRestrictions",
-                principalColumn: "RestrictionId",
-                onDelete: ReferentialAction.Restrict);
-
             migrationBuilder.CreateTable(
                 name: "File",
                 columns: table => new
@@ -236,11 +222,6 @@ namespace Backend.Migrations
             migrationBuilder.DropTable(
                 name: "Signature");
 
-            // Remove the notification FK before restoring the old primary key.
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notifications_OperationalRestrictions_OperationalRestrictio~",
-                table: "Notifications");
-
             migrationBuilder.DropPrimaryKey(
                 name: "PK_OperationalRestrictions",
                 table: "OperationalRestrictions");
@@ -285,7 +266,7 @@ namespace Backend.Migrations
                 name: "UpdatedAt",
                 table: "OperationalRestrictions");
 
-            // Restore the old state values.
+            // States without a RestrictionStatus equivalent fall back to Draft.
             migrationBuilder.Sql(
                 """
                 UPDATE "OperationalRestrictions" SET "State" = CASE "State"
@@ -339,15 +320,6 @@ namespace Backend.Migrations
                 name: "PK_OperationalRestrictions",
                 table: "OperationalRestrictions",
                 column: "Id");
-
-            // Restore the notification relationship to the original Id column.
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notifications_OperationalRestrictions_OperationalRestrictio~",
-                table: "Notifications",
-                column: "OperationalRestrictionId",
-                principalTable: "OperationalRestrictions",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
         }
     }
 }

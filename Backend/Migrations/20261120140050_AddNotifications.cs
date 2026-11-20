@@ -1,5 +1,4 @@
-using System;
-
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -9,15 +8,6 @@ namespace Backend.Migrations
     /// <inheritdoc />
     public partial class AddNotifications : Migration
     {
-        private static readonly string[] DeliveryStatusNextAttemptAtColumns = { "Status", "NextAttemptAt" };
-
-        private static readonly string[] RecipientCreatedAtColumns = { "RecipientUserId", "CreatedAt" };
-
-        private static readonly string[] RecipientReadAtColumns = { "RecipientUserId", "ReadAt" };
-
-        private static readonly string[] RecipientActionResolvedColumns =
-            { "RecipientUserId", "RequiresAction", "ResolvedAt" };
-
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -43,7 +33,7 @@ namespace Backend.Migrations
                         name: "FK_Notifications_OperationalRestrictions_OperationalRestrictio~",
                         column: x => x.OperationalRestrictionId,
                         principalTable: "OperationalRestrictions",
-                        principalColumn: "Id",
+                        principalColumn: "RestrictionId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Notifications_Users_RecipientUserId",
@@ -84,7 +74,7 @@ namespace Backend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_NotificationDeliveries_Status_NextAttemptAt",
                 table: "NotificationDeliveries",
-                columns: DeliveryStatusNextAttemptAtColumns);
+                columns: new[] { "Status", "NextAttemptAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_OperationalRestrictionId",
@@ -94,17 +84,17 @@ namespace Backend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_CreatedAt",
                 table: "Notifications",
-                columns: RecipientCreatedAtColumns);
+                columns: new[] { "RecipientUserId", "CreatedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_ReadAt",
                 table: "Notifications",
-                columns: RecipientReadAtColumns);
+                columns: new[] { "RecipientUserId", "ReadAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_RecipientUserId_RequiresAction_ResolvedAt",
                 table: "Notifications",
-                columns: RecipientActionResolvedColumns);
+                columns: new[] { "RecipientUserId", "RequiresAction", "ResolvedAt" });
         }
 
         /// <inheritdoc />

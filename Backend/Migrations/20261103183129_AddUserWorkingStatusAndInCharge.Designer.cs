@@ -13,7 +13,7 @@ namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20261103183129_AddUserWorkingStatusAndInCharge")]
-    partial class AddUserWorkingStatusAndInCharge20261103183129
+    partial class AddUserWorkingStatusAndInCharge
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
