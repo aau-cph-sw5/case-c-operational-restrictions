@@ -3,7 +3,7 @@
 // Displays signature completeness across active Operational Restrictions.
 
 import { useEffect, useState } from "react";
-import { LoaderCircle, OctagonAlert, Search } from "lucide-react";
+import { Clock3, LoaderCircle, OctagonAlert, Search } from "lucide-react";
 
 import { SignatureRestrictionCard } from "../components/SignatureRestrictionCard";
 import {
@@ -118,6 +118,10 @@ export function SignatureOverviewPage() {
 
         <p className="font-['Instrument_Sans',sans-serif] text-base font-bold text-[#6B6B6B]">
           CCR employee signature status
+        </p>
+        <p className="flex items-center justify-center gap-1 font-['Inter',sans-serif] text-xs text-[#6B6B6B]">
+          <Clock3 className="size-3" aria-hidden />
+          Last updated: {new Date(report.computedAt).toLocaleString()}
         </p>
       </header>
 
