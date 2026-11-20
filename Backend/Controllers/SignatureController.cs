@@ -89,7 +89,7 @@ public class SignatureController : ApiControllerBase
         return Ok(new SigningAttemptStatusDto
         {
             AttemptKey = attemptKey,
-            Status = signature is null ? SigningAttemptStatusDto.NotSigned : SigningAttemptStatusDto.Signed,
+            Status = signature is null ? SigningAttemptStatusDto.NotSignedStatus : SigningAttemptStatusDto.SignedStatus,
             Signature = signature is null ? null : SignatureDto.FromDalEntity(signature)
         });
     }

@@ -340,7 +340,7 @@ public class RemoteSigningTests
         var response = await controller.GetAttemptStatus(attemptKey);
 
         var status = Assert.IsType<SigningAttemptStatusDto>(Assert.IsType<OkObjectResult>(response.Result).Value);
-        Assert.Equal(SigningAttemptStatusDto.Signed, status.Status);
+        Assert.Equal(SigningAttemptStatusDto.SignedStatus, status.Status);
         Assert.Equal("Phone", status.Signature?.DeviceClass);
     }
 
@@ -352,7 +352,7 @@ public class RemoteSigningTests
         var response = await controller.GetAttemptStatus(Guid.NewGuid());
 
         var status = Assert.IsType<SigningAttemptStatusDto>(Assert.IsType<OkObjectResult>(response.Result).Value);
-        Assert.Equal(SigningAttemptStatusDto.NotSigned, status.Status);
+        Assert.Equal(SigningAttemptStatusDto.NotSignedStatus, status.Status);
         Assert.Null(status.Signature);
     }
 
@@ -367,7 +367,7 @@ public class RemoteSigningTests
         var response = await controller.GetAttemptStatus(attemptKey);
 
         var status = Assert.IsType<SigningAttemptStatusDto>(Assert.IsType<OkObjectResult>(response.Result).Value);
-        Assert.Equal(SigningAttemptStatusDto.NotSigned, status.Status);
+        Assert.Equal(SigningAttemptStatusDto.NotSignedStatus, status.Status);
     }
 
     private async Task<OperationalRestriction> AddRestrictionAsync(RestrictionState state)

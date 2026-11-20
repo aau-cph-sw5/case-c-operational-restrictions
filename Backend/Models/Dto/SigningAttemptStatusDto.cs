@@ -4,10 +4,10 @@ namespace Backend.Models.DTOs;
 // A signature either exists (Signed, with the signature) or it does not (NotSigned).
 public class SigningAttemptStatusDto
 {
-    public const string Signed = "Signed";
-    public const string NotSigned = "NotSigned";
+    public const string SignedStatus = "Signed";
+    public const string NotSignedStatus = "NotSigned";
 
     public Guid AttemptKey { get; set; }
-    public string Status { get; set; } = NotSigned;
+    public string Status { get; set; } = NotSignedStatus;
     public SignatureDto? Signature { get; set; }
 }
