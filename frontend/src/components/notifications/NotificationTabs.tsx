@@ -22,18 +22,29 @@ export function NotificationTabs({
   onTabChange,
 }: NotificationTabsProps) {
   return (
-    <nav className="notification-tabs" aria-label="Filtrer notifikationer">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          className={`notification-tab ${activeTab === tab.id ? "active" : ""}`}
-          aria-pressed={activeTab === tab.id}
-          onClick={() => onTabChange(tab.id)}
-        >
-          {tab.label} ({counts[tab.id]})
-        </button>
-      ))}
+    <nav
+      className="flex flex-wrap gap-2 max-[380px]:gap-1.5"
+      aria-label="Filtrer notifikationer"
+    >
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            aria-pressed={isActive}
+            onClick={() => onTabChange(tab.id)}
+            className={`cursor-pointer rounded-full border px-3 py-2 text-base transition-colors focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-blue-300 max-[380px]:px-[9px] max-[380px]:py-[7px] max-[380px]:text-sm ${
+              isActive
+                ? "border-blue-600 bg-blue-600 text-white"
+                : "border-gray-300 bg-white text-gray-700 hover:bg-slate-50"
+            }`}
+          >
+            {tab.label} ({counts[tab.id]})
+          </button>
+        );
+      })}
     </nav>
   );
 }
