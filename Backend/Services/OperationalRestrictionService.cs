@@ -22,7 +22,7 @@ public class OperationalRestrictionService
         IOperationalRestrictionRepository repository,
         IRestrictionTransitionEventRepository transitionEventRepository,
         IUnitOfWork unitOfWork,
-        ISignatureService? signatureService = null)
+        ISignatureService signatureService)
     {
         _lifecycleService = lifecycleService;
         _repository = repository;
