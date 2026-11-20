@@ -61,7 +61,7 @@ function App() {
         <Link to="/login">Go to login page</Link>
       </p>
       <p>
-        <Link to="/restrictions">Go to Overview page</Link>
+        <Link to="/overview">Go to Overview page</Link>
       </p>
     </div>
   );
