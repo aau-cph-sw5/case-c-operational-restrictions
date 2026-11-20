@@ -142,40 +142,61 @@ public class OperationalRestrictionService
         return restriction;
     }
 
-    public async Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(Guid id, Guid signerId)
+    public async Task<Signature> SignOriginatorAndAdvanceToPendingApprovalAsync(
+        Guid id, Guid signerId, SigningContext? signingContext = null)
     {
         if (_signatureService == null)
             throw new InvalidOperationException("SignatureService is not configured.");
 
-        var restriction = await _repository.GetByIdAsync(id)
-            ?? throw new OperationalRestrictionNotFoundException(id);
+        var signatureService = _signatureService;
 
-        if (restriction.State != RestrictionState.Draft)
-            throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
-
-        Signature? signature = null;
-        try
+        // Exclusive until the transaction has committed or the signature has been discarded,
+        // so the signature is either committed or gone, never in between.
+        return await signatureService.RunExclusiveAsync(async () =>
         {
-            signature = _signatureService.SignOriginator(id, signerId);
+            var restriction = await _repository.GetByIdAsync(id)
+                ?? throw new OperationalRestrictionNotFoundException(id);
 
-            await TransitionAsync(
-                id,
-                RestrictionAction.PendingDutyOperationsManagerApproval,
-                signerId,
-                newVersion =>
-                {
-                    newVersion.SignatureSheet.Add(signature);
-                });
+            if (restriction.State != RestrictionState.Draft)
+                throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
 
-            return signature;
-        }
-        catch
-        {
-            if (signature != null)
-                _signatureService.DiscardUnpersistedSignature(signature);
+            Signature? signature = null;
+            try
+            {
+                signature = signatureService.SignOriginator(id, signerId, signingContext);
 
-            throw;
-        }
+                await TransitionAsync(
+                    id,
+                    RestrictionAction.PendingDutyOperationsManagerApproval,
+                    signerId,
+                    newVersion =>
+                    {
+                        newVersion.SignatureSheet.Add(signature);
+                    });
+
+                return signature;
+            }
+            catch
+            {
+                if (signature != null)
+                    signatureService.DiscardUnpersistedSignature(signature);
+
+                throw;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Returns the signature committed by an earlier attempt with this key, or null if that attempt
+    /// left none. Used so a retry after a lost response gets the committed result back.
+    /// </summary>
+    public async Task<Signature?> FindReplayedSignatureAsync(
+        Guid attemptKey, Guid signerId, string expectedRole)
+    {
+        if (_signatureService == null)
+            return null;
+
+        return await _signatureService.FindReplayAsync(attemptKey, signerId, expectedRole);
     }
 
 
@@ -183,44 +204,48 @@ public class OperationalRestrictionService
     /// The control room supervisor signs the restriction for implementation, which moves it from PendingControlRoomSupervisorApproval to Active.
     /// Only users with the ControlroomSupervisor role may sign.
     /// </summary>
-    public async Task<Signature> SignControlRoomSupervisorApprovalAsync(Guid id, Guid signerId)
+    public async Task<Signature> SignControlRoomSupervisorApprovalAsync(
+        Guid id, Guid signerId, SigningContext? signingContext = null)
     {
         if (_signatureService == null)
             throw new InvalidOperationException("SignatureService is not configured.");
 
         var signatureService = _signatureService;
 
-        var restriction = await _repository.GetByIdAsync(id)
-            ?? throw new OperationalRestrictionNotFoundException(id);
-
-        if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
-            throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
-
-        Signature? signature = null;
-        try
+        return await signatureService.RunExclusiveAsync(async () =>
         {
-            signature = signatureService.SignControlRoomSupervisor(id, signerId);
-            await TransitionAsync(
-                id,
-                RestrictionAction.Active,
-                signerId,
-                newVersion =>
-                {
-                    newVersion.SignatureSheet.Add(signature);
+            var restriction = await _repository.GetByIdAsync(id)
+                ?? throw new OperationalRestrictionNotFoundException(id);
 
-                    newVersion.AssignedOperatorsIds =
-                        signatureService.GetAtWorkAndOffWorkUserIds();
-                });
+            if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
+                throw new OperationalRestrictionNotSignableException(id, restriction.State.ToString());
 
-            return signature;
-        }
-        catch
-        {
-            if (signature != null)
-                signatureService.DiscardUnpersistedSignature(signature);
+            Signature? signature = null;
+            try
+            {
+                signature = signatureService.SignControlRoomSupervisor(id, signerId, signingContext);
+                await TransitionAsync(
+                    id,
+                    RestrictionAction.Active,
+                    signerId,
+                    newVersion =>
+                    {
+                        newVersion.SignatureSheet.Add(signature);
 
-            throw;
-        }
+                        newVersion.AssignedOperatorsIds =
+                            signatureService.GetAtWorkAndOffWorkUserIds();
+                    });
+
+                return signature;
+            }
+            catch
+            {
+                if (signature != null)
+                    signatureService.DiscardUnpersistedSignature(signature);
+
+                throw;
+            }
+        });
     }
 
     /// <summary>
@@ -482,7 +507,10 @@ public class OperationalRestrictionService
                     OperationalRestrictionId = newRestrictionId,
                     SigneeId = s.SigneeId,
                     SigneeRole = s.SigneeRole,
-                    SignedAt = s.SignedAt
+                    SignedAt = s.SignedAt,
+                    DeviceClass = s.DeviceClass,
+                    UserAgent = s.UserAgent,
+                    AttemptKey = s.AttemptKey
                 })
                 .ToList(),
             State = original.State,

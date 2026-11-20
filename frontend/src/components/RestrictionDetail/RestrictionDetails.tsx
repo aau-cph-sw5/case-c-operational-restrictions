@@ -35,7 +35,7 @@ export function RestrictionDetails({
       </RestrictionInfoCard>
 
       <RestrictionInfoCard label={t.description}>
-        <p className="whitespace-pre-wrap">
+        <p className="review-text">
           {restriction.restrictionDescription || t.noDescription}
         </p>
       </RestrictionInfoCard>

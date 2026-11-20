@@ -37,6 +37,17 @@ export const restrictionTexts = {
   signConflict:
     "Restriktionen er ikke længere en kladde og kan ikke underskrives.",
   signFailed: "Underskrivningen mislykkedes. Prøv igen.",
+  signNotRecorded: "Din underskrift blev ikke registreret. Du kan prøve igen.",
+  signOutcomeUnknown:
+    "Vi kunne ikke bekræfte, om din underskrift blev registreret. Tjek igen, når du har forbindelse. Du kan ikke underskrive igen, før svaret er kendt.",
+  signCheckAgain: "Tjek igen",
+  signChecking: "Tjekker...",
+  signedButRefreshFailed:
+    "Din underskrift er registreret, men siden kunne ikke opdateres. Genindlæs siden.",
+  signedFromDevice: "Enhed",
+  deviceClassPhone: "Telefon",
+  deviceClassTablet: "Tablet",
+  deviceClassDesktop: "Computer",
   signForImplementation: "Underskriv for implementering",
   signForImplementationSuccess:
     "Restriktionen er underskrevet for implementering og er nu aktiv.",

@@ -46,9 +46,14 @@ public class SignatureController : ApiControllerBase
     [Authorize]
     public ActionResult<SignatureDto> Sign(Guid requiresSignatureId)
     {
+        if (!TryGetSigningContext(out var signingContext))
+        {
+            return InvalidAttemptKeyResult();
+        }
+
         try
         {
-            var signature = _signatureService.Sign(requiresSignatureId, CurrentUserId);
+            var signature = _signatureService.Sign(requiresSignatureId, CurrentUserId, signingContext);
 
             return Ok(SignatureDto.FromDalEntity(signature));
         }
@@ -64,5 +69,28 @@ public class SignatureController : ApiControllerBase
         {
             return Conflict(new { error = exception.Message });
         }
+        catch (AttemptKeyReusedException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+    }
+
+    /// <summary>
+    /// Tells the logged-in user whether a signing attempt left a signature, so the client can
+    /// recover after losing the connection mid-signature. Works for every signing action.
+    /// </summary>
+    /// <response code="200">Signed with the committed signature, or NotSigned</response>
+    [HttpGet("attempts/{attemptKey:guid}")]
+    [Authorize]
+    public async Task<ActionResult<SigningAttemptStatusDto>> GetAttemptStatus(Guid attemptKey)
+    {
+        var signature = await _signatureService.FindReplayAsync(attemptKey, CurrentUserId);
+
+        return Ok(new SigningAttemptStatusDto
+        {
+            AttemptKey = attemptKey,
+            Status = signature is null ? SigningAttemptStatusDto.NotSigned : SigningAttemptStatusDto.Signed,
+            Signature = signature is null ? null : SignatureDto.FromDalEntity(signature)
+        });
     }
 }

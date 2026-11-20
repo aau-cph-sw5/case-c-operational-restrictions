@@ -8,7 +8,12 @@ import type {
   RestrictionDto as CreatedRestrictionDto,
 } from "../types/restriction";
 import type { RestrictionApiError } from "../types/restrictionApiError";
-import type { RestrictionDto, SignatureDto } from "../types/restrictionDto";
+import type {
+  DeviceClass,
+  RestrictionDto,
+  SignatureDto,
+  SigningAttemptStatusDto,
+} from "../types/restrictionDto";
 import { getStoredToken } from "./tokenStorage";
 
 // 400 Bad Request so the UI can show every server message.
@@ -47,6 +52,21 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// A signing request carries the key of the attempt, so a retry after a lost
+// response gets the committed signature back instead of signing twice.
+function signingHeaders(attemptKey?: string): HeadersInit {
+  return attemptKey
+    ? { ...authHeaders(), "Idempotency-Key": attemptKey }
+    : authHeaders();
+}
+
+const deviceClasses: readonly string[] = [
+  "Phone",
+  "Tablet",
+  "Desktop",
+  "Unknown",
+];
+
 // Backend enum order for UserRole (Originator, Dom, Operator).
 const numericRoles = ["Originator", "Dom", "Operator"];
 
@@ -60,6 +80,11 @@ function toSignature(raw: Record<string, unknown>): SignatureDto {
         ? (numericRoles[role] ?? "Unknown")
         : String(role ?? "Unknown"),
     signedAt: String(raw.signedAt ?? ""),
+    deviceClass:
+      typeof raw.deviceClass === "string" &&
+      deviceClasses.includes(raw.deviceClass)
+        ? (raw.deviceClass as DeviceClass)
+        : undefined,
   };
 }
 
@@ -162,10 +187,11 @@ export async function requestChanges(
 // otherwise null (the caller then re-fetches the restriction).
 export async function signRestriction(
   id: string,
+  attemptKey?: string,
 ): Promise<RestrictionDto | null> {
   const response = await fetch(
     `/api/restrictions/${encodeURIComponent(id)}/sign`,
-    { method: "POST", headers: authHeaders() },
+    { method: "POST", headers: signingHeaders(attemptKey) },
   );
 
   if (!response.ok) {
@@ -185,10 +211,13 @@ export async function signRestriction(
 }
 
 // POST /api/restrictions/{id}/sign-for-implementation
-export async function signForImplementation(id: string): Promise<SignatureDto> {
+export async function signForImplementation(
+  id: string,
+  attemptKey?: string,
+): Promise<SignatureDto> {
   const response = await fetch(
     `/api/restrictions/${encodeURIComponent(id)}/sign-for-implementation`,
-    { method: "POST", headers: authHeaders() },
+    { method: "POST", headers: signingHeaders(attemptKey) },
   );
 
   if (!response.ok) {
@@ -196,4 +225,31 @@ export async function signForImplementation(id: string): Promise<SignatureDto> {
   }
 
   return toSignature((await response.json()) as Record<string, unknown>);
+}
+
+// GET /api/signature/attempts/{attemptKey}
+// Used after a signing request got no usable answer: the server says whether
+// that attempt left a signature. A signature either exists or it does not.
+export async function getSigningAttemptStatus(
+  attemptKey: string,
+): Promise<SigningAttemptStatusDto> {
+  const response = await fetch(
+    `/api/signature/attempts/${encodeURIComponent(attemptKey)}`,
+    { headers: authHeaders() },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  const body = (await response.json()) as Record<string, unknown>;
+  const signed = body.status === "Signed";
+
+  return {
+    status: signed ? "Signed" : "NotSigned",
+    signature:
+      signed && body.signature
+        ? toSignature(body.signature as Record<string, unknown>)
+        : undefined,
+  };
 }
