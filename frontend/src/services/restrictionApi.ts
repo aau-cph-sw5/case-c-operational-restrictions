@@ -15,6 +15,7 @@ import type {
   SigningAttemptStatusDto,
 } from "../types/restrictionDto";
 import { getStoredToken } from "./tokenStorage";
+import { getAuthHeaders } from "./authApi";
 
 // 400 Bad Request so the UI can show every server message.
 export class RestrictionValidationError extends Error {
@@ -149,7 +150,7 @@ export async function createRestriction(
 // GET /api/restrictions/{id}
 export async function getRestrictionById(id: string): Promise<RestrictionDto> {
   const response = await fetch(`/api/restrictions/${encodeURIComponent(id)}`, {
-    headers: authHeaders(),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -170,7 +171,7 @@ export async function requestChanges(
     `/api/restrictions/${encodeURIComponent(id)}/request-changes`,
     {
       method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({ comment: comment.trim() }),
     },
   );
