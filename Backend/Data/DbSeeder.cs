@@ -16,6 +16,7 @@ public static class DbSeeder
 
     // This seeded user owns some of the sample drafts.
     public static readonly Guid PlaceholderUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+    public static readonly Guid TemporaryDomUserId = Guid.Parse("99999999-9999-9999-9999-999999999999");
     public static readonly Guid AnnaId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid LarsId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     public static readonly Guid SofieId = Guid.Parse("33333333-3333-3333-3333-333333333333");
@@ -97,6 +98,7 @@ public static class DbSeeder
     private static readonly Dictionary<string, string> SeedUserRolesByEmail = new()
     {
         ["placeholder@example.com"] = RoleNames.Originator,
+        ["temp.dom@example.test"] = RoleNames.DutyOperationsManager,
         ["anna.jensen@example.test"] = RoleNames.DutyOperationsManager,
         ["lars.nielsen@example.test"] = RoleNames.Operator,
         ["sofie.hansen@example.test"] = RoleNames.Operator,
@@ -248,6 +250,7 @@ public static class DbSeeder
         return
         [
             CreateUser(PlaceholderUserId, "Placeholder User", "placeholder@example.com", UserWorkingStatus.AtWork),
+            CreateUser(TemporaryDomUserId, "Temporary DOM", "temp.dom@example.test", UserWorkingStatus.AtWork),
             CreateUser(AnnaId, "Anna Jensen", "anna.jensen@example.test", UserWorkingStatus.AtWork),
             CreateUser(LarsId, "Lars Nielsen", "lars.nielsen@example.test", UserWorkingStatus.AtWork),
             CreateUser(SofieId, "Sofie Hansen", "sofie.hansen@example.test", UserWorkingStatus.OffWork),
@@ -267,7 +270,7 @@ public static class DbSeeder
         return
         [
             CreateRestriction("5eed0000-0000-0000-0000-000000000001", PlaceholderUserId, RestrictionState.Draft, today.AddDays(7), today.AddDays(14), "Sporarbejde ved Nørreport", "REF-2026-001"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000002", PlaceholderUserId, RestrictionState.Draft, today.AddDays(20), today.AddDays(21), "Hastighedsbegrænsning M1", "REF-2026-002"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000002", PlaceholderUserId, RestrictionState.Draft, today.AddDays(20), today.AddDays(21), "Hastighedsbegrænsning M3", "REF-2026-002"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000003", PlaceholderUserId, RestrictionState.PendingDutyOperationsManagerApproval, today.AddDays(3), today.AddDays(10), "Afspærring af perron 2", "REF-2026-003"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000004", PlaceholderUserId, RestrictionState.Active, today.AddDays(-2), today.AddDays(5), "Sporskiftefejl ved Kongens Nytorv", "REF-2026-004"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000005", AnnaId, RestrictionState.Draft, today.AddDays(10), today.AddDays(12), "Signalinspektion vest", "REF-2026-005"),
@@ -283,7 +286,7 @@ public static class DbSeeder
             CreateRestriction("5eed0000-0000-0000-0000-000000000015", CamillaId, RestrictionState.Approved, today.AddDays(14), today.AddDays(28), "Ombygning af nødsystemer", "REF-2026-015"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000016", CamillaId, RestrictionState.Archived, today.AddDays(-120), today.AddDays(-90), "Sommerkøreplan tilpasning", "REF-2025-050"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000017", OscarId, RestrictionState.Draft, today.AddDays(30), today.AddDays(31), "Inspektion af nødudgange", null),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000018", SofieId, RestrictionState.CancelledRefused, today.AddDays(6), today.AddDays(8), "Aflyst sporjustering M2", "REF-2026-018")
+            CreateRestriction("5eed0000-0000-0000-0000-000000000018", SofieId, RestrictionState.CancelledRefused, today.AddDays(6), today.AddDays(8), "Aflyst sporjustering M4", "REF-2026-018")
         ];
     }
 

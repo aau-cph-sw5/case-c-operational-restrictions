@@ -36,3 +36,19 @@ export function signForImplementationErrorMessage(error: unknown): string {
   }
   return t.signFailed;
 }
+
+export function approveErrorMessage(error: unknown): string {
+  if (isRestrictionApiError(error)) {
+    switch (error.status) {
+      case 401:
+        return t.sessionExpired;
+      case 403:
+        return t.approveForbidden;
+      case 404:
+        return t.notFound;
+      case 409:
+        return t.approveConflict;
+    }
+  }
+  return t.approveFailed;
+}
