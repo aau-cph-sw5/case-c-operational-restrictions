@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDayMonthYear } from "@/lib/dateFormat";
 
-export type DRStatus = "aktiv" | "afventer_deaktivering" | "arkiv" | "kladde";
+export type DRStatus =
+  | "aktiv"
+  | "afventer_deaktivering"
+  | "afventer_godkendelse"
+  | "arkiv"
+  | "kladde";
 
 interface StatusStyle {
   bgHex: string;
@@ -24,6 +29,12 @@ export const STATUS_STYLES: Record<DRStatus, StatusStyle> = {
     bgHex: "#FEF3C7", // Awaiting deactivation yellow
     borderColor: "border-[#FDE68A]",
     statusLabel: "Afventer deaktivering",
+    statusTextColor: "text-[#92400E]",
+  },
+  afventer_godkendelse: {
+    bgHex: "#FEF3C7", // Awaiting approval yellow
+    borderColor: "border-[#FDE68A]",
+    statusLabel: "Afventer godkendelse",
     statusTextColor: "text-[#92400E]",
   },
   arkiv: {
