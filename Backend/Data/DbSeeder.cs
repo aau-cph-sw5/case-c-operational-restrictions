@@ -270,7 +270,7 @@ public static class DbSeeder
         return
         [
             CreateRestriction("5eed0000-0000-0000-0000-000000000001", PlaceholderUserId, RestrictionState.Draft, today.AddDays(7), today.AddDays(14), "Sporarbejde ved Nørreport", "REF-2026-001"),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000002", PlaceholderUserId, RestrictionState.Draft, today.AddDays(20), today.AddDays(21), "Hastighedsbegrænsning M1", "REF-2026-002"),
+            CreateRestriction("5eed0000-0000-0000-0000-000000000002", PlaceholderUserId, RestrictionState.Draft, today.AddDays(20), today.AddDays(21), "Hastighedsbegrænsning M3", "REF-2026-002"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000003", PlaceholderUserId, RestrictionState.PendingDutyOperationsManagerApproval, today.AddDays(3), today.AddDays(10), "Afspærring af perron 2", "REF-2026-003"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000004", PlaceholderUserId, RestrictionState.Active, today.AddDays(-2), today.AddDays(5), "Sporskiftefejl ved Kongens Nytorv", "REF-2026-004"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000005", AnnaId, RestrictionState.Draft, today.AddDays(10), today.AddDays(12), "Signalinspektion vest", "REF-2026-005"),
@@ -286,7 +286,7 @@ public static class DbSeeder
             CreateRestriction("5eed0000-0000-0000-0000-000000000015", CamillaId, RestrictionState.Approved, today.AddDays(14), today.AddDays(28), "Ombygning af nødsystemer", "REF-2026-015"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000016", CamillaId, RestrictionState.Archived, today.AddDays(-120), today.AddDays(-90), "Sommerkøreplan tilpasning", "REF-2025-050"),
             CreateRestriction("5eed0000-0000-0000-0000-000000000017", OscarId, RestrictionState.Draft, today.AddDays(30), today.AddDays(31), "Inspektion af nødudgange", null),
-            CreateRestriction("5eed0000-0000-0000-0000-000000000018", SofieId, RestrictionState.CancelledRefused, today.AddDays(6), today.AddDays(8), "Aflyst sporjustering M2", "REF-2026-018")
+            CreateRestriction("5eed0000-0000-0000-0000-000000000018", SofieId, RestrictionState.CancelledRefused, today.AddDays(6), today.AddDays(8), "Aflyst sporjustering M4", "REF-2026-018")
         ];
     }
 
