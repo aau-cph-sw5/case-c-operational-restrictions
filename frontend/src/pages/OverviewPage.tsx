@@ -1,80 +1,45 @@
-import { useState, useMemo, useEffect } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  ORNotificationCard,
-  type DRStatus,
-} from "@/components/OverviewNotificationCard";
+import { ORNotificationCard } from "@/components/OverviewNotificationCard";
+import { getOverviewRestrictions } from "@/services/overviewApi";
+import type { DrItem } from "@/types/overviewRestriction";
+import { isRestrictionApiError } from "@/types/restrictionApiError";
+import { clockTimeNow } from "@/lib/dateFormat";
 import { AppHeader } from "../components/AppHeader";
-import { getRestrictions } from "@/services/restrictionApi";
-import type { RestrictionDto } from "@/types/restrictionDto";
-
-export interface DrItem {
-  id: string;
-  referenceId: string;
-  statusKey: DRStatus;
-  title: string;
-  date: string;
-  signed: boolean;
-  category: "kladde" | "alle" | "aktiv" | "arkiv";
-}
-
-function toOverviewItem(restriction: RestrictionDto): DrItem {
-  const category: DrItem["category"] =
-    restriction.status === "Draft"
-      ? "kladde"
-      : restriction.status === "Active" ||
-          restriction.status === "PendingControlRoomSupervisorApproval"
-        ? "aktiv"
-        : restriction.status === "Archived"
-          ? "arkiv"
-          : "alle";
-
-  const statusKey: DRStatus =
-    restriction.status === "PendingControlRoomSupervisorApproval"
-      ? "afventer_implementering"
-      : category === "kladde"
-        ? "kladde"
-        : category === "arkiv"
-          ? "arkiv"
-          : restriction.status === "Active"
-            ? "aktiv"
-            : "afventer_deaktivering";
-
-  return {
-    id: restriction.id,
-    referenceId: restriction.reference ?? restriction.id,
-    statusKey,
-    title: restriction.title ?? restriction.id,
-    date: restriction.startDate,
-    signed: restriction.signatures.length > 0,
-    category,
-  };
-}
 
 export function OverviewPage() {
   const navigate = useNavigate();
   const [restrictions, setRestrictions] = useState<DrItem[]>([]);
-  const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "kladde" | "alle" | "aktiv" | "arkiv"
   >("alle");
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string>();
 
   useEffect(() => {
-    getRestrictions()
-      .then((loadedRestrictions) => {
-        setRestrictions(loadedRestrictions.map(toOverviewItem));
-      })
-      .catch(() => {
-        setLoadError(true);
+    const controller = new AbortController();
+
+    getOverviewRestrictions(controller.signal)
+      .then(setRestrictions)
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        if (isRestrictionApiError(err) && err.status === 401) {
+          setError("Du er ikke logget ind.");
+        } else {
+          setError("Driftsrestriktionerne kunne ikke hentes.");
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
+
+    setLastUpdated(clockTimeNow());
+    return () => controller.abort();
   }, []);
 
   const kladdeCount = restrictions.filter(
@@ -86,20 +51,34 @@ export function OverviewPage() {
   const arkivCount = restrictions.filter(
     (item) => item.category === "arkiv",
   ).length;
-  const alleCount = restrictions.length;
+  const alleCount = restrictions.length - kladdeCount;
 
   const filteredItems = useMemo(() => {
     return restrictions.filter((item) => {
-      const matchesTab = activeTab === "alle" || item.category === activeTab;
+      const matchesTab =
+        (activeTab === "alle" && item.category !== "kladde") ||
+        item.category === activeTab;
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.referenceId.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesTab && matchesSearch;
     });
-  }, [activeTab, searchQuery, restrictions]);
+  }, [restrictions, activeTab, searchQuery]);
+
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort((a, b) => {
+      if (a.category === "arkiv" && b.category !== "arkiv") return 1;
+      else if (b.category === "arkiv" && a.category !== "arkiv") return -1;
+
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [filteredItems]);
 
   return (
-    <div className="flex min-h-0 w-full justify-center bg-[#F8FAFC] antialiased text-foreground">
+    <div className="flex min-h-0 w-full justify-center bg-[#F8FAFC] antialiased text-foreground overscroll-none">
       <div className="flex h-[calc(100svh-5rem)] w-full max-w-md flex-col overflow-hidden border-x border-border/40 bg-white shadow-xl">
         {/* Header*/}
         <AppHeader title="Alle Driftsrestriktioner">
@@ -162,6 +141,9 @@ export function OverviewPage() {
               className="pl-9 bg-white border-border/80 h-11 text-base rounded-full shadow-xs focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
+          <div className=" text-muted-foreground text-xs text-left">
+            Sidst opdateret: {lastUpdated}
+          </div>
         </AppHeader>
 
         {/* Scrollable Card List Container */}
@@ -173,12 +155,12 @@ export function OverviewPage() {
             >
               Henter driftsrestriktioner...
             </p>
-          ) : loadError ? (
+          ) : error ? (
             <p role="alert" className="py-16 text-center text-destructive">
-              Kunne ikke hente driftsrestriktioner. Prøv igen.
+              {error}
             </p>
-          ) : filteredItems.length > 0 ? (
-            filteredItems.map((item) => (
+          ) : sortedItems.length > 0 ? (
+            sortedItems.map((item) => (
               <ORNotificationCard
                 key={item.id}
                 statusKey={item.statusKey}

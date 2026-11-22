@@ -7,6 +7,7 @@ export type DRStatus =
   | "aktiv"
   | "afventer_deaktivering"
   | "afventer_implementering"
+  | "afventer_godkendelse"
   | "arkiv"
   | "kladde";
 
@@ -35,6 +36,12 @@ export const STATUS_STYLES: Record<DRStatus, StatusStyle> = {
     bgHex: "#FEF3C7",
     borderColor: "border-[#FDE68A]",
     statusLabel: "Afventer implementering",
+    statusTextColor: "text-[#92400E]",
+  },
+  afventer_godkendelse: {
+    bgHex: "#FEF3C7", // Awaiting approval yellow
+    borderColor: "border-[#FDE68A]",
+    statusLabel: "Afventer godkendelse",
     statusTextColor: "text-[#92400E]",
   },
   arkiv: {
