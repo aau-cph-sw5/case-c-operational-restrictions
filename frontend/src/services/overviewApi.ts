@@ -55,7 +55,7 @@ const CARD_STATUS: Record<
     category: "alle",
   },
   PendingControlRoomSupervisorApproval: {
-    statusKey: "afventer_godkendelse",
+    statusKey: "afventer_implementering",
     category: "alle",
   },
   Approved: { statusKey: "afventer_godkendelse", category: "alle" },

@@ -32,7 +32,46 @@ public class OperationalRestrictionServiceTests
             lifecycle,
             repository,
             eventRepository ?? new FakeRestrictionTransitionEventRepository(),
-            new FakeUnitOfWork());
+            new FakeUnitOfWork(),
+            new FakeSignatureService());
+    }
+
+    internal sealed class FakeSignatureService : ISignatureService
+    {
+        private readonly List<Signature> _signatures = new();
+
+        public Signature SignOriginator(Guid operationalRestrictionId, Guid signerUserId) =>
+            CreateSignature(operationalRestrictionId, signerUserId, "Originator");
+
+        public Signature? GetOriginatorSignature(Guid operationalRestrictionId) =>
+            _signatures.FirstOrDefault(signature =>
+                signature.OperationalRestrictionId == operationalRestrictionId
+                && signature.SigneeRole == "Originator");
+
+        public Signature SignDutyOperationsManager(Guid operationalRestrictionId, Guid signerUserId) =>
+            CreateSignature(operationalRestrictionId, signerUserId, "DutyOperationsManager");
+
+        public Signature SignControlRoomSupervisor(Guid operationalRestrictionId, Guid signerUserId) =>
+            CreateSignature(operationalRestrictionId, signerUserId, "ControlroomSupervisor");
+
+        public List<Guid> GetAtWorkAndOffWorkUserIds() => new();
+
+        public void DiscardUnpersistedSignature(Signature signature) => _signatures.Remove(signature);
+
+        private Signature CreateSignature(Guid restrictionId, Guid signerId, string role)
+        {
+            var signature = new Signature
+            {
+                Id = Guid.NewGuid(),
+                RequiresSignatureId = Guid.NewGuid(),
+                OperationalRestrictionId = restrictionId,
+                SigneeId = signerId,
+                SigneeRole = role,
+                SignedAt = DateTime.UtcNow
+            };
+            _signatures.Add(signature);
+            return signature;
+        }
     }
 
     private static Task<OperationalRestrictionDto> CreateDraftAsync(
@@ -143,8 +182,7 @@ public class OperationalRestrictionServiceTests
         var resubmittedDraft = await service.ResubmitRestrictionAsync(returned.Id, originator);
         var submittedAgain = await service.SubmitForApprovalAsync(resubmittedDraft.Id, originator);
         var approved = await service.ApproveRestrictionAsync(submittedAgain.Id, dutyOperationsManager);
-        var pendingSupervisor = await service.SubmitForControlRoomSupervisorApprovalAsync(approved.Id, dutyOperationsManager);
-        var active = await service.ActivateRestrictionAsync(pendingSupervisor.Id, controlRoomSupervisor);
+        var active = await service.ActivateRestrictionAsync(approved.Id, controlRoomSupervisor);
 
         // Assert
         Assert.Equal(RestrictionState.Draft, draft.State);
@@ -152,8 +190,7 @@ public class OperationalRestrictionServiceTests
         Assert.Equal(RestrictionState.ReturnedForChanges, returned.State);
         Assert.Equal(RestrictionState.Draft, resubmittedDraft.State);
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, submittedAgain.State);
-        Assert.Equal(RestrictionState.Approved, approved.State);
-        Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, pendingSupervisor.State);
+        Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, approved.State);
         Assert.Equal(RestrictionState.Active, active.State);
 
         Assert.Equal(7, repo.Restrictions.Single(
@@ -265,7 +302,7 @@ public class OperationalRestrictionServiceTests
         var approved = await service.ApproveRestrictionAsync(submitted.Id, dutyOperationsManager);
 
         // Assert
-        Assert.Equal(3, events.Events.Count);
+        Assert.Equal(4, events.Events.Count);
         Assert.All(events.Events, e => Assert.Equal(draft.Id, e.OriginalRestrictionId));
 
         var created = events.Events[0];
@@ -287,7 +324,13 @@ public class OperationalRestrictionServiceTests
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, approvedEvent.FromState);
         Assert.Equal(RestrictionState.Approved, approvedEvent.ToState);
         Assert.Equal(dutyOperationsManager, approvedEvent.ActorId);
-        Assert.Equal(approved.Id, approvedEvent.RestrictionVersionId);
+
+        var pendingImplementationEvent = events.Events[3];
+        Assert.Equal(RestrictionAction.PendingControlRoomSupervisorApproval, pendingImplementationEvent.Action);
+        Assert.Equal(RestrictionState.Approved, pendingImplementationEvent.FromState);
+        Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, pendingImplementationEvent.ToState);
+        Assert.Equal(dutyOperationsManager, pendingImplementationEvent.ActorId);
+        Assert.Equal(approved.Id, pendingImplementationEvent.RestrictionVersionId);
     }
 
     [Fact]

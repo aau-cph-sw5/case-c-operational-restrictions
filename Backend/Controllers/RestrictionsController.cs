@@ -165,11 +165,12 @@ public class RestrictionsController : ApiControllerBase
     }
 
     /// <summary>
-    /// Approves a restriction that is pending duty operations manager approval.
+    /// Signs and approves a restriction that is pending duty operations manager
+    /// approval, then advances it to control room implementation approval.
     /// The originator of a restriction can never approve it themselves, even if
     /// their role grants the approval permission.
     /// </summary>
-    /// <response code="200">Returns the approved restriction</response>
+    /// <response code="200">Returns the signed restriction awaiting implementation approval</response>
     /// <response code="403">The user has no role granting OperationalRestriction:Approve, or they created the restriction themselves</response>
     /// <response code="404">The operational restriction was not found</response>
     /// <response code="409">The operational restriction is not pending approval</response>
@@ -187,6 +188,12 @@ public class RestrictionsController : ApiControllerBase
             return NotFound(new { error = exception.Message });
         }
         catch (SelfApprovalNotAllowedException exception)
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new { error = exception.Message });
+        }
+        catch (NotDutyOperationsManagerException exception)
         {
             return StatusCode(
                 StatusCodes.Status403Forbidden,

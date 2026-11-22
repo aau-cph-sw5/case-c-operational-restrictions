@@ -11,14 +11,14 @@ import { clockTimeNow } from "@/lib/dateFormat";
 import { AppHeader } from "../components/AppHeader";
 
 export function OverviewPage() {
+  const navigate = useNavigate();
+  const [restrictions, setRestrictions] = useState<DrItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "kladde" | "alle" | "aktiv" | "arkiv"
   >("alle");
   const [searchQuery, setSearchQuery] = useState("");
-  const [restrictions, setRestrictions] = useState<DrItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const [lastUpdated, setLastUpdated] = useState<string>();
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export function OverviewPage() {
   }, [restrictions, activeTab, searchQuery]);
 
   const sortedItems = useMemo(() => {
-    return filteredItems.sort((a, b) => {
+    return [...filteredItems].sort((a, b) => {
       if (a.category === "arkiv" && b.category !== "arkiv") return 1;
       else if (b.category === "arkiv" && a.category !== "arkiv") return -1;
 
@@ -149,11 +149,14 @@ export function OverviewPage() {
         {/* Scrollable Card List Container */}
         <main className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-white p-3.5 pb-6">
           {loading ? (
-            <p className="text-center py-16 text-muted-foreground">
+            <p
+              role="status"
+              className="py-16 text-center text-muted-foreground"
+            >
               Henter driftsrestriktioner...
             </p>
           ) : error ? (
-            <p className="text-center py-16 text-destructive font-medium">
+            <p role="alert" className="py-16 text-center text-destructive">
               {error}
             </p>
           ) : sortedItems.length > 0 ? (

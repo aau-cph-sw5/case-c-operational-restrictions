@@ -62,6 +62,21 @@ public class RestrictionLifecycleServiceTests
     }
 
     [Fact]
+    public void ApprovalWithoutDutyOperationsManagerSignatureIsRefused()
+    {
+        var data = CreateValidDto(RestrictionState.PendingDutyOperationsManagerApproval);
+        data.Signatures.Clear();
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanTransition(
+                RestrictionState.PendingDutyOperationsManagerApproval,
+                RestrictionAction.Approved,
+                data));
+
+        Assert.Contains("DutyOperationsManagerSignatureIsFound", exception.Message);
+    }
+
+    [Fact]
     public void EnsureCanCreateWithValidDataDoesNotThrow()
     {
         // Arrange
@@ -115,7 +130,15 @@ public class RestrictionLifecycleServiceTests
             StartDate = DateTime.Now,
             State = state,
             ReviewerId = Guid.NewGuid(),
-            ReviewDescription = "Review comment"
+            ReviewDescription = "Review comment",
+            Signatures =
+            [
+                new SignatureDto
+                {
+                    SigneeId = Guid.NewGuid(),
+                    SigneeRole = "DutyOperationsManager"
+                }
+            ]
         };
     }
 

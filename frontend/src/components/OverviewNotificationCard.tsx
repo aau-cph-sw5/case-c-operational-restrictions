@@ -6,6 +6,7 @@ import { formatDayMonthYear } from "@/lib/dateFormat";
 export type DRStatus =
   | "aktiv"
   | "afventer_deaktivering"
+  | "afventer_implementering"
   | "afventer_godkendelse"
   | "arkiv"
   | "kladde";
@@ -29,6 +30,12 @@ export const STATUS_STYLES: Record<DRStatus, StatusStyle> = {
     bgHex: "#FEF3C7", // Awaiting deactivation yellow
     borderColor: "border-[#FDE68A]",
     statusLabel: "Afventer deaktivering",
+    statusTextColor: "text-[#92400E]",
+  },
+  afventer_implementering: {
+    bgHex: "#FEF3C7",
+    borderColor: "border-[#FDE68A]",
+    statusLabel: "Afventer implementering",
     statusTextColor: "text-[#92400E]",
   },
   afventer_godkendelse: {
