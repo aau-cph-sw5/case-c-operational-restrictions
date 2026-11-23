@@ -52,4 +52,6 @@ public interface IOperationalRestrictionService
     Task<OperationalRestrictionDto> ResubmitRestrictionAsync(
           Guid id,
           Guid actorId);
+    Task<Signature> SignControlRoomSupervisorApprovalAsync(
+          Guid id, Guid signerId);
 }

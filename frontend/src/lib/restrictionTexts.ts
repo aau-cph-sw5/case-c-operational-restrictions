@@ -21,6 +21,21 @@ export const restrictionTexts = {
   role: "Rolle",
   signedAt: "Tidspunkt",
   sign: "Underskriv",
+  approve: "Godkend og send til implementering",
+  approving: "Godkender...",
+  approveSuccess: "Restriktionen er godkendt og afventer implementering.",
+  approveForbidden:
+    "Kun en Duty Operations Manager kan godkende denne restriktion.",
+  approveConflict:
+    "Restriktionen afventer ikke længere godkendelse. Genindlæs siden.",
+  approveFailed: "Godkendelsen mislykkedes. Prøv igen.",
+  title: "Titel",
+  situation: "Situation",
+  cancellationDescription: "Annullering",
+  historyHeading: "Historik",
+  historyEmpty: "Der er endnu ingen historik for denne restriktion.",
+  historyCreated: "Oprettet",
+  historyActor: "Aktør",
   signSubmit: "Underskriv og indsend til godkendelse",
   signing: "Underskriver...",
   edit: "Rediger",
@@ -37,10 +52,17 @@ export const restrictionTexts = {
   signConflict:
     "Restriktionen er ikke længere en kladde og kan ikke underskrives.",
   signFailed: "Underskrivningen mislykkedes. Prøv igen.",
+  signForImplementation: "Underskriv for implementering",
+  signForImplementationSuccess:
+    "Restriktionen er underskrevet for implementering og er nu aktiv.",
+  signForImplementationForbidden:
+    "Kun en kontrolrumschef kan underskrive for implementering.",
+  signForImplementationConflict:
+    "Restriktionen afventer ikke længere kontrolrumsgodkendelse. Genindlæs siden.",
   requestChangesHeading: "Anmod om ændringer",
   requestChangesLabel: "Kommentar til originator",
   requestChangesHelper:
-    "Beskriv hvad originator skal rette, før restriktionen kan godkendes.",
+    "Hvis restriktionen ikke kan godkendes, returneres den til originator med en kommentar, så den kan rettes.",
   requestChanges: "Anmod om ændringer",
   requestingChanges: "Sender...",
   requestChangesCommentRequired: "Skriv en kommentar til originator.",

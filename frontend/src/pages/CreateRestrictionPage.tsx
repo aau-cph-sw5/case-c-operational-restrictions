@@ -35,6 +35,7 @@ import type {
   RestrictionField,
   RestrictionFormValues,
 } from "../lib/restrictionValidation";
+import { AppHeader } from "../components/AppHeader";
 
 export function CreateRestrictionPage() {
   const navigate = useNavigate();
@@ -162,12 +163,8 @@ export function CreateRestrictionPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-xl min-w-0 flex-col gap-4 p-4 text-left overflow-x-hidden">
-      <header className="flex flex-col gap-1 w-full min-w-0">
-        <h1 className="font-ui text-2xl font-bold text-foreground">
-          Opret ny Driftsrestriktion
-        </h1>
-      </header>
+    <div className="mx-auto flex h-[calc(100svh-5rem)] w-full max-w-xl min-w-0 flex-col gap-4 overflow-hidden p-4 text-left">
+      <AppHeader title="Opret ny Driftsrestriktion" />
 
       {serverErrors.length > 0 && (
         <Alert variant="destructive" className="w-full min-w-0">
@@ -189,7 +186,7 @@ export function CreateRestrictionPage() {
         noValidate
         className="flex flex-col flex-1 w-full min-w-0 max-w-full"
       >
-        <Card className="flex flex-col w-full min-w-0 max-w-full border border-border/80 bg-card shadow-sm rounded-2xl overflow-hidden min-h-145 h-[calc(100svh-8rem)] max-h-180">
+        <Card className="flex min-h-0 h-full w-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
           <CardHeader className="shrink-0 space-y-3 pb-3 border-b border-border/40 w-full min-w-0 max-w-full overflow-hidden">
             <div className="flex items-center justify-between">
               {step > 0 ? (
