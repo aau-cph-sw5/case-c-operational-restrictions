@@ -31,10 +31,13 @@ public class OperationalRestrictionDto
     public Guid? OriginalOperationalRestrictionId { get; set; }
     public SignatureDto? OriginatorSignature { get; set; }
     public List<SignatureDto> Signatures { get; set; } = new();
+    public List<RestrictionTransitionEventDto> History { get; set; } = new();
 
     public Guid ReviewerId { get; set; }
 
     public string ReviewDescription { get; set; } = string.Empty;
+
+    public List<Guid> AssignedOperatorsIds { get; set; } = new();
 
     public static OperationalRestrictionDto FromOperationalRestrictionToDto(OperationalRestriction operationalRestriction)
     {
@@ -61,6 +64,7 @@ public class OperationalRestrictionDto
             OriginalOperationalRestrictionId = operationalRestriction.OriginalOperationalRestrictionId,
             ReviewerId = operationalRestriction.ReviewerId,
             ReviewDescription = operationalRestriction.ReviewDescription,
+            AssignedOperatorsIds = new List<Guid>(operationalRestriction.AssignedOperatorsIds),
             Signatures = signatures,
             OriginatorSignature = originatorSignature
         };

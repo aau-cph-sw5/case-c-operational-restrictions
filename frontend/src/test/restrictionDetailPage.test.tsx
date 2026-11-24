@@ -9,14 +9,18 @@ import type { RestrictionDto } from "../types/restrictionDto";
 const mocks = vi.hoisted(() => ({
   getRestrictionById: vi.fn(),
   signRestriction: vi.fn(),
+  signForImplementation: vi.fn(),
   requestChanges: vi.fn(),
+  approveRestriction: vi.fn(),
   getCurrentUser: vi.fn(),
 }));
 
 vi.mock("../services/restrictionApi", () => ({
   getRestrictionById: mocks.getRestrictionById,
   signRestriction: mocks.signRestriction,
+  signForImplementation: mocks.signForImplementation,
   requestChanges: mocks.requestChanges,
+  approveRestriction: mocks.approveRestriction,
 }));
 
 vi.mock("../services/authService", () => ({
@@ -302,6 +306,146 @@ describe("RestrictionDetailPage", () => {
     expect(screen.getByTestId("signature-block")).toBeInTheDocument();
   });
 
+  describe("Duty Operations Manager approval", () => {
+    const manager = {
+      id: "manager-1",
+      name: "Dina Manager",
+      email: "manager@example.test",
+      roles: ["DutyOperationsManager"],
+    };
+    const pendingApproval: RestrictionDto = {
+      ...signed,
+      title: "Track maintenance",
+      reference: "REF-2026-025",
+      situationDescription: "Maintenance work near the station.",
+      cancellationDescription: "Remove the restriction when work is complete.",
+      status: "PendingDOMApproval",
+      history: [
+        {
+          action: "PendingDutyOperationsManagerApproval",
+          fromState: "Draft",
+          toState: "PendingDutyOperationsManagerApproval",
+          actorId: "user-1",
+          occurredAt: "2026-11-18T09:00:00Z",
+        },
+      ],
+    };
+    const pendingImplementation: RestrictionDto = {
+      ...pendingApproval,
+      status: "PendingControlRoomSupervisorApproval",
+      signatures: [
+        ...pendingApproval.signatures,
+        {
+          signeeId: "manager-1",
+          signeeRole: "DutyOperationsManager",
+          signedAt: "2026-11-18T10:00:00Z",
+        },
+      ],
+      history: [
+        ...(pendingApproval.history ?? []),
+        {
+          action: "Approved",
+          fromState: "PendingDutyOperationsManagerApproval",
+          toState: "Approved",
+          actorId: "manager-1",
+          occurredAt: "2026-11-18T10:00:00Z",
+        },
+        {
+          action: "PendingControlRoomSupervisorApproval",
+          fromState: "Approved",
+          toState: "PendingControlRoomSupervisorApproval",
+          actorId: "manager-1",
+          occurredAt: "2026-11-18T10:00:01Z",
+        },
+      ],
+    };
+    const approveButton = () =>
+      screen.queryByRole("button", {
+        name: /godkend og send til implementering/i,
+      });
+
+    beforeEach(() => {
+      mocks.getCurrentUser.mockResolvedValue(manager);
+      mocks.getRestrictionById.mockResolvedValue(pendingApproval);
+    });
+
+    it("presents the full restriction, originator signature and history", async () => {
+      renderPage();
+
+      expect(await screen.findByTestId("restriction-title")).toHaveTextContent(
+        "Track maintenance",
+      );
+      expect(
+        screen.getByText("Maintenance work near the station."),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Remove the restriction when work is complete."),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("signature-block")).toHaveTextContent(
+        "Originator",
+      );
+      expect(screen.getByTestId("restriction-history-entry")).toHaveTextContent(
+        "Indsendt til godkendelse",
+      );
+    });
+
+    it("shows approval only to a non-originator duty operations manager", async () => {
+      const { unmount } = renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(approveButton()).toBeInTheDocument();
+      unmount();
+
+      mocks.getCurrentUser.mockResolvedValue({
+        ...manager,
+        id: "operator-1",
+        roles: ["Operator"],
+      });
+      mocks.getRestrictionById.mockResolvedValue(pendingApproval);
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(approveButton()).not.toBeInTheDocument();
+    });
+
+    it("signs approval and moves the restriction to implementation approval", async () => {
+      mocks.approveRestriction.mockResolvedValue(pendingImplementation);
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      fireEvent.click(approveButton()!);
+
+      expect(await screen.findByTestId("approve-success")).toHaveTextContent(
+        /afventer implementering/i,
+      );
+      expect(mocks.approveRestriction).toHaveBeenCalledWith("restriction-1");
+      expect(screen.getByTestId("status-badge")).toHaveTextContent(
+        "Afventer kontrolrumsgodkendelse",
+      );
+      expect(screen.getAllByTestId("signature-block")).toHaveLength(2);
+      expect(approveButton()).not.toBeInTheDocument();
+      expect(screen.getAllByTestId("restriction-history-entry")).toHaveLength(
+        3,
+      );
+    });
+
+    it("shows server authorization failures without changing pending state", async () => {
+      mocks.approveRestriction.mockRejectedValue(apiError(403));
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      fireEvent.click(approveButton()!);
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        /kun en duty operations manager/i,
+      );
+      expect(screen.getByTestId("status-badge")).toHaveTextContent(
+        "Afventer DOM-godkendelse",
+      );
+      expect(approveButton()).toBeEnabled();
+    });
+  });
+
   it.each([
     [400, /ikke komplet/i],
     [403, /kun restriktionens originator/i],
@@ -360,12 +504,126 @@ describe("RestrictionDetailPage", () => {
     );
   });
 
+  describe("Control room supervisor sign for implementation", () => {
+    const supervisor = {
+      id: "supervisor-1",
+      name: "Sara Supervisor",
+      email: "supervisor@example.test",
+      roles: ["ControlroomSupervisor"],
+    };
+    const awaitingSupervisor: RestrictionDto = {
+      ...signed,
+      status: "PendingControlRoomSupervisorApproval",
+    };
+    const supervisorSignature = {
+      signeeId: "supervisor-1",
+      signeeRole: "ControlroomSupervisor",
+      signedAt: "2026-11-16T10:00:00Z",
+    };
+    const signForImplementationButton = () =>
+      screen.queryByRole("button", { name: /underskriv for implementering/i });
+
+    beforeEach(() => {
+      mocks.getCurrentUser.mockResolvedValue(supervisor);
+      mocks.getRestrictionById.mockResolvedValue(awaitingSupervisor);
+    });
+
+    it("shows the sign-for-implementation button to a control room supervisor", async () => {
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(signForImplementationButton()).toBeEnabled();
+      expect(screen.getByTestId("status-badge")).toHaveTextContent(
+        "Afventer kontrolrumsgodkendelse",
+      );
+    });
+
+    it("hides the button for a user without the ControlroomSupervisor role", async () => {
+      mocks.getCurrentUser.mockResolvedValue({
+        ...supervisor,
+        roles: ["Operator"],
+      });
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      expect(signForImplementationButton()).not.toBeInTheDocument();
+    });
+
+    it("hides the button when the restriction is not awaiting supervisor approval", async () => {
+      mocks.getRestrictionById.mockResolvedValue(signed);
+      renderPage();
+      await screen.findByTestId("signature-block");
+
+      expect(signForImplementationButton()).not.toBeInTheDocument();
+    });
+
+    it("signs, then shows Active, the new signature and a success alert without re-fetching", async () => {
+      let resolveSign: (value: unknown) => void = () => {};
+      mocks.signForImplementation.mockReturnValue(
+        new Promise((resolve) => {
+          resolveSign = resolve;
+        }),
+      );
+      renderPage();
+      await screen.findByText("restriction-1");
+
+      fireEvent.click(signForImplementationButton()!);
+
+      const pending = await screen.findByRole("button", {
+        name: /underskriver/i,
+      });
+      expect(pending).toBeDisabled();
+      expect(mocks.signForImplementation).toHaveBeenCalledWith("restriction-1");
+
+      resolveSign(supervisorSignature);
+
+      await waitFor(() =>
+        expect(screen.getByTestId("status-badge")).toHaveTextContent("Aktiv"),
+      );
+      // The signature from the response is appended locally; no re-fetch.
+      expect(mocks.getRestrictionById).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByTestId("sign-for-implementation-success"),
+      ).toHaveTextContent(/nu aktiv/i);
+      const blocks = screen.getAllByTestId("signature-block");
+      expect(
+        blocks.some((block) =>
+          block.textContent?.includes("ControlroomSupervisor"),
+        ),
+      ).toBe(true);
+      expect(
+        blocks.some((block) => block.textContent?.includes("Sara Supervisor")),
+      ).toBe(true);
+      expect(signForImplementationButton()).not.toBeInTheDocument();
+    });
+
+    it.each([
+      [403, /kun en kontrolrumschef/i],
+      [409, /afventer ikke længere kontrolrumsgodkendelse/i],
+    ])(
+      "shows an alert and stays pending when signing for implementation returns %i",
+      async (status, message) => {
+        mocks.signForImplementation.mockRejectedValue(apiError(status));
+        renderPage();
+        await screen.findByText("restriction-1");
+
+        fireEvent.click(signForImplementationButton()!);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent(message);
+        expect(screen.getByTestId("status-badge")).toHaveTextContent(
+          "Afventer kontrolrumsgodkendelse",
+        );
+        expect(signForImplementationButton()).toBeEnabled();
+      },
+    );
+  });
+
   describe("DOM request changes", () => {
     const dom = {
       id: "dom-1",
       name: "Dan Dom",
       email: "dom@example.test",
-      role: "DutyOperationsManager",
+      roles: ["DutyOperationsManager"],
     };
     const pending: RestrictionDto = { ...signed, status: "PendingDOMApproval" };
     const returned: RestrictionDto = {
@@ -401,7 +659,7 @@ describe("RestrictionDetailPage", () => {
     });
 
     it("hides the form from a user whose role is not DOM", async () => {
-      mocks.getCurrentUser.mockResolvedValue({ ...dom, role: "Operator" });
+      mocks.getCurrentUser.mockResolvedValue({ ...dom, roles: ["Operator"] });
       renderPage();
       await screen.findByText("restriction-1");
 

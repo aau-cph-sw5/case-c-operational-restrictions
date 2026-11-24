@@ -165,11 +165,12 @@ public class RestrictionsController : ApiControllerBase
     }
 
     /// <summary>
-    /// Approves a restriction that is pending duty operations manager approval.
+    /// Signs and approves a restriction that is pending duty operations manager
+    /// approval, then advances it to control room implementation approval.
     /// The originator of a restriction can never approve it themselves, even if
     /// their role grants the approval permission.
     /// </summary>
-    /// <response code="200">Returns the approved restriction</response>
+    /// <response code="200">Returns the signed restriction awaiting implementation approval</response>
     /// <response code="403">The user has no role granting OperationalRestriction:Approve, or they created the restriction themselves</response>
     /// <response code="404">The operational restriction was not found</response>
     /// <response code="409">The operational restriction is not pending approval</response>
@@ -192,6 +193,12 @@ public class RestrictionsController : ApiControllerBase
                 StatusCodes.Status403Forbidden,
                 new { error = exception.Message });
         }
+        catch (NotDutyOperationsManagerException exception)
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new { error = exception.Message });
+        }
         catch (InvalidOperationException exception)
         {
             return Conflict(new { error = exception.Message });
@@ -201,6 +208,67 @@ public class RestrictionsController : ApiControllerBase
             LogUnexpectedError(_logger, exception);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
+    }
+
+    /// <summary>
+    /// Signs an operational restriction for implementation as the control room
+    /// supervisor, moving it from PendingControlRoomSupervisorApproval to Active.
+    /// </summary>
+    /// <response code="403">The authenticated user is not a control room supervisor</response>
+    /// <response code="404">The operational restriction was not found</response>
+    /// <response code="409">The operational restriction is not awaiting control room supervisor approval</response>
+    /// <response code="200">Returns the created immutable signature</response>
+
+    [HttpPost("{id:guid}/sign-for-implementation")]
+    public async Task<IActionResult> SignForImplementation(Guid id)
+    {
+        OperationalRestrictionDto restriction;
+        try
+        {
+            restriction = await _operationalRestrictionService.GetByIdAsync(id);
+
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+
+        if (restriction.State != RestrictionState.PendingControlRoomSupervisorApproval)
+        {
+            return Conflict(new
+            {
+                error =
+                    "Only restrictions awaiting control room supervisor approval can be signed for implementation."
+            });
+        }
+
+        try
+        {
+            var signature =
+                await _operationalRestrictionService.SignControlRoomSupervisorApprovalAsync(id, CurrentUserId);
+            return Ok(SignatureDto.FromDalEntity(signature));
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (NotControlRoomSupervisorException exception)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+        }
+        catch (OperationalRestrictionNotSignableException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+        catch (RequiresSignatureNotSignableException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+
     }
 
     private IActionResult? ValidateSigningRequirements(OperationalRestrictionDto restriction)

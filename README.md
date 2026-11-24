@@ -70,6 +70,14 @@ docker compose down
    *Backend runs on [http://localhost:8080](http://localhost:8080).*
    *Swagger UI (API documentation) is available at [http://localhost:8080/swagger](http://localhost:8080/swagger) when running in development.*
 
+### Try the DOM approval flow
+1. Sign in as `placeholder@example.com` and create a restriction.
+2. Save the restriction's link, then sign out.
+3. Sign in as the temporary DOM user:
+   - **Email:** `temp.dom@example.test`
+   - **Password:** `Password123!`
+4. Open the saved restriction link. Review it, then approve it for implementation or request changes.
+
  **3. Format & Lint:**
    ```bash
    pnpm format    # Formats both backend (.NET) and frontend (Prettier)

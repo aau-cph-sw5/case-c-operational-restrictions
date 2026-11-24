@@ -81,10 +81,12 @@ public class NotificationTransitionTests : IDisposable
     [Fact]
     public async Task ReachingControlRoomSupervisorStepNotifiesEveryControlRoomSupervisor()
     {
-        var restriction = await AddRestrictionAsync(RestrictionState.Approved);
+        // Approving now signs as duty operations manager and advances straight to the
+        // control room supervisor step, which requires that signature.
+        var restriction = await AddRestrictionAsync(RestrictionState.PendingDutyOperationsManagerApproval);
+        var approver = (await RoleHoldersAsync(RoleNames.DutyOperationsManager)).First();
 
-        await _restrictionService.SubmitForControlRoomSupervisorApprovalAsync(
-            restriction.RestrictionId, Guid.NewGuid());
+        await _restrictionService.ApproveRestrictionAsync(restriction.RestrictionId, approver);
 
         var notifications = await OpenNotificationsAsync();
         var supervisors = await RoleHoldersAsync(RoleNames.ControlroomSupervisor);
@@ -120,7 +122,8 @@ public class NotificationTransitionTests : IDisposable
 
         var stepNotifications = await _db.Notifications
             .Include(n => n.Deliveries)
-            .Where(n => n.Type == NotificationType.SignatureRequired)
+            .Where(n => n.Type == NotificationType.SignatureRequired
+                && n.OperationalRestrictionId == pending.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(stepNotifications);

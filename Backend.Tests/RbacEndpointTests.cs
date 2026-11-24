@@ -6,6 +6,8 @@ using System.Security.Claims;
 using System.Text;
 
 using Backend.Data;
+using Backend.Models.DTOs;
+using Backend.Models.Enums;
 
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,6 +21,8 @@ public class RbacEndpointTests : IAsyncLifetime, IDisposable
 {
     // Seeded restriction in PendingDutyOperationsManagerApproval state, owned by the placeholder user.
     private static readonly Guid PendingRestrictionId = Guid.Parse("5eed0000-0000-0000-0000-000000000003");
+    // A separate restriction owned by Lars, for testing the placeholder manager's approval role.
+    private static readonly Guid LarsPendingRestrictionId = Guid.Parse("5eed0000-0000-0000-0000-000000000010");
 
     // Must match the Jwt:SigningKey set in TestWebApplicationFactory.
     private const string TestSigningKey = "integration-test-signing-key-at-least-32-characters";
@@ -135,6 +139,68 @@ public class RbacEndpointTests : IAsyncLifetime, IDisposable
             .PostAsync($"/api/restrictions/{PendingRestrictionId}/approve", null, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var approved = await response.Content.ReadFromJsonAsync<OperationalRestrictionDto>(
+            cancellationToken: TestContext.Current.CancellationToken);
+        Assert.NotNull(approved);
+        Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, approved.State);
+        Assert.Contains(approved.Signatures, signature =>
+            signature.SigneeId == DbSeeder.AnnaId
+            && signature.SigneeRole.Contains("DutyOperationsManager"));
+        Assert.Contains(approved.History, transition =>
+            transition.Action == "Approved");
+        Assert.Contains(approved.History, transition =>
+            transition.Action == "PendingControlRoomSupervisorApproval");
+    }
+
+    [Fact]
+    public async Task TemporaryDomUserHasDutyOperationsManagerRoleAndCanApprove()
+    {
+        var response = await CreateClientFor(DbSeeder.TemporaryDomUserId)
+            .PostAsync(
+                $"/api/restrictions/{LarsPendingRestrictionId}/approve",
+                null,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var approved = await response.Content.ReadFromJsonAsync<OperationalRestrictionDto>(
+            cancellationToken: TestContext.Current.CancellationToken);
+        Assert.NotNull(approved);
+        Assert.Equal(RestrictionState.PendingControlRoomSupervisorApproval, approved.State);
+        Assert.Contains(approved.Signatures, signature =>
+            signature.SigneeId == DbSeeder.TemporaryDomUserId
+            && signature.SigneeRole.Contains("DutyOperationsManager"));
+    }
+
+    [Fact]
+    public async Task OperatorWithoutApprovePermissionGets403OnReturnForChanges()
+    {
+        var response = await CreateClientFor(DbSeeder.LarsId)
+            .PostAsJsonAsync(
+                $"/api/restrictions/{PendingRestrictionId}/request-changes",
+                new { comment = "Return for correction" },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DutyOperationsManagerReturnsRestrictionForChangesInsteadOfTerminatingIt()
+    {
+        var response = await CreateClientFor(DbSeeder.AnnaId)
+            .PostAsJsonAsync(
+                $"/api/restrictions/{PendingRestrictionId}/request-changes",
+                new { comment = "Clarify the affected track section." },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var returned = await response.Content.ReadFromJsonAsync<OperationalRestrictionDto>(
+            cancellationToken: TestContext.Current.CancellationToken);
+        Assert.NotNull(returned);
+        Assert.Equal(RestrictionState.ReturnedForChanges, returned.State);
+        Assert.Equal("Clarify the affected track section.", returned.ReviewDescription);
+        Assert.Contains(returned.History, transition =>
+            transition.Action == "ReturnedForChanges"
+            && transition.ActorId == DbSeeder.AnnaId);
     }
 
     private HttpClient CreateClientFor(Guid userId)
