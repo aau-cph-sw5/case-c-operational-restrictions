@@ -13,7 +13,7 @@ namespace Backend.Services;
 public class SignatureService(
     AppDbContext appDbContext,
     INotificationService notificationService
-)
+) : ISignatureService
 {
     private readonly AppDbContext _appDbContext = appDbContext;
     private readonly INotificationService _notificationService = notificationService;
@@ -32,7 +32,6 @@ public class SignatureService(
 
         return _requiredSignatures[Random.Shared.Next(_requiredSignatures.Count)].Id;
     }
-
 
     // The users who must read and sign a restriction when it becomes active:
     // everyone at work or off work at that moment (i.e. not on holiday).

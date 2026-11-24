@@ -43,7 +43,7 @@ public class RestrictionControllerTests
             new OperationalRestrictionRepository(appDbContext),
             new RestrictionTransitionEventRepository(appDbContext),
             new UnitOfWork(appDbContext),
-            new SignatureService(appDbContext));
+            new SignatureService(appDbContext, null!));
     }
 
     [Fact]
