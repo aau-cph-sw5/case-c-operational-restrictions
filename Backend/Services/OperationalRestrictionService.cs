@@ -237,10 +237,13 @@ public class OperationalRestrictionService
     /// </summary>
     public async Task<List<OperationalRestrictionDto>> GetAllAsync(Guid currentUserId)
     {
-        var restrictions = await _repository.GetAllAsync(
-            x => x.State != RestrictionState.Draft || x.OriginatorUserId == currentUserId);
+        var restrictions = await _repository.GetAllAsync();
 
+        // Every transition stores a new version, so only the latest version of each chain is listed.
         return restrictions
+            .GroupBy(x => x.OriginalOperationalRestrictionId ?? x.RestrictionId)
+            .Select(chain => chain.MaxBy(version => version.Version)!)
+            .Where(x => x.State != RestrictionState.Draft || x.OriginatorUserId == currentUserId)
             .Select(OperationalRestrictionDto.FromOperationalRestrictionToDto)
             .ToList();
     }
