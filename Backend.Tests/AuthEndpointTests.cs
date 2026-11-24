@@ -1,11 +1,14 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Backend.Data;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
+using Backend.Services.Auth;
 
 namespace Backend.Tests;
 
@@ -63,6 +66,12 @@ public class AuthEndpointTests : IAsyncLifetime, IDisposable
         Assert.False(string.IsNullOrWhiteSpace(content.AccessToken));
         Assert.Equal(email, content.User.Email);
         Assert.Contains(expectedRole.ToString(), content.User.Roles);
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(content.AccessToken);
+        var roleClaims = jwt.Claims.Where(c => c.Type == JwtService.RoleClaimType).ToList();
+        Assert.Single(roleClaims);
+        Assert.Equal(expectedRole.ToString(), roleClaims[0].Value);
+        Assert.DoesNotContain(jwt.Claims, c => c.Type == ClaimTypes.Role);
     }
 
     [Fact]

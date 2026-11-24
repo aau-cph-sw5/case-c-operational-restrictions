@@ -51,6 +51,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             Id = userId,
             Name = "Test User",
             Email = $"{userId}@example.com"
-        }).AccessToken;
+        }, []).AccessToken;
     }
 }

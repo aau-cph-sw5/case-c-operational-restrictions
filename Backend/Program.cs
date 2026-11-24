@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Security.Claims;
 using System.Text;
 
 using Backend.Configuration;
@@ -76,7 +75,7 @@ builder.Services
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            RoleClaimType = ClaimTypes.Role,
+            RoleClaimType = JwtService.RoleClaimType,
             ValidateIssuer = true,
             ValidIssuer = jwtOptions.Issuer,
             ValidateAudience = true,

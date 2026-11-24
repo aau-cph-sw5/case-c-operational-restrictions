@@ -12,6 +12,8 @@ namespace Backend.Services.Auth;
 
 public class JwtService
 {
+    public const string RoleClaimType = "role";
+
     private readonly JwtOptions _options;
 
     public JwtService(IOptions<JwtOptions> options)
@@ -19,7 +21,7 @@ public class JwtService
         _options = options.Value;
     }
 
-    public MintedToken Mint(User user, IEnumerable<string>? roles = null)
+    public MintedToken Mint(User user, IEnumerable<string> roles)
     {
         var issuedAt = DateTime.UtcNow;
         var expiresAt = issuedAt.AddDays(_options.LifetimeDays);
@@ -33,13 +35,9 @@ public class JwtService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        if (roles != null)
+        foreach (var role in roles)
         {
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-                claims.Add(new Claim("role", role));
-            }
+            claims.Add(new Claim(RoleClaimType, role));
         }
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
@@ -123,6 +121,7 @@ public class JwtService
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
         var parameters = new TokenValidationParameters
         {
+            RoleClaimType = RoleClaimType,
             ValidateIssuer = true,
             ValidIssuer = _options.Issuer,
             ValidateAudience = true,
