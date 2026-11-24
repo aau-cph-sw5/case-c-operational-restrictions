@@ -46,6 +46,9 @@ builder.Services.AddSingleton<IRestrictionGuard, ControlRoomSupervisorSignatureI
 builder.Services.AddSingleton<IRestrictionGuard, OperatorsAreAssigned>();
 builder.Services.AddSingleton<IRestrictionGuard, ReturnedForChanges>();
 builder.Services.AddSingleton<IRestrictionGuard, CancelledRefused>();
+builder.Services.AddSingleton<IRestrictionGuard, OriginatorCancellationSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, DutyOperationsManagerCancellationSignatureIsFound>();
+builder.Services.AddSingleton<IRestrictionGuard, ControlRoomCancellationSignatureIsFound>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
