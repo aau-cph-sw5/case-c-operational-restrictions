@@ -23,7 +23,10 @@ public class RestrictionLifecycleServiceTests
                 new ControlRoomSupervisorSignatureIsFound(),
                 new OperatorsAreAssigned(),
                 new ReturnedForChanges(),
-                new CancelledRefused()
+                new CancelledRefused(),
+                new OriginatorCancellationSignatureIsFound(),
+                new DutyOperationsManagerCancellationSignatureIsFound(),
+                new ControlRoomCancellationSignatureIsFound()
             });
     }
 

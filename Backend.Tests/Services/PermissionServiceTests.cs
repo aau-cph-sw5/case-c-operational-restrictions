@@ -56,7 +56,7 @@ public class PermissionServiceTests
         var service = CreateService();
 
         var annaPermissions = await service.GetPermissionsForUserAsync(DbSeeder.AnnaId);
-        Assert.Equal(5, annaPermissions.Count);
+        Assert.Equal(6, annaPermissions.Count);
         Assert.Contains(Permissions.OperationalRestrictionRead, annaPermissions);
         Assert.Contains(Permissions.OperationalRestrictionCreate, annaPermissions);
         Assert.Contains(Permissions.OperationalRestrictionSign, annaPermissions);
