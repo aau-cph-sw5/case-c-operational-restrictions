@@ -11,6 +11,7 @@ import { pageClasses } from "@/lib/pageLayout.ts";
 import { loadErrorMessage } from "@/lib/utils/loadErrorMessage.ts";
 import { requestChangesErrorMessage } from "@/lib/utils/requestChangesErrorMessage.ts";
 import {
+  approveErrorMessage,
   signErrorMessage,
   signForImplementationErrorMessage,
 } from "@/lib/utils/signErrorMessages.ts";
@@ -24,6 +25,7 @@ import { useRestriction } from "../hooks/useRestriction";
 import { restrictionTexts as t } from "../lib/restrictionTexts";
 import {
   getRestrictionById,
+  approveRestriction,
   requestChanges,
   signForImplementation,
   signRestriction,
@@ -46,6 +48,9 @@ export function RestrictionDetailPage() {
     null,
   );
   const [requestChangesSuccess, setRequestChangesSuccess] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
+  const [approveSuccess, setApproveSuccess] = useState(false);
 
   const {
     user: currentUser,
@@ -125,6 +130,23 @@ export function RestrictionDetailPage() {
     }
   }
 
+  async function handleApprove() {
+    if (!restriction) return;
+
+    setApproving(true);
+    setApproveError(null);
+    setApproveSuccess(false);
+
+    try {
+      setRestriction(await approveRestriction(restriction.id));
+      setApproveSuccess(true);
+    } catch (error) {
+      setApproveError(approveErrorMessage(error));
+    } finally {
+      setApproving(false);
+    }
+  }
+
   async function handleRequestChanges(comment: string): Promise<boolean> {
     if (!restriction) return false;
 
@@ -146,6 +168,7 @@ export function RestrictionDetailPage() {
 
   const {
     canSign,
+    canApprove,
     canRequestChanges,
     canSignForImplementation,
     reviewComment,
@@ -202,7 +225,9 @@ export function RestrictionDetailPage() {
         signatures={restriction.signatures}
         knownUsers={knownUsers}
       />
-
+      {approveSuccess && (
+        <SuccessAlert testId="approve-success">{t.approveSuccess}</SuccessAlert>
+      )}
       {signForImplementationSuccess && (
         <SuccessAlert testId="sign-for-implementation-success">
           {t.signForImplementationSuccess}
@@ -210,6 +235,7 @@ export function RestrictionDetailPage() {
       )}
 
       {signError && <ErrorAlert>{signError}</ErrorAlert>}
+      {approveError && <ErrorAlert>{approveError}</ErrorAlert>}
 
       {signForImplementationError && (
         <ErrorAlert>{signForImplementationError}</ErrorAlert>
@@ -221,6 +247,9 @@ export function RestrictionDetailPage() {
         canSign={canSign}
         signing={signing}
         onSign={handleSign}
+        canApprove={canApprove}
+        approving={approving}
+        onApprove={handleApprove}
         canRequestChanges={canRequestChanges}
         submittingChanges={requestingChanges}
         onRequestChanges={handleRequestChanges}

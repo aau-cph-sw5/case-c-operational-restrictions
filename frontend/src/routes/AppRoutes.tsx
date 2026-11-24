@@ -30,7 +30,7 @@ export function AppRoutes() {
               path="/restrictions/:id"
               element={<RestrictionDetailPage />}
             />
-            <Route path="/overview" element={<OverviewPage />} />
+            <Route path="/restrictions" element={<OverviewPage />} />
             <Route path="*" element={<App />} />
           </Route>
         </Route>

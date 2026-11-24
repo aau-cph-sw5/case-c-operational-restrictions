@@ -8,6 +8,7 @@ export interface RestrictionPermissions {
   isOriginator: boolean;
   canSign: boolean;
   isAwaitingDomApproval: boolean;
+  canApprove: boolean;
   canRequestChanges: boolean;
   isAwaitingControlRoomSupervisorApproval: boolean;
   canSignForImplementation: boolean;
@@ -34,12 +35,20 @@ export function useRestrictionPermissions(
       restriction?.status === "PendingDOMApproval" ||
       restriction?.status === "PendingApproval";
 
+    const isDutyOperationsManager =
+      currentUser?.roles?.includes("DutyOperationsManager") ?? false;
+
+    const canApprove =
+      Boolean(isAwaitingDomApproval) &&
+      currentUser !== null &&
+      !isOriginator &&
+      isDutyOperationsManager;
+
     const canRequestChanges =
       Boolean(isAwaitingDomApproval) &&
       currentUser !== null &&
       !isOriginator &&
-      (currentUser.roles === undefined ||
-        currentUser.roles.includes("DutyOperationsManager"));
+      isDutyOperationsManager;
 
     const isAwaitingControlRoomSupervisorApproval =
       restriction?.status === "PendingControlRoomSupervisorApproval";
@@ -64,6 +73,7 @@ export function useRestrictionPermissions(
       isOriginator,
       canSign,
       isAwaitingDomApproval,
+      canApprove,
       canRequestChanges,
       isAwaitingControlRoomSupervisorApproval,
       canSignForImplementation,

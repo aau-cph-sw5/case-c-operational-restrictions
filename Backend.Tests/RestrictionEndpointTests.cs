@@ -60,7 +60,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         var response = await client.PostAsJsonAsync("/api/restrictions", new
         {
             createdBy = DbSeeder.LarsId,
-            title = "Sporafspærring Nørreport",
+            title = "Sporafspærring Nørrebro",
             reference = "REF-2026-001",
             startDate = DateTime.UtcNow.AddDays(1),
             endDate = DateTime.UtcNow.AddDays(2),
@@ -73,7 +73,7 @@ public class RestrictionEndpointTests : IAsyncLifetime, IDisposable
         var created = await ReadAsync<OperationalRestrictionDto>(response);
         Assert.Equal(DbSeeder.AnnaId, created.OriginatorUserId);
         Assert.Equal(RestrictionState.Draft, created.State);
-        Assert.Equal("Sporafspærring Nørreport", created.Title);
+        Assert.Equal("Sporafspærring Nørrebro", created.Title);
         Assert.Equal("REF-2026-001", created.Reference);
         Assert.Equal("Situation details", created.SituationDescription);
         Assert.Equal("Restriction details", created.RestrictionDescription);

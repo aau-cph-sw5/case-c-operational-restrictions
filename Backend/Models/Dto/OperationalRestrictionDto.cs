@@ -31,6 +31,7 @@ public class OperationalRestrictionDto
     public Guid? OriginalOperationalRestrictionId { get; set; }
     public SignatureDto? OriginatorSignature { get; set; }
     public List<SignatureDto> Signatures { get; set; } = new();
+    public List<RestrictionTransitionEventDto> History { get; set; } = new();
 
     public Guid ReviewerId { get; set; }
 
