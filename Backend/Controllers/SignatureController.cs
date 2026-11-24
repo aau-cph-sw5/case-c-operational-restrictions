@@ -19,20 +19,17 @@ public class SignatureController : ApiControllerBase
     }
 
     /// <summary>
-    /// Temporary endpoint: picks a random required signature and signs it.
+    /// Lists the logged-in user's required signatures that are still pending.
     /// </summary>
-    /// <response code="200">Returns the created signature</response>
-    [HttpPost("sign-random")]
-    public ActionResult<SignatureDto> SignRandom()
+    /// <response code="200">Returns the pending required signatures (empty when there are none)</response>
+    /// <response code="401">No valid JWT was supplied</response>
+    [HttpGet("required/me")]
+    [Authorize]
+    public async Task<ActionResult<List<RequiredSignatureDto>>> GetMyPendingRequiredSignatures()
     {
-        var requiresSignatureId = _signatureService.GetSomeRandomRequiredSignatureId();
+        var requiredSignatures = await _signatureService.GetPendingRequiredSignaturesAsync(CurrentUserId);
 
-        // Temporary: signs as the required signee, as there is no logged-in user to test with.
-        var signeeId = _signatureService.GetRequiresSignatureById(requiresSignatureId).SigneeId;
-
-        var signature = _signatureService.Sign(requiresSignatureId, signeeId);
-
-        return Ok(SignatureDto.FromDalEntity(signature));
+        return Ok(requiredSignatures);
     }
 
     /// <summary>

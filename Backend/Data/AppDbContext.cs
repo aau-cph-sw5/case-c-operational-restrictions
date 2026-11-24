@@ -54,6 +54,24 @@ public class AppDbContext : DbContext
                 .HasForeignKey(ura => ura.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // The table was created as "Signature" through OperationalRestriction.SignatureSheet;
+        // keep that name now that it also has its own DbSet.
+        modelBuilder.Entity<Signature>().ToTable("Signature");
+
+        modelBuilder.Entity<RequiresSignature>(builder =>
+        {
+            builder.HasKey(rs => rs.Id);
+            builder.HasOne(rs => rs.OperationalRestriction)
+                .WithMany()
+                .HasForeignKey(rs => rs.OperationalRestrictionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // Restrict: deleting a user must not silently erase who was required to sign.
+            builder.HasOne(rs => rs.Signee)
+                .WithMany()
+                .HasForeignKey(rs => rs.SigneeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 
     public DbSet<OperationalRestriction> OperationalRestrictions => Set<OperationalRestriction>();
@@ -63,6 +81,8 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
+    public DbSet<RequiresSignature> RequiresSignatures => Set<RequiresSignature>();
+    public DbSet<Signature> Signatures => Set<Signature>();
 
 
 }

@@ -13,8 +13,7 @@ namespace Backend.Tests;
 [Collection("SignatureService")]
 public class SignatureServiceTests
 {
-    // Users come from a seeded in-memory database, but required signatures and signatures are still kept
-    // in static lists, so every test uses its own restriction id.
+    // Users, required signatures and signatures live in a seeded in-memory database.
     // xUnit creates a new test class instance per test, so each test gets a fresh service and database.
     private readonly AppDbContext _appDbContext;
     private readonly SignatureService _service;
@@ -68,6 +67,7 @@ public class SignatureServiceTests
         var before = DateTime.UtcNow;
 
         var signature = _service.SignOriginator(restrictionId, originatorId);
+        SaveOnRestriction(signature);
 
         Assert.Equal(originatorId, signature.SigneeId);
         Assert.Equal(RoleNames.Originator, signature.SigneeRole);
@@ -88,7 +88,7 @@ public class SignatureServiceTests
     {
         var restrictionId = Guid.NewGuid();
         var originatorId = Guid.NewGuid();
-        _service.SignOriginator(restrictionId, originatorId);
+        SaveOnRestriction(_service.SignOriginator(restrictionId, originatorId));
 
         Assert.Throws<RequiresSignatureNotSignableException>(
             () => _service.SignOriginator(restrictionId, originatorId));
@@ -136,5 +136,19 @@ public class SignatureServiceTests
         Assert.Equal(usersNotOnHoliday, required.Count);
         Assert.DoesNotContain(required, x => x.SigneeId == DbSeeder.MikkelId);
         Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
+    }
+
+    // Role signatures are saved through the version's SignatureSheet, as OperationalRestrictionService does.
+    private void SaveOnRestriction(Signature signature)
+    {
+        _appDbContext.OperationalRestrictions.Add(new OperationalRestriction
+        {
+            RestrictionId = signature.OperationalRestrictionId,
+            Title = "Test restriction",
+            State = RestrictionState.Draft,
+            StartDate = DateTime.UtcNow,
+            SignatureSheet = [signature]
+        });
+        _appDbContext.SaveChanges();
     }
 }

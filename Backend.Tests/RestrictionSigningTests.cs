@@ -114,6 +114,8 @@ public class RestrictionSigningTests
     {
         var restriction = await AddRestrictionAsync(RestrictionState.Draft);
         var existingSignature = _signatureService.SignOriginator(restriction.RestrictionId, restriction.OriginatorUserId);
+        _dbContext.Signatures.Add(existingSignature);
+        await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         var controller = CreateController(restriction.OriginatorUserId);
 
         var actionResult = await controller.Sign(restriction.RestrictionId);

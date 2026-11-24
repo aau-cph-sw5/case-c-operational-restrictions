@@ -1,3 +1,4 @@
+import { requiredSignatureTexts } from "@/lib/requiredSignatureTexts.ts";
 import { restrictionTexts as t } from "@/lib/restrictionTexts.ts";
 import { isRestrictionApiError } from "@/types/restrictionApiError.ts";
 
@@ -51,4 +52,22 @@ export function approveErrorMessage(error: unknown): string {
     }
   }
   return t.approveFailed;
+}
+
+// Status mapping for an operator's read-and-sign of a required signature
+// (POST /api/signature/sign/{requiresSignatureId}).
+export function requiredSignatureSignErrorMessage(error: unknown): string {
+  if (isRestrictionApiError(error)) {
+    switch (error.status) {
+      case 401:
+        return requiredSignatureTexts.sessionExpired;
+      case 403:
+        return requiredSignatureTexts.signForbidden;
+      case 404:
+        return requiredSignatureTexts.signNotFound;
+      case 409:
+        return requiredSignatureTexts.signConflict;
+    }
+  }
+  return requiredSignatureTexts.signFailed;
 }

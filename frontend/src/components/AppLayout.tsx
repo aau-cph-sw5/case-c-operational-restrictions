@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { RequiredSignaturesDialog } from "./RequiredSignatures/RequiredSignaturesDialog";
 import { BottomNav } from "./ui/bottom-nav";
 
 export function AppLayout() {
@@ -9,6 +10,9 @@ export function AppLayout() {
       </main>
 
       <BottomNav />
+
+      {/* AppLayout only renders inside ProtectedRoute, i.e. after the JWT has been validated. */}
+      <RequiredSignaturesDialog />
     </div>
   );
 }

@@ -151,6 +151,33 @@ namespace Backend.Migrations
                     b.ToTable("Permissions");
                 });
 
+            modelBuilder.Entity("Backend.Models.Entities.RequiresSignature", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OperationalRestrictionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RequiresSignatureStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SigneeId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperationalRestrictionId");
+
+                    b.HasIndex("SigneeId");
+
+                    b.ToTable("RequiresSignatures");
+                });
+
             modelBuilder.Entity("Backend.Models.Entities.RestrictionTransitionEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -300,6 +327,25 @@ namespace Backend.Migrations
                     b.HasOne("Backend.Models.Entities.OperationalRestriction", null)
                         .WithMany("Files")
                         .HasForeignKey("OperationalRestrictionRestrictionId");
+                });
+
+            modelBuilder.Entity("Backend.Models.Entities.RequiresSignature", b =>
+                {
+                    b.HasOne("Backend.Models.Entities.OperationalRestriction", "OperationalRestriction")
+                        .WithMany()
+                        .HasForeignKey("OperationalRestrictionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Entities.User", "Signee")
+                        .WithMany()
+                        .HasForeignKey("SigneeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OperationalRestriction");
+
+                    b.Navigation("Signee");
                 });
 
             modelBuilder.Entity("Backend.Models.Entities.RolePermission", b =>
