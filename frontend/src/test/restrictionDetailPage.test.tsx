@@ -21,6 +21,9 @@ vi.mock("../services/restrictionApi", () => ({
   signForImplementation: mocks.signForImplementation,
   requestChanges: mocks.requestChanges,
   approveRestriction: mocks.approveRestriction,
+  startCancellation: vi.fn(),
+  approveCancellation: vi.fn(),
+  signCancellation: vi.fn(),
 }));
 
 vi.mock("../services/authService", () => ({
