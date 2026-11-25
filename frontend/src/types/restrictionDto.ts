@@ -24,6 +24,14 @@ export interface SignatureDto {
   signedAt: string;
 }
 
+export interface RestrictionHistoryEntry {
+  action: string;
+  fromState: string | null;
+  toState: string;
+  actorId: string;
+  occurredAt: string;
+}
+
 export interface RestrictionDto {
   id: string;
   title?: string;
@@ -37,6 +45,7 @@ export interface RestrictionDto {
   situationDescription?: string;
   cancellationDescription?: string;
   signatures: SignatureDto[];
+  history?: RestrictionHistoryEntry[];
 }
 
 export interface SignatureStatusDto {

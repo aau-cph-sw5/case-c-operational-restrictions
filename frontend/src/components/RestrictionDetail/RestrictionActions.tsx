@@ -1,0 +1,93 @@
+import { RequestChangesForm } from "@/components/RequestChangesForm.tsx";
+import { RestrictionActionButton } from "@/components/RestrictionActionButton.tsx";
+import { restrictionTexts as t } from "@/lib/restrictionTexts.ts";
+import { FilePen, Pencil } from "lucide-react";
+
+interface RestrictionActionsProps {
+  canSign: boolean;
+  signing: boolean;
+  onSign: () => void;
+  canApprove: boolean;
+  approving: boolean;
+  onApprove: () => void;
+  canRequestChanges: boolean;
+  submittingChanges: boolean;
+  onRequestChanges: (comment: string) => Promise<boolean>;
+  canSignForImplementation: boolean;
+  signingForImplementation: boolean;
+  onSignForImplementation: () => void;
+}
+
+export function RestrictionActions({
+  canSign,
+  signing,
+  onSign,
+  canApprove,
+  approving,
+  onApprove,
+  canRequestChanges,
+  submittingChanges,
+  onRequestChanges,
+  canSignForImplementation,
+  signingForImplementation,
+  onSignForImplementation,
+}: RestrictionActionsProps) {
+  return (
+    <>
+      {canApprove && (
+        <div className="flex flex-wrap gap-3 pb-4">
+          <RestrictionActionButton
+            onClick={onApprove}
+            loading={approving}
+            loadingLabel={t.approving}
+          >
+            {t.approve}
+          </RestrictionActionButton>
+        </div>
+      )}
+
+      {canRequestChanges && (
+        <RequestChangesForm
+          submitting={submittingChanges}
+          onSubmit={onRequestChanges}
+        />
+      )}
+
+      {canSign && (
+        <div className="flex flex-wrap gap-3 pb-4">
+          <RestrictionActionButton
+            onClick={onSign}
+            loading={signing}
+            loadingLabel={t.signing}
+            icon={<Pencil className="size-4" aria-hidden />}
+            title="Sign and Submit for Approval"
+          >
+            {t.sign}
+          </RestrictionActionButton>
+
+          {/* TEMPORARY: edit flow is not implemented yet. */}
+          <RestrictionActionButton
+            disabled
+            title={t.editComingSoon}
+            icon={<FilePen className="size-4" aria-hidden />}
+          >
+            {t.edit}
+          </RestrictionActionButton>
+        </div>
+      )}
+
+      {canSignForImplementation && (
+        <div className="flex flex-wrap gap-3 pb-4">
+          <RestrictionActionButton
+            onClick={onSignForImplementation}
+            loading={signingForImplementation}
+            loadingLabel={t.signing}
+            title="Sign for Implementation"
+          >
+            {t.signForImplementation}
+          </RestrictionActionButton>
+        </div>
+      )}
+    </>
+  );
+}

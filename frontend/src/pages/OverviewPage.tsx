@@ -1,44 +1,37 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ORNotificationCard } from "@/components/OverviewNotificationCard";
-import { BottomNav } from "@/components/ui/bottom-nav";
-import { toDrItem } from "@/lib/restrictionMapper";
-import {
-  getAllRestrictions,
-  getSignatureStatuses,
-} from "@/services/restrictionApi";
-
-import type {
-  RestrictionDto,
-  SignatureStatusDto,
-} from "@/types/restrictionDto";
+import { getOverviewRestrictions } from "@/services/overviewApi";
+import { getSignatureStatuses } from "@/services/restrictionApi";
+import type { SignatureStatusDto } from "@/types/restrictionDto";
+import type { DrItem } from "@/types/overviewRestriction";
+import { isRestrictionApiError } from "@/types/restrictionApiError";
+import { clockTimeNow } from "@/lib/dateFormat";
+import { AppHeader } from "../components/AppHeader";
 
 export function OverviewPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<
-    "kladde" | "alle" | "aktiv" | "arkiv"
-  >("alle");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [restrictions, setRestrictions] = useState<RestrictionDto[]>([]);
+  const [restrictions, setRestrictions] = useState<DrItem[]>([]);
   const [signatureStatuses, setSignatureStatuses] = useState<
     Record<string, SignatureStatusDto[]>
   >({});
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<
+    "kladde" | "alle" | "aktiv" | "arkiv"
+  >("alle");
+  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string>();
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
-    async function loadRestrictions() {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const data = await getAllRestrictions();
-        if (cancelled) return;
+    getOverviewRestrictions(controller.signal)
+      .then(async (data) => {
+        if (controller.signal.aborted) return;
 
         setRestrictions(data);
 
@@ -46,7 +39,7 @@ export function OverviewPage() {
           data.map((restriction) => getSignatureStatuses(restriction.id)),
         );
 
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
 
         const statuses: Record<string, SignatureStatusDto[]> = {};
 
@@ -57,56 +50,63 @@ export function OverviewPage() {
         });
 
         setSignatureStatuses(statuses);
-      } catch {
-        if (!cancelled) {
-          setError("Kunne ikke hente driftsrestriktioner.");
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        if (isRestrictionApiError(err) && err.status === 401) {
+          setError("Du er ikke logget ind.");
+        } else {
+          setError("Driftsrestriktionerne kunne ikke hentes.");
         }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
 
-    void loadRestrictions();
-
-    return () => {
-      cancelled = true;
-    };
+    setLastUpdated(clockTimeNow());
+    return () => controller.abort();
   }, []);
 
-  const items = useMemo(() => restrictions.map(toDrItem), [restrictions]);
-
-  const kladdeCount = items.filter((item) => item.category === "kladde").length;
-
-  const aktivCount = items.filter((item) => item.category === "aktiv").length;
-
-  const arkivCount = items.filter((item) => item.category === "arkiv").length;
-
-  const alleCount = items.length;
+  const kladdeCount = restrictions.filter(
+    (item) => item.category === "kladde",
+  ).length;
+  const aktivCount = restrictions.filter(
+    (item) => item.category === "aktiv",
+  ).length;
+  const arkivCount = restrictions.filter(
+    (item) => item.category === "arkiv",
+  ).length;
+  const alleCount = restrictions.length - kladdeCount;
 
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchesTab = activeTab === "alle" || item.category === activeTab;
-
+    return restrictions.filter((item) => {
+      const matchesTab =
+        (activeTab === "alle" && item.category !== "kladde") ||
+        item.category === activeTab;
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.referenceId.toLowerCase().includes(searchQuery.toLowerCase());
-
       return matchesTab && matchesSearch;
     });
-  }, [items, activeTab, searchQuery]);
+  }, [restrictions, activeTab, searchQuery]);
+
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort((a, b) => {
+      if (a.category === "arkiv" && b.category !== "arkiv") return 1;
+      else if (b.category === "arkiv" && a.category !== "arkiv") return -1;
+
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [filteredItems]);
 
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] flex justify-center items-center overflow-hidden antialiased text-foreground">
-      {/* Permanent Fixed Mobile Shell Container */}
-      <div className="w-full max-w-md h-full bg-white flex flex-col shadow-xl relative border-x border-border/40 overflow-hidden">
+    <div className="flex min-h-0 w-full justify-center bg-[#F8FAFC] antialiased text-foreground overscroll-none">
+      <div className="flex h-[calc(100svh-5rem)] w-full max-w-md flex-col overflow-hidden border-x border-border/40 bg-white shadow-xl">
         {/* Header*/}
-        <header className="shrink-0 bg-[#E0F3FF] pt-5 pb-4 px-4 flex flex-col gap-4 border-b border-border/50 z-30">
-          <h1 className="text-xl md:text-2xl font-bold text-center text-foreground font-heading">
-            Alle Driftsrestriktioner
-          </h1>
-
+        <AppHeader title="Alle Driftsrestriktioner">
           {/* Subheader Filter Tabs*/}
           <div className="grid grid-cols-4 gap-1 p-1 bg-white/60 backdrop-blur-sm rounded-full border border-border/40">
             <button
@@ -166,27 +166,33 @@ export function OverviewPage() {
               className="pl-9 bg-white border-border/80 h-11 text-base rounded-full shadow-xs focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
-        </header>
+          <div className=" text-muted-foreground text-xs text-left">
+            Sidst opdateret: {lastUpdated}
+          </div>
+        </AppHeader>
 
         {/* Scrollable Card List Container */}
-        <main className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-white pb-20">
+        <main className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-white p-3.5 pb-6">
           {loading ? (
-            <p className="text-center py-16 text-muted-foreground">
+            <p
+              role="status"
+              className="py-16 text-center text-muted-foreground"
+            >
               Henter driftsrestriktioner...
             </p>
           ) : error ? (
-            <p className="text-center py-16 text-red-600">{error}</p>
-          ) : filteredItems.length > 0 ? (
-            filteredItems.map((item) => (
+            <p role="alert" className="py-16 text-center text-destructive">
+              {error}
+            </p>
+          ) : sortedItems.length > 0 ? (
+            sortedItems.map((item) => (
               <ORNotificationCard
                 key={item.id}
                 statusKey={item.statusKey}
                 title={item.title}
                 date={item.date}
                 signatureStatuses={signatureStatuses[item.id] ?? []}
-                onSeMere={() => {
-                  navigate(`/restrictions/${item.id}`);
-                }}
+                onSeMere={() => navigate(`/restrictions/${item.id}`)}
               />
             ))
           ) : (
@@ -200,7 +206,6 @@ export function OverviewPage() {
         </main>
 
         {/* Embedded Bottom Navigation  */}
-        <BottomNav />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
@@ -83,8 +84,9 @@ public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard<Op
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        // TODO: Check data.DutyOperationsManagerSignature when added to DTO
-        return true;
+        return data.Signatures.Any(signature =>
+            signature.SigneeRole.Split(", ")
+                .Contains(RoleNames.DutyOperationsManager));
     }
 }
 
