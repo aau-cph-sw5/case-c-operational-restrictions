@@ -2,8 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDayMonthYear } from "@/lib/dateFormat";
-import { CheckCircle2, CircleX, AlertTriangle } from "lucide-react";
-import type { SignatureStatusDto } from "@/services/restrictionApi";
+import type { SignatureStatusDto } from "@/types/restrictionDto";
 
 export type DRStatus = "aktiv" | "afventer_deaktivering" | "arkiv" | "kladde";
 
@@ -59,6 +58,11 @@ export function ORNotificationCard({
 }: ORNotificationCardProps) {
   const style = STATUS_STYLES[statusKey] || STATUS_STYLES.arkiv;
   const buttonText = statusKey === "kladde" ? "Rediger" : "Se mere";
+  const totalSignatures = signatureStatuses.length;
+
+  const signedCount = signatureStatuses.filter(
+    (signature) => signature.status === "CompletedSignature",
+  ).length;
 
   return (
     <Card
@@ -100,38 +104,12 @@ export function ORNotificationCard({
           {style.statusLabel}
         </span>
       </div>
-      {/* MET-C-017: Required signature statuses */}
-      {signatureStatuses.length > 0 && (
-        <div className="flex flex-col gap-1.5 text-xs">
-          {signatureStatuses.map((signature) => {
-            const isCompleted = signature.status === "CompletedSignature";
-            const isInvalid = signature.status === "Invalid";
-
-            return (
-              <div
-                key={signature.requiresSignatureId}
-                className="flex items-center gap-2"
-              >
-                {isCompleted ? (
-                  <CheckCircle2 className="size-4 text-green-700" />
-                ) : isInvalid ? (
-                  <AlertTriangle className="size-4 text-amber-700" />
-                ) : (
-                  <CircleX className="size-4 text-red-700" />
-                )}
-
-                <span>
-                  {signature.signeeName} (
-                  {signature.signeeRole || "Ukendt rolle"}){" — "}
-                  {isCompleted
-                    ? "Underskrevet"
-                    : isInvalid
-                      ? "Ugyldig"
-                      : "Mangler underskrift"}
-                </span>
-              </div>
-            );
-          })}
+      {/* MET-C-017: Signature completeness summary */}
+      {totalSignatures > 0 && (
+        <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
+          <span>
+            {signedCount} af {totalSignatures} underskrevet
+          </span>
         </div>
       )}
       <div className="flex items-center justify-between gap-3">

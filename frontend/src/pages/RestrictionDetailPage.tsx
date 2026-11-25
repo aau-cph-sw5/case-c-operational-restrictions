@@ -26,10 +26,12 @@ import {
   getSignatureStatuses,
   requestChanges,
   signRestriction,
-  type SignatureStatusDto,
 } from "../services/restrictionApi";
 import { isRestrictionApiError } from "../types/restrictionApiError";
-import type { RestrictionDto } from "../types/restrictionDto";
+import type {
+  RestrictionDto,
+  SignatureStatusDto,
+} from "../types/restrictionDto";
 import type { UserDto } from "../types/userDto";
 
 function loadErrorMessage(error: unknown): string {

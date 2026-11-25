@@ -2,11 +2,10 @@
 // Reusable UI building blocks (e.g. Buttons, Cards)
 import { formatUtc } from "../lib/dateFormat";
 import { restrictionTexts as t } from "../lib/restrictionTexts";
-import type { SignatureDto } from "../types/restrictionDto";
+import type { SignatureDto, SignatureStatusDto } from "../types/restrictionDto";
 import { RestrictionInfoCard } from "./RestrictionInfoCard";
 import { Badge } from "./ui/badge";
-import type { SignatureStatusDto } from "../services/restrictionApi";
-import { CheckCircle2, CircleX, AlertTriangle } from "lucide-react";
+import { CheckCircle2, CircleX } from "lucide-react";
 
 interface SignatureSectionProps {
   signatures: SignatureDto[];
@@ -70,14 +69,15 @@ export function SignatureSection({
         </ul>
       )}
       {signatureStatuses.length === 0 ? (
-        <p className="mt-4 text-sm text-gray-500">Underskriftsstatus ukendt</p>
+        <p className="mt-4 text-sm text-[#6B6B6B]">Underskriftsstatus ukendt</p>
       ) : (
-        <div className="mt-4 space-y-2">
-          <h3 className="font-bold">Påkrævede underskrifter</h3>
+        <div className="mt-4 space-y-2 font-['Instrument_Sans',sans-serif]">
+          <h3 className="text-base font-bold text-[#2563EB]">
+            Påkrævede underskrifter
+          </h3>
 
           {signatureStatuses.map((signature) => {
             const isSigned = signature.status === "CompletedSignature";
-            const isInvalid = signature.status === "Invalid";
 
             return (
               <div
@@ -86,15 +86,13 @@ export function SignatureSection({
               >
                 {isSigned ? (
                   <CheckCircle2 className="size-5 text-green-600" />
-                ) : isInvalid ? (
-                  <AlertTriangle className="size-5 text-amber-600" />
                 ) : (
                   <CircleX className="size-5 text-red-600" />
                 )}
 
                 <div className="flex-1">
                   <p className="font-semibold">{signature.signeeName}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[#6B6B6B]">
                     {signature.signeeRole}
                   </p>
                 </div>
@@ -104,16 +102,10 @@ export function SignatureSection({
                   className={
                     isSigned
                       ? "border-green-600 text-green-700"
-                      : isInvalid
-                        ? "border-amber-600 text-amber-700"
-                        : "border-red-600 text-red-700"
+                      : "border-red-600 text-red-700"
                   }
                 >
-                  {isSigned
-                    ? "Underskrevet"
-                    : isInvalid
-                      ? "Ugyldig"
-                      : "Mangler"}
+                  {isSigned ? "Underskrevet" : "Mangler"}
                 </Badge>
               </div>
             );

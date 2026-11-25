@@ -3,58 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  ORNotificationCard,
-  type DRStatus,
-} from "@/components/OverviewNotificationCard";
+import { ORNotificationCard } from "@/components/OverviewNotificationCard";
 import { BottomNav } from "@/components/ui/bottom-nav";
+import { toDrItem } from "@/lib/restrictionMapper";
 import {
   getAllRestrictions,
   getSignatureStatuses,
-  type SignatureStatusDto,
 } from "@/services/restrictionApi";
 
-import type { RestrictionDto } from "@/types/restrictionDto";
-
-export interface DrItem {
-  id: string;
-  referenceId: string;
-  statusKey: DRStatus;
-  title: string;
-  date: string;
-  category: "kladde" | "alle" | "aktiv" | "arkiv";
-}
-
-function toDrItem(restriction: RestrictionDto): DrItem {
-  const status = restriction.status;
-
-  const category: DrItem["category"] =
-    status === "Draft" || status === "ReturnedForChanges"
-      ? "kladde"
-      : status === "Archived" ||
-          status === "Cancelled" ||
-          status === "OutOfForce"
-        ? "arkiv"
-        : "aktiv";
-
-  const statusKey: DRStatus =
-    category === "kladde"
-      ? "kladde"
-      : category === "arkiv"
-        ? "arkiv"
-        : status === "Closing" || status === "AwaitingOperatorSignOut"
-          ? "afventer_deaktivering"
-          : "aktiv";
-
-  return {
-    id: restriction.id,
-    referenceId: restriction.reference ?? restriction.id,
-    statusKey,
-    title: restriction.restrictionDescription,
-    date: restriction.startDate,
-    category,
-  };
-}
+import type {
+  RestrictionDto,
+  SignatureStatusDto,
+} from "@/types/restrictionDto";
 
 export function OverviewPage() {
   const navigate = useNavigate();

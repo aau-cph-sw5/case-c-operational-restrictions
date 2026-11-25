@@ -8,7 +8,11 @@ import type {
   RestrictionDto as CreatedRestrictionDto,
 } from "../types/restriction";
 import type { RestrictionApiError } from "../types/restrictionApiError";
-import type { RestrictionDto, SignatureDto } from "../types/restrictionDto";
+import type {
+  RestrictionDto,
+  SignatureDto,
+  SignatureStatusDto,
+} from "../types/restrictionDto";
 import { getStoredToken } from "./tokenStorage";
 
 // 400 Bad Request so the UI can show every server message.
@@ -196,16 +200,6 @@ export async function signRestriction(
   }
 
   return null;
-}
-
-// GET /api/Signature/restriction/{id}/status
-// Returns completed and missing required signatures.
-export interface SignatureStatusDto {
-  requiresSignatureId: string;
-  signeeId: string;
-  signeeName: string;
-  signeeRole: string;
-  status: string;
 }
 
 export async function getSignatureStatuses(

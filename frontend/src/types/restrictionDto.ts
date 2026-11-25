@@ -38,3 +38,11 @@ export interface RestrictionDto {
   cancellationDescription?: string;
   signatures: SignatureDto[];
 }
+
+export interface SignatureStatusDto {
+  requiresSignatureId: string;
+  signeeId: string;
+  signeeName: string;
+  signeeRole: string;
+  status: string;
+}
