@@ -29,8 +29,8 @@ public abstract class ApiControllerBase : ControllerBase
             Status = StatusCodes.Status400BadRequest
         });
 
-    // Builds the signing context from the request headers. 
-    // The device class is derived from the User-Agent and Client Hints on the server. 
+    // Builds the signing context from the request headers.
+    // The device class is derived from the User-Agent and Client Hints on the server.
     // Returns false only when an idempotency-Key header is present but is not a GUID.
     protected bool TryGetSigningContext(out SigningContext signingContext)
     {

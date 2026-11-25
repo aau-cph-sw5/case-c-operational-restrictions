@@ -40,6 +40,14 @@ export function getAuthHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// A signing request carries the key of the attempt, so a retry after a lost
+// response gets the committed signature back instead of signing twice.
+export function getSigningHeaders(attemptKey?: string): HeadersInit {
+  return attemptKey
+    ? { ...getAuthHeaders(), "Idempotency-Key": attemptKey }
+    : getAuthHeaders();
+}
+
 export async function getCurrentUserId(): Promise<string | null> {
   const token = getStoredToken();
   if (!token) return null;

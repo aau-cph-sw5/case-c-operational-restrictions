@@ -215,7 +215,7 @@ public class RestrictionsController : ApiControllerBase
     }
 
     /// <summary>
-    /// Signs an operational restriction for implementation as the control room 
+    /// Signs an operational restriction for implementation as the control room
     /// supervisor, moving it from PendingControlRoomSupervisorApproval to Active.
     /// </summary>
     /// <response code="403">The authenticated user is not a control room supervisor</response>

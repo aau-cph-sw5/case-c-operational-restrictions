@@ -14,8 +14,8 @@ import type {
   SignatureDto,
   SigningAttemptStatusDto,
 } from "../types/restrictionDto";
+import { getAuthHeaders, getSigningHeaders } from "./authApi";
 import { getStoredToken } from "./tokenStorage";
-import { getAuthHeaders } from "./authApi";
 
 // 400 Bad Request so the UI can show every server message.
 export class RestrictionValidationError extends Error {
@@ -46,19 +46,6 @@ async function readValidationMessages(response: Response): Promise<string[]> {
 
 function createApiError(status: number, message: string): RestrictionApiError {
   return Object.assign(new Error(message), { status });
-}
-
-function authHeaders(): HeadersInit {
-  const token = getStoredToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-// A signing request carries the key of the attempt, so a retry after a lost
-// response gets the committed signature back instead of signing twice.
-function signingHeaders(attemptKey?: string): HeadersInit {
-  return attemptKey
-    ? { ...authHeaders(), "Idempotency-Key": attemptKey }
-    : authHeaders();
 }
 
 const deviceClasses: readonly string[] = [
@@ -192,7 +179,7 @@ export async function signRestriction(
 ): Promise<RestrictionDto | null> {
   const response = await fetch(
     `/api/restrictions/${encodeURIComponent(id)}/sign`,
-    { method: "POST", headers: signingHeaders(attemptKey) },
+    { method: "POST", headers: getSigningHeaders(attemptKey) },
   );
 
   if (!response.ok) {
@@ -218,7 +205,7 @@ export async function signForImplementation(
 ): Promise<SignatureDto> {
   const response = await fetch(
     `/api/restrictions/${encodeURIComponent(id)}/sign-for-implementation`,
-    { method: "POST", headers: signingHeaders(attemptKey) },
+    { method: "POST", headers: getSigningHeaders(attemptKey) },
   );
 
   if (!response.ok) {
@@ -236,7 +223,7 @@ export async function getSigningAttemptStatus(
 ): Promise<SigningAttemptStatusDto> {
   const response = await fetch(
     `/api/signature/attempts/${encodeURIComponent(attemptKey)}`,
-    { headers: authHeaders() },
+    { headers: getAuthHeaders() },
   );
 
   if (!response.ok) {
