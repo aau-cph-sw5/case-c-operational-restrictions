@@ -23,7 +23,10 @@ public class RestrictionLifecycleServiceTests
                 new ControlRoomSupervisorSignatureIsFound(),
                 new OperatorsAreAssigned(),
                 new ReturnedForChanges(),
-                new CancelledRefused()
+                new CancelledRefused(),
+                new OriginatorCancellationSignatureIsFound(),
+                new DutyOperationsManagerCancellationSignatureIsFound(),
+                new ControlRoomCancellationSignatureIsFound()
             });
     }
 
@@ -285,6 +288,31 @@ public class RestrictionLifecycleServiceTests
             RestrictionState.PendingControlRoomSupervisorApproval,
             RestrictionAction.Active,
             data);
+    }
+
+    // ========== Cancellation Chain Transitions ==========
+
+    [Theory]
+    [InlineData(RestrictionState.Active, RestrictionAction.OriginatorStartCancellation, RestrictionState.PendingCancellation)]
+    [InlineData(RestrictionState.PendingCancellation, RestrictionAction.DutyOperationsManagerApproveCancellation, RestrictionState.CancellationApproved)]
+    [InlineData(RestrictionState.CancellationApproved, RestrictionAction.ControlRoomCancellation, RestrictionState.OutOfForce)]
+    public void CancellationStepMovesToNextState(
+        RestrictionState from, RestrictionAction action, RestrictionState expected)
+    {
+        var nextState = _sut.EnsureCanTransition(from, action, CreateValidDto(from));
+
+        Assert.Equal(expected, nextState);
+    }
+
+    [Theory]
+    [InlineData(RestrictionState.Active, RestrictionAction.DutyOperationsManagerApproveCancellation)]
+    [InlineData(RestrictionState.Active, RestrictionAction.ControlRoomCancellation)]
+    [InlineData(RestrictionState.PendingCancellation, RestrictionAction.ControlRoomCancellation)]
+    public void CancellationStepIsRefusedWhenPreviousStepIsIncomplete(
+        RestrictionState from, RestrictionAction action)
+    {
+        Assert.Throws<InvalidOperationException>(
+            () => _sut.EnsureCanTransition(from, action, CreateValidDto(from)));
     }
 
     // ========== ReturnedForChanges State Transitions ==========

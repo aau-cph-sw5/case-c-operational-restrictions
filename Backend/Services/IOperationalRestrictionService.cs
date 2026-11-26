@@ -54,4 +54,16 @@ public interface IOperationalRestrictionService
           Guid actorId);
     Task<Signature> SignControlRoomSupervisorApprovalAsync(
           Guid id, Guid signerId);
+
+    Task<OperationalRestrictionDto> StartCancellationAsync(
+          Guid id,
+          Guid actorId);
+
+    Task<OperationalRestrictionDto> ApproveCancellationAsync(
+          Guid id,
+          Guid approverId);
+
+    Task<OperationalRestrictionDto> ControlRoomCancellationAsync(
+          Guid id,
+          Guid actorId);
 }

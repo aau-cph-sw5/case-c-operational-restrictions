@@ -120,6 +120,46 @@ public static class RestrictionLifecycle
                     "DutyOperationsManagerSignatureIsFound",
                     "ControlRoomSupervisorSignatureIsFound",
                     "OperatorsAreAssigned"
+                }),
+
+            // Cancellation chain (C5.1-C5.3): a linear, three-signature
+            // sequence with no branching. Each action is only valid from its
+            // declared From state, so a step is refused unless the previous
+            // one is complete.
+            // Step 1: the originator signs to move an Active restriction to
+            // PendingCancellation.
+            [RestrictionAction.OriginatorStartCancellation] = new(
+                RestrictionAction.OriginatorStartCancellation,
+                From: RestrictionState.Active,
+                To: RestrictionState.PendingCancellation,
+                Guards: new[]
+                {
+                    "OriginatorCancellationSignatureIsFound"
+                }),
+
+            // Step 2: the Duty Operations Manager confirms the cause is
+            // resolved and signs.
+            [RestrictionAction.DutyOperationsManagerApproveCancellation] = new(
+                RestrictionAction.DutyOperationsManagerApproveCancellation,
+                From: RestrictionState.PendingCancellation,
+                To: RestrictionState.CancellationApproved,
+                Guards: new[]
+                {
+                    "OriginatorCancellationSignatureIsFound",
+                    "DutyOperationsManagerCancellationSignatureIsFound"
+                }),
+
+            // Step 3: the Control Room Supervisor signs to take the
+            // restriction out of force.
+            [RestrictionAction.ControlRoomCancellation] = new(
+                RestrictionAction.ControlRoomCancellation,
+                From: RestrictionState.CancellationApproved,
+                To: RestrictionState.OutOfForce,
+                Guards: new[]
+                {
+                    "OriginatorCancellationSignatureIsFound",
+                    "DutyOperationsManagerCancellationSignatureIsFound",
+                    "ControlRoomCancellationSignatureIsFound"
                 })
         };
 }

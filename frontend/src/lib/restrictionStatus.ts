@@ -11,6 +11,7 @@ export const statusLabels: Record<RestrictionStatus, string> = {
   Archived: "Arkiveret",
   Cancelled: "Annulleret",
   Closing: "Under afslutning",
+  CancellationApproved: "Annullering godkendt",
   OutOfForce: "Ikke længere i kraft",
   AwaitingOperatorSignatures: "Afventer operatørunderskrifter",
   AwaitingOperatorSignOut: "Afventer operatørernes afslutning",
@@ -35,6 +36,7 @@ export const statusClasses: Record<RestrictionStatus, string> = {
   Archived: grey,
   Cancelled: grey,
   Closing: amber,
+  CancellationApproved: amber,
   OutOfForce: grey,
   AwaitingOperatorSignatures: amber,
   AwaitingOperatorSignOut: amber,
@@ -57,6 +59,7 @@ const numericStatuses: RestrictionStatus[] = [
   "AwaitingOperatorSignatures",
   "AwaitingOperatorSignOut",
   "Archived",
+  "CancellationApproved",
 ];
 
 const backendStatusAliases: Record<string, RestrictionStatus> = {

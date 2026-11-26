@@ -88,3 +88,11 @@ public class NotDutyOperationsManagerException : Exception
     {
     }
 }
+
+public class NotOriginatorException : Exception
+{
+    public NotOriginatorException(Guid restrictionId, Guid userId)
+        : base($"User {userId} is not the originator of operational restriction {restrictionId} and cannot start its cancellation")
+    {
+    }
+}

@@ -42,7 +42,8 @@ public class SignatureCompletenessService(AppDbContext appDbContext)
             .Select(group => group.OrderByDescending(version => version.Version).First())
             .Where(restriction => restriction.State is RestrictionState.Active
                 or RestrictionState.AwaitingOperatorSignatures
-                or RestrictionState.PendingCancellation)
+                or RestrictionState.PendingCancellation
+                or RestrictionState.CancellationApproved)
             .OrderBy(restriction => restriction.StartDate)
             .ThenBy(restriction => restriction.Title)
             .ToList();

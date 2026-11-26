@@ -241,6 +241,45 @@ public class SignatureService(
         );
     }
 
+    // Cancellation ("closure") signatures for the C5.1-C5.3 chain. Unlike the
+    // implementation signatures above, the same role signs again when the
+    // restriction is cancelled, so no duplicate-signature check is applied
+    // here; the lifecycle state machine refuses a repeated step instead.
+    // A null requiredRole is the originator step, which records the signer's roles.
+    public Signature SignCancellation(Guid operationalRestrictionId, Guid signerUserId, string? requiredRole)
+    {
+        var roleNames = GetRoleNames(signerUserId);
+
+        if (requiredRole == RoleNames.DutyOperationsManager && !roleNames.Contains(RoleNames.DutyOperationsManager))
+            throw new NotDutyOperationsManagerException(signerUserId);
+
+        if (requiredRole == RoleNames.ControlroomSupervisor && !roleNames.Contains(RoleNames.ControlroomSupervisor))
+            throw new NotControlRoomSupervisorException(signerUserId);
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+        };
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = requiredRole ?? string.Join(", ", roleNames),
+            SignedAt = DateTime.UtcNow
+        };
+        _signatures.Add(signature);
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+
+        return signature;
+    }
+
 
     // The signer's current role names, resolved from the database so the
     // recorded label matches the data-driven role assignments.

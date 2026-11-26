@@ -12,4 +12,5 @@ export const BACKEND_RESTRICTION_STATES = [
   "AwaitingOperatorSignatures",
   "AwaitingOperatorSignOut",
   "Archived",
+  "CancellationApproved",
 ] as const;

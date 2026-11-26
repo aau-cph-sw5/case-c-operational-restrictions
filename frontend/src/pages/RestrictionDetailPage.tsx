@@ -12,6 +12,7 @@ import { loadErrorMessage } from "@/lib/utils/loadErrorMessage.ts";
 import { requestChangesErrorMessage } from "@/lib/utils/requestChangesErrorMessage.ts";
 import {
   approveErrorMessage,
+  cancellationErrorMessage,
   signErrorMessage,
   signForImplementationErrorMessage,
 } from "@/lib/utils/signErrorMessages.ts";
@@ -19,17 +20,42 @@ import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { SignatureSection } from "../components/SignatureSection";
-import { useRestrictionPermissions } from "../hooks/useRestrictionPermissions";
+import {
+  type CancellationStep,
+  useRestrictionPermissions,
+} from "../hooks/useRestrictionPermissions";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { useRestriction } from "../hooks/useRestriction";
 import { restrictionTexts as t } from "../lib/restrictionTexts";
+import type { RestrictionDto } from "../types/restrictionDto";
 import {
   getRestrictionById,
+  approveCancellation,
   approveRestriction,
   requestChanges,
+  signCancellation,
   signForImplementation,
   signRestriction,
+  startCancellation,
 } from "../services/restrictionApi";
+
+const cancellationSteps: Record<
+  CancellationStep,
+  { request: (id: string) => Promise<RestrictionDto>; successText: string }
+> = {
+  start: {
+    request: startCancellation,
+    successText: t.startCancellationSuccess,
+  },
+  approve: {
+    request: approveCancellation,
+    successText: t.approveCancellationSuccess,
+  },
+  takeOutOfForce: {
+    request: signCancellation,
+    successText: t.outOfForceSuccess,
+  },
+};
 
 export function RestrictionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +77,13 @@ export function RestrictionDetailPage() {
   const [approving, setApproving] = useState(false);
   const [approveError, setApproveError] = useState<string | null>(null);
   const [approveSuccess, setApproveSuccess] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancellationError, setCancellationError] = useState<string | null>(
+    null,
+  );
+  const [cancellationSuccess, setCancellationSuccess] = useState<string | null>(
+    null,
+  );
 
   const {
     user: currentUser,
@@ -147,6 +180,25 @@ export function RestrictionDetailPage() {
     }
   }
 
+  async function handleCancellationStep() {
+    if (!restriction || !cancellationStep) return;
+
+    const step = cancellationStep;
+    setCancelling(true);
+    setCancellationError(null);
+    setCancellationSuccess(null);
+
+    try {
+      setRestriction(await cancellationSteps[step].request(restriction.id));
+      setCancellationSuccess(cancellationSteps[step].successText);
+    } catch (error) {
+      // The state machine refused the step; the restriction is untouched.
+      setCancellationError(cancellationErrorMessage(error, step));
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   async function handleRequestChanges(comment: string): Promise<boolean> {
     if (!restriction) return false;
 
@@ -171,6 +223,7 @@ export function RestrictionDetailPage() {
     canApprove,
     canRequestChanges,
     canSignForImplementation,
+    cancellationStep,
     reviewComment,
     hasRequestedChanges,
     showReviewCommentCard,
@@ -233,6 +286,11 @@ export function RestrictionDetailPage() {
           {t.signForImplementationSuccess}
         </SuccessAlert>
       )}
+      {cancellationSuccess && (
+        <SuccessAlert testId="cancellation-success">
+          {cancellationSuccess}
+        </SuccessAlert>
+      )}
 
       {signError && <ErrorAlert>{signError}</ErrorAlert>}
       {approveError && <ErrorAlert>{approveError}</ErrorAlert>}
@@ -242,6 +300,8 @@ export function RestrictionDetailPage() {
       )}
 
       {requestChangesError && <ErrorAlert>{requestChangesError}</ErrorAlert>}
+
+      {cancellationError && <ErrorAlert>{cancellationError}</ErrorAlert>}
 
       <RestrictionActions
         canSign={canSign}
@@ -256,6 +316,9 @@ export function RestrictionDetailPage() {
         canSignForImplementation={canSignForImplementation}
         signingForImplementation={signingForImplementation}
         onSignForImplementation={handleSignForImplementation}
+        cancellationStep={cancellationStep}
+        cancelling={cancelling}
+        onCancellationStep={handleCancellationStep}
       />
     </main>
   );

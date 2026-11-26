@@ -43,6 +43,10 @@ const CARD_STATUS: Record<
     statusKey: "afventer_deaktivering",
     category: "aktiv",
   },
+  CancellationApproved: {
+    statusKey: "afventer_deaktivering",
+    category: "aktiv",
+  },
   AwaitingOperatorSignOut: {
     statusKey: "afventer_deaktivering",
     category: "aktiv",

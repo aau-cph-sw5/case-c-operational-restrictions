@@ -12,6 +12,10 @@ const historyActionLabels: Record<string, string> = {
   Approved: "Godkendt af Duty Operations Manager",
   PendingControlRoomSupervisorApproval: "Sendt videre til implementering",
   CancelledRefused: "Afvist",
+  OriginatorStartCancellation: "Annullering anmodet af originator",
+  DutyOperationsManagerApproveCancellation:
+    "Annullering godkendt af Duty Operations Manager",
+  ControlRoomCancellation: "Taget ud af kraft af kontrolrummet",
 };
 
 export function RestrictionDetails({
