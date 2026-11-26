@@ -17,13 +17,15 @@ public class OperationalRestrictionService
     private readonly IRestrictionTransitionEventRepository _transitionEventRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISignatureService _signatureService;
+    private readonly INotificationService? _notificationService;
 
     public OperationalRestrictionService(
         RestrictionLifecycleService lifecycleService,
         IOperationalRestrictionRepository repository,
         IRestrictionTransitionEventRepository transitionEventRepository,
         IUnitOfWork unitOfWork,
-        ISignatureService signatureService)
+        ISignatureService signatureService,
+        INotificationService? notificationService = null)
     {
         _lifecycleService = lifecycleService;
         _repository = repository;
@@ -31,6 +33,7 @@ public class OperationalRestrictionService
         _unitOfWork = unitOfWork;
         _signatureService = signatureService
             ?? throw new ArgumentNullException(nameof(signatureService));
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -485,7 +488,8 @@ public class OperationalRestrictionService
     // Single entry point for lifecycle transitions (MET-C-002): the target state
     // comes from RestrictionLifecycle, guards are evaluated against the version
     // the transition would produce (stored data plus the changes it applies),
-    // and every transition is recorded as an audit event.
+    // every transition is recorded as an audit event, and the holders of the
+    // role the new step waits on are notified (MET-C-019).
     private async Task<OperationalRestrictionDto> TransitionAsync(
         Guid id,
         RestrictionAction action,
@@ -515,6 +519,10 @@ public class OperationalRestrictionService
         await _repository.AddAsync(newVersion);
 
         await RecordTransitionAsync(newVersion, action, restriction.State, actorId);
+
+        // MET-C-019: notify the role the new step waits on, inside the same transaction.
+        if (_notificationService != null)
+            await _notificationService.NotifyRestrictionTransitionAsync(newVersion, actorId);
 
         await transaction.CommitAsync();
 
