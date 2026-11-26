@@ -18,7 +18,13 @@ services:
       retries: 10
     networks:
       - backend-net
-
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "8025:8025"   # web UI, her ser du mailene
+      - "1025:1025"   # SMTP
+    networks:
+      - backend-net
   backend:
     build:
       context: ./Backend
@@ -32,6 +38,13 @@ services:
       - DOTNET_USE_POLLING_FILE_WATCHER=true
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-metro};Username=${POSTGRES_USER:-metro};Password=${POSTGRES_PASSWORD:-metro_local_pw}
       - Jwt__SigningKey=dev-only-key-at-least-32-characters-long
+      - Smtp__Host=${SMTP_HOST:-mailpit}
+      - Smtp__Port=${SMTP_PORT:-1025}
+      - Smtp__EnableSsl=${SMTP_ENABLE_SSL:-false}
+      - Smtp__Username=${SMTP_USERNAME:-}
+      - Smtp__Password=${SMTP_PASSWORD:-}
+      - Smtp__FromAddress=${SMTP_FROM:-noreply@metroservicecph.local}
+      - Smtp__FromName=${SMTP_FROM_NAME:-MetroService Cph}
     volumes:
       - ./Backend:/app
       - /app/bin
