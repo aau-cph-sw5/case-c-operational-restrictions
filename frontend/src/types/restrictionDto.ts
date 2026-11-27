@@ -11,6 +11,7 @@ export type RestrictionStatus =
   | "Archived"
   | "Cancelled"
   | "Closing"
+  | "CancellationApproved"
   | "OutOfForce"
   | "AwaitingOperatorSignatures"
   | "AwaitingOperatorSignOut"
@@ -22,6 +23,14 @@ export interface SignatureDto {
   signeeName?: string;
   signeeRole: string;
   signedAt: string;
+}
+
+export interface RestrictionHistoryEntry {
+  action: string;
+  fromState: string | null;
+  toState: string;
+  actorId: string;
+  occurredAt: string;
 }
 
 export interface RestrictionDto {
@@ -37,4 +46,5 @@ export interface RestrictionDto {
   situationDescription?: string;
   cancellationDescription?: string;
   signatures: SignatureDto[];
+  history?: RestrictionHistoryEntry[];
 }

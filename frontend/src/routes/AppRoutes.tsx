@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import App from "../App";
 import { LoginPage } from "../pages/LoginPage";
+import { NotificationPage } from "../pages/NotificationPage";
 import { RestrictionDetailPage } from "../pages/RestrictionDetailPage";
 import { ProtectedRoute } from "../hooks/ProtectedRoute";
 import { InstallButton } from "../components/InstallButton";
@@ -20,6 +21,7 @@ export function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<App />} />
+            <Route path="/notifications" element={<NotificationPage />} />
             <Route
               path="/restrictions/new"
               element={<CreateRestrictionPage />}
@@ -28,11 +30,15 @@ export function AppRoutes() {
               path="/restrictions/:id"
               element={<RestrictionDetailPage />}
             />
+<<<<<<< HEAD
             <Route path="/overview" element={<OverviewPage />} />
             <Route
               path="/signatures/overview"
               element={<SignatureOverviewPage />}
             />
+=======
+            <Route path="/restrictions" element={<OverviewPage />} />
+>>>>>>> origin/development
             <Route path="*" element={<App />} />
           </Route>
         </Route>

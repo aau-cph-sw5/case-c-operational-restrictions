@@ -36,7 +36,8 @@ public class OperationalRestrictionCreationTests
             lifecycle,
             new OperationalRestrictionRepository(_appDbContext),
             new RestrictionTransitionEventRepository(_appDbContext),
-            new UnitOfWork(_appDbContext));
+            new UnitOfWork(_appDbContext),
+            new SignatureService(_appDbContext));
     }
 
     [Fact]
@@ -55,7 +56,7 @@ public class OperationalRestrictionCreationTests
     {
         var request = new CreateRestrictionRequest(
             CreatedBy: DbSeeder.AnnaId,
-            Title: "Sporafspærring M1",
+            Title: "Sporafspærring M3",
             Reference: "REF-99",
             StartDate: DateTime.UtcNow.AddDays(1),
             EndDate: DateTime.UtcNow.AddDays(2),
@@ -67,13 +68,13 @@ public class OperationalRestrictionCreationTests
         var created = await _service.CreateRestrictionAsync(request);
 
         var stored = await _appDbContext.OperationalRestrictions.AsNoTracking().SingleAsync(x => x.RestrictionId == created.Id, cancellationToken: TestContext.Current.CancellationToken);
-        Assert.Equal("Sporafspærring M1", stored.Title);
+        Assert.Equal("Sporafspærring M3", stored.Title);
         Assert.Equal("REF-99", stored.Reference);
         Assert.Equal("Situation details", stored.SituationDescription);
         Assert.Equal("Restriction details", stored.RestrictionDescription);
         Assert.Equal("Cancellation details", stored.CancellationDescription);
 
-        Assert.Equal("Sporafspærring M1", created.Title);
+        Assert.Equal("Sporafspærring M3", created.Title);
         Assert.Equal("REF-99", created.Reference);
         Assert.Equal("Situation details", created.SituationDescription);
         Assert.Equal("Restriction details", created.RestrictionDescription);
@@ -85,7 +86,7 @@ public class OperationalRestrictionCreationTests
     {
         var request = new CreateRestrictionRequest(
             CreatedBy: DbSeeder.AnnaId,
-            Title: "Sporafspærring M1",
+            Title: "Sporafspærring M3",
             StartDate: DateTime.UtcNow.AddDays(1),
             EndDate: null,
             SituationDescription: "Situation details",
@@ -105,7 +106,7 @@ public class OperationalRestrictionCreationTests
     {
         var request = new CreateRestrictionRequest(
             CreatedBy: DbSeeder.AnnaId,
-            Title: "Sporafspærring M1",
+            Title: "Sporafspærring M3",
             StartDate: DateTime.UtcNow.AddDays(2),
             EndDate: DateTime.UtcNow.AddDays(1),
             SituationDescription: "Situation details",
@@ -122,7 +123,7 @@ public class OperationalRestrictionCreationTests
         var date = DateTime.UtcNow.AddDays(1);
         var request = new CreateRestrictionRequest(
             CreatedBy: DbSeeder.AnnaId,
-            Title: "Sporafspærring M1",
+            Title: "Sporafspærring M3",
             StartDate: date,
             EndDate: date,
             SituationDescription: "Situation details",
@@ -138,7 +139,7 @@ public class OperationalRestrictionCreationTests
     {
         var request = new CreateRestrictionRequest(
             CreatedBy: DbSeeder.AnnaId,
-            Title: "Sporafspærring M1",
+            Title: "Sporafspærring M3",
             StartDate: null,
             SituationDescription: "Situation details",
             RestrictionDescription: "Restriction details",
@@ -181,7 +182,7 @@ public class OperationalRestrictionCreationTests
     {
         var request = new CreateRestrictionRequest(
             CreatedBy: DbSeeder.AnnaId,
-            Title: "Sporafspærring M1",
+            Title: "Sporafspærring M3",
             StartDate: DateTime.UtcNow.AddDays(1),
             SituationDescription: situation,
             RestrictionDescription: restriction,
@@ -196,7 +197,7 @@ public class OperationalRestrictionCreationTests
     {
         var request = new CreateRestrictionRequest(
             CreatedBy: DbSeeder.AnnaId,
-            Title: "Sporafspærring M1",
+            Title: "Sporafspærring M3",
             Reference: null,
             StartDate: DateTime.UtcNow.AddDays(1),
             EndDate: DateTime.UtcNow.AddDays(2),
@@ -259,6 +260,18 @@ public class OperationalRestrictionCreationTests
         Assert.All(
             restrictions.Where(x => x.State == RestrictionState.Draft),
             x => Assert.Equal(DbSeeder.AnnaId, x.OriginatorUserId));
+    }
+
+    [Fact]
+    public async Task GetAllReturnsOnlyTheLatestVersionOfEachRestriction()
+    {
+        var draft = await CreateDraftAsync(DbSeeder.AnnaId);
+        await _service.SignOriginatorAndAdvanceToPendingApprovalAsync(draft.Id, DbSeeder.AnnaId);
+
+        var restrictions = await _service.GetAllAsync(DbSeeder.AnnaId);
+
+        var listed = Assert.Single(restrictions, x => (x.OriginalOperationalRestrictionId ?? x.Id) == draft.Id);
+        Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, listed.State);
     }
 
     private Task<OperationalRestrictionDto> CreateDraftAsync(Guid createdBy)

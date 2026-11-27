@@ -80,3 +80,19 @@ public class NotControlRoomSupervisorException : Exception
     {
     }
 }
+
+public class NotDutyOperationsManagerException : Exception
+{
+    public NotDutyOperationsManagerException(Guid userId)
+        : base($"User {userId} is not a duty operations manager and cannot approve restrictions")
+    {
+    }
+}
+
+public class NotOriginatorException : Exception
+{
+    public NotOriginatorException(Guid restrictionId, Guid userId)
+        : base($"User {userId} is not the originator of operational restriction {restrictionId} and cannot start its cancellation")
+    {
+    }
+}

@@ -21,6 +21,21 @@ export const restrictionTexts = {
   role: "Rolle",
   signedAt: "Tidspunkt",
   sign: "Underskriv",
+  approve: "Godkend og send til implementering",
+  approving: "Godkender...",
+  approveSuccess: "Restriktionen er godkendt og afventer implementering.",
+  approveForbidden:
+    "Kun en Duty Operations Manager kan godkende denne restriktion.",
+  approveConflict:
+    "Restriktionen afventer ikke længere godkendelse. Genindlæs siden.",
+  approveFailed: "Godkendelsen mislykkedes. Prøv igen.",
+  title: "Titel",
+  situation: "Situation",
+  cancellationDescription: "Annullering",
+  historyHeading: "Historik",
+  historyEmpty: "Der er endnu ingen historik for denne restriktion.",
+  historyCreated: "Oprettet",
+  historyActor: "Aktør",
   signSubmit: "Underskriv og indsend til godkendelse",
   signing: "Underskriver...",
   edit: "Rediger",
@@ -47,7 +62,7 @@ export const restrictionTexts = {
   requestChangesHeading: "Anmod om ændringer",
   requestChangesLabel: "Kommentar til originator",
   requestChangesHelper:
-    "Beskriv hvad originator skal rette, før restriktionen kan godkendes.",
+    "Hvis restriktionen ikke kan godkendes, returneres den til originator med en kommentar, så den kan rettes.",
   requestChanges: "Anmod om ændringer",
   requestingChanges: "Sender...",
   requestChangesCommentRequired: "Skriv en kommentar til originator.",
@@ -59,4 +74,27 @@ export const restrictionTexts = {
   requestChangesConflict:
     "Restriktionen afventer ikke længere godkendelse eller er blevet ændret. Genindlæs siden.",
   requestChangesFailed: "Anmodningen mislykkedes. Prøv igen.",
+  startCancellation: "Annuller restriktion",
+  startingCancellation: "Annullerer...",
+  startCancellationSuccess: "Restriktionen afventer nu annullering.",
+  startCancellationForbidden:
+    "Kun restriktionens originator kan starte en annullering.",
+  startCancellationConflict:
+    "Kun aktive restriktioner kan annulleres. Genindlæs siden.",
+  approveCancellation: "Godkend annullering",
+  approvingCancellation: "Godkender annullering...",
+  approveCancellationSuccess:
+    "Annulleringen er godkendt og afventer kontrolrummet.",
+  approveCancellationForbidden:
+    "Kun en Duty Operations Manager kan godkende en annullering.",
+  approveCancellationConflict:
+    "Restriktionen afventer ikke længere annullering. Genindlæs siden.",
+  takeOutOfForce: "Tag ud af kraft",
+  takingOutOfForce: "Tager ud af kraft...",
+  outOfForceSuccess: "Restriktionen er ikke længere i kraft.",
+  takeOutOfForceForbidden:
+    "Kun en kontrolrumschef kan tage restriktionen ud af kraft.",
+  takeOutOfForceConflict:
+    "Restriktionen afventer ikke længere kontrolrummet. Genindlæs siden.",
+  cancellationFailed: "Annulleringen mislykkedes. Prøv igen.",
 } as const;

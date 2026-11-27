@@ -62,7 +62,7 @@ public class PermissionServiceDatabaseTests(
 
         var permissions = await service.GetPermissionsForUserAsync(DbSeeder.AnnaId);
 
-        Assert.Equal(5, permissions.Count);
+        Assert.Equal(6, permissions.Count);
         Assert.Contains(Permissions.OperationalRestrictionApprove, permissions);
         Assert.Contains(Permissions.OperationalRestrictionRequestChanges, permissions);
     }

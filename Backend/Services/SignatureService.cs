@@ -10,7 +10,7 @@ namespace Backend.Services;
 
 public class SignatureService(
     AppDbContext appDbContext
-)
+) : ISignatureService
 {
     private readonly AppDbContext _appDbContext = appDbContext;
     //Midlertidigt mens der ikke er database
@@ -68,6 +68,14 @@ public class SignatureService(
             throw new RequiresSignatureNotFoundException(requiresSignatureId);
 
         return requiredSignature;
+    }
+
+    public List<RequiresSignature> GetRequiresSignaturesByOperationalRestrictionId(Guid operationalRestrictionId)
+    {
+        //her skal de hentes fra db i fremtiden
+        return _requiredSignatures
+            .Where(required => required.OperationalRestrictionId == operationalRestrictionId)
+            .ToList();
     }
 
 
@@ -143,6 +151,44 @@ public class SignatureService(
         return signature;
     }
 
+    public Signature SignDutyOperationsManager(Guid operationalRestrictionId, Guid signerUserId)
+    {
+        if (!GetRoleNames(signerUserId).Contains(RoleNames.DutyOperationsManager))
+            throw new NotDutyOperationsManagerException(signerUserId);
+
+        if (_signatures.Any(signature =>
+                signature.OperationalRestrictionId == operationalRestrictionId
+                && signature.SigneeRole.Split(", ")
+                    .Contains(RoleNames.DutyOperationsManager)))
+        {
+            throw new InvalidOperationException(
+                "A duty operations manager has already signed this restriction.");
+        }
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+        };
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = string.Join(", ", GetRoleNames(signerUserId)),
+            SignedAt = DateTime.UtcNow
+        };
+        _signatures.Add(signature);
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+
+        return signature;
+    }
+
     public Signature? GetOriginatorSignature(Guid operationalRestrictionId)
     {
         return _signatures.FirstOrDefault(signature =>
@@ -203,6 +249,45 @@ public class SignatureService(
         );
     }
 
+    // Cancellation ("closure") signatures for the C5.1-C5.3 chain. Unlike the
+    // implementation signatures above, the same role signs again when the
+    // restriction is cancelled, so no duplicate-signature check is applied
+    // here; the lifecycle state machine refuses a repeated step instead.
+    // A null requiredRole is the originator step, which records the signer's roles.
+    public Signature SignCancellation(Guid operationalRestrictionId, Guid signerUserId, string? requiredRole)
+    {
+        var roleNames = GetRoleNames(signerUserId);
+
+        if (requiredRole == RoleNames.DutyOperationsManager && !roleNames.Contains(RoleNames.DutyOperationsManager))
+            throw new NotDutyOperationsManagerException(signerUserId);
+
+        if (requiredRole == RoleNames.ControlroomSupervisor && !roleNames.Contains(RoleNames.ControlroomSupervisor))
+            throw new NotControlRoomSupervisorException(signerUserId);
+
+        var requiredSignature = new RequiresSignature
+        {
+            Id = Guid.NewGuid(),
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
+        };
+        _requiredSignatures.Add(requiredSignature);
+
+        var signature = new Signature
+        {
+            Id = Guid.NewGuid(),
+            RequiresSignatureId = requiredSignature.Id,
+            OperationalRestrictionId = operationalRestrictionId,
+            SigneeId = signerUserId,
+            SigneeRole = requiredRole ?? string.Join(", ", roleNames),
+            SignedAt = DateTime.UtcNow
+        };
+        _signatures.Add(signature);
+        requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
+
+        return signature;
+    }
+
 
     // The signer's current role names, resolved from the database so the
     // recorded label matches the data-driven role assignments.
@@ -218,7 +303,7 @@ public class SignatureService(
             .ToList();
     }
 
-    internal void DiscardUnpersistedSignature(Signature signature)
+    public void DiscardUnpersistedSignature(Signature signature)
     {
         var requiredSignature = GetRequiresSignatureById(signature.RequiresSignatureId);
 

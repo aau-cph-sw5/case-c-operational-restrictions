@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  approveRestriction,
+  getRestrictions,
   getRestrictionById,
   requestChanges,
   signForImplementation,
@@ -10,6 +12,35 @@ describe("restrictionApi", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     localStorage.clear();
+  });
+
+  it("loads and maps all restrictions for the overview", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          id: "restriction-1",
+          title: "Track maintenance",
+          originatorUserId: "user-1",
+          state: 1,
+          startDate: "2026-11-18T08:00:00Z",
+          endDate: null,
+          restrictionDescription: "Full restriction text",
+          signatures: [],
+        },
+      ],
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const restrictions = await getRestrictions();
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/restrictions");
+    expect(restrictions[0]).toMatchObject({
+      id: "restriction-1",
+      title: "Track maintenance",
+      status: "PendingDOMApproval",
+      restrictionDescription: "Full restriction text",
+    });
   });
 
   it("maps backend reviewDescription and returned state", async () => {
@@ -74,6 +105,44 @@ describe("restrictionApi", () => {
     await expect(
       requestChanges("restriction-1", "Fix it"),
     ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("posts to approve and maps the returned status, signature and audit history", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "restriction-1",
+        originatorUserId: "originator-1",
+        state: 5,
+        signatures: [
+          {
+            signeeId: "manager-1",
+            signeeRole: "DutyOperationsManager",
+            signedAt: "2026-11-18T10:00:00Z",
+          },
+        ],
+        history: [
+          {
+            action: "Approved",
+            fromState: "PendingDutyOperationsManagerApproval",
+            toState: "Approved",
+            actorId: "manager-1",
+            occurredAt: "2026-11-18T10:00:00Z",
+          },
+        ],
+      }),
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const restriction = await approveRestriction("restriction-1");
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "/api/restrictions/restriction-1/approve",
+    );
+    expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+    expect(restriction.status).toBe("PendingControlRoomSupervisorApproval");
+    expect(restriction.signatures[0].signeeRole).toBe("DutyOperationsManager");
+    expect(restriction.history?.[0].action).toBe("Approved");
   });
 
   it("posts to the restriction signing endpoint with the restriction ID", async () => {

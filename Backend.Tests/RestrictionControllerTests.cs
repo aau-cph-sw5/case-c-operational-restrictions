@@ -42,7 +42,8 @@ public class RestrictionControllerTests
             lifecycle,
             new OperationalRestrictionRepository(appDbContext),
             new RestrictionTransitionEventRepository(appDbContext),
-            new UnitOfWork(appDbContext));
+            new UnitOfWork(appDbContext),
+            new SignatureService(appDbContext));
     }
 
     [Fact]

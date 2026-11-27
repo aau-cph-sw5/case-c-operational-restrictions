@@ -1,0 +1,16 @@
+export const BACKEND_RESTRICTION_STATES = [
+  "Draft",
+  "PendingDutyOperationsManagerApproval",
+  "ReturnedForChanges",
+  "CancelledRefused",
+  "Approved",
+  "PendingControlRoomSupervisorApproval",
+  "Active",
+  "Empty",
+  "PendingCancellation",
+  "OutOfForce",
+  "AwaitingOperatorSignatures",
+  "AwaitingOperatorSignOut",
+  "Archived",
+  "CancellationApproved",
+] as const;

@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Models.DTOs;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
@@ -83,8 +84,9 @@ public sealed class DutyOperationsManagerSignatureIsFound : IRestrictionGuard<Op
 
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
-        // TODO: Check data.DutyOperationsManagerSignature when added to DTO
-        return true;
+        return data.Signatures.Any(signature =>
+            signature.SigneeRole.Split(", ")
+                .Contains(RoleNames.DutyOperationsManager));
     }
 }
 
@@ -106,6 +108,42 @@ public sealed class OperatorsAreAssigned : IRestrictionGuard<OperationalRestrict
     public bool IsSatisfied(OperationalRestrictionDto data)
     {
         // TODO: Check data.AssignedOperatorsIds when added to DTO
+        return true;
+    }
+}
+
+// Cancellation guards. The sequence itself is enforced by the From state of
+// each cancellation transition; these guards reserve the signature checks
+// once SignatureType is added to the signature DTO (see SignatureType).
+public sealed class OriginatorCancellationSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
+{
+    public string Name => "OriginatorCancellationSignatureIsFound";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        // TODO: Check for a Closure signature with the Originator role when SignatureType is added to the DTO
+        return true;
+    }
+}
+
+public sealed class DutyOperationsManagerCancellationSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
+{
+    public string Name => "DutyOperationsManagerCancellationSignatureIsFound";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        // TODO: Check for a Closure signature with the DutyOperationsManager role when SignatureType is added to the DTO
+        return true;
+    }
+}
+
+public sealed class ControlRoomCancellationSignatureIsFound : IRestrictionGuard<OperationalRestrictionDto>
+{
+    public string Name => "ControlRoomCancellationSignatureIsFound";
+
+    public bool IsSatisfied(OperationalRestrictionDto data)
+    {
+        // TODO: Check for a Closure signature with the ControlroomSupervisor role when SignatureType is added to the DTO
         return true;
     }
 }

@@ -165,11 +165,12 @@ public class RestrictionsController : ApiControllerBase
     }
 
     /// <summary>
-    /// Approves a restriction that is pending duty operations manager approval.
+    /// Signs and approves a restriction that is pending duty operations manager
+    /// approval, then advances it to control room implementation approval.
     /// The originator of a restriction can never approve it themselves, even if
     /// their role grants the approval permission.
     /// </summary>
-    /// <response code="200">Returns the approved restriction</response>
+    /// <response code="200">Returns the signed restriction awaiting implementation approval</response>
     /// <response code="403">The user has no role granting OperationalRestriction:Approve, or they created the restriction themselves</response>
     /// <response code="404">The operational restriction was not found</response>
     /// <response code="409">The operational restriction is not pending approval</response>
@@ -187,6 +188,12 @@ public class RestrictionsController : ApiControllerBase
             return NotFound(new { error = exception.Message });
         }
         catch (SelfApprovalNotAllowedException exception)
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new { error = exception.Message });
+        }
+        catch (NotDutyOperationsManagerException exception)
         {
             return StatusCode(
                 StatusCodes.Status403Forbidden,
@@ -262,6 +269,85 @@ public class RestrictionsController : ApiControllerBase
             return Conflict(new { error = exception.Message });
         }
 
+    }
+
+    /// <summary>
+    /// Step 1 of the cancellation chain: the originator signs an Active
+    /// restriction cancelled once its cause is resolved, moving it to
+    /// PendingCancellation. Only the originator check applies here, so every
+    /// role that can create a restriction can also start its cancellation.
+    /// </summary>
+    /// <response code="200">Returns the restriction now pending cancellation</response>
+    /// <response code="403">The authenticated user is not the restriction originator</response>
+    /// <response code="404">The operational restriction was not found</response>
+    /// <response code="409">The operational restriction is not Active</response>
+    [HttpPost("{id:guid}/cancel")]
+    public Task<IActionResult> StartCancellation(Guid id)
+    {
+        return RunCancellationStepAsync(
+            () => _operationalRestrictionService.StartCancellationAsync(id, CurrentUserId));
+    }
+
+    /// <summary>
+    /// Step 2 of the cancellation chain: the Duty Operations Manager confirms
+    /// the cause is resolved and signs, moving the restriction to CancellationApproved.
+    /// </summary>
+    /// <response code="200">Returns the restriction approved for cancellation</response>
+    /// <response code="403">The user is not a duty operations manager, is the originator, or lacks the cancel permission</response>
+    /// <response code="404">The operational restriction was not found</response>
+    /// <response code="409">The operational restriction is not pending cancellation</response>
+    [HttpPost("{id:guid}/cancel/approve")]
+    [RequiresPermission(Permissions.OperationalRestrictionCancel)]
+    public Task<IActionResult> ApproveCancellation(Guid id)
+    {
+        return RunCancellationStepAsync(
+            () => _operationalRestrictionService.ApproveCancellationAsync(id, CurrentUserId));
+    }
+
+    /// <summary>
+    /// Step 3 of the cancellation chain: the Control Room Supervisor signs to
+    /// take the restriction out of force.
+    /// </summary>
+    /// <response code="200">Returns the restriction that is now out of force</response>
+    /// <response code="403">The user is not a control room supervisor, or lacks the cancel permission</response>
+    /// <response code="404">The operational restriction was not found</response>
+    /// <response code="409">The operational restriction is not approved for cancellation</response>
+    [HttpPost("{id:guid}/cancel/sign")]
+    [RequiresPermission(Permissions.OperationalRestrictionCancel)]
+    public Task<IActionResult> SignCancellation(Guid id)
+    {
+        return RunCancellationStepAsync(
+            () => _operationalRestrictionService.ControlRoomCancellationAsync(id, CurrentUserId));
+    }
+
+    private async Task<IActionResult> RunCancellationStepAsync(
+        Func<Task<OperationalRestrictionDto>> cancellationStep)
+    {
+        try
+        {
+            return Ok(await cancellationStep());
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+        catch (Exception exception) when (exception is NotOriginatorException
+                                              or SelfApprovalNotAllowedException
+                                              or NotDutyOperationsManagerException
+                                              or NotControlRoomSupervisorException)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = exception.Message });
+        }
+        catch (Exception exception) when (exception is OperationalRestrictionNotSignableException
+                                              or InvalidOperationException)
+        {
+            return Conflict(new { error = exception.Message });
+        }
+        catch (Exception exception)
+        {
+            LogUnexpectedError(_logger, exception);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     private IActionResult? ValidateSigningRequirements(OperationalRestrictionDto restriction)
