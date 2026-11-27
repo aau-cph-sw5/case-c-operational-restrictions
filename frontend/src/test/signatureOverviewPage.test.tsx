@@ -112,4 +112,28 @@ describe("SignatureOverviewPage", () => {
       "Could not load signature overview.",
     );
   });
+
+  it("shows a login message for 401 Unauthorized", async () => {
+    mocks.getSignatureCompleteness.mockRejectedValue(
+      Object.assign(new Error("Unauthorized"), { status: 401 }),
+    );
+
+    render(<SignatureOverviewPage />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Your session has expired. Please log in again.",
+    );
+  });
+
+  it("shows a permission message for 403 Forbidden", async () => {
+    mocks.getSignatureCompleteness.mockRejectedValue(
+      Object.assign(new Error("Forbidden"), { status: 403 }),
+    );
+
+    render(<SignatureOverviewPage />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "You do not have permission to view signature overview.",
+    );
+  });
 });

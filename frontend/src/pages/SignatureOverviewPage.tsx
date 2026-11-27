@@ -2,8 +2,10 @@
 // Route-level screen component rendered by React Router for a specific URL.
 // Displays signature completeness across active Operational Restrictions.
 
+import { AppHeader } from "../components/AppHeader";
 import { useEffect, useState } from "react";
 import { Clock3, LoaderCircle, OctagonAlert, Search } from "lucide-react";
+import type { RestrictionApiError } from "../types/restrictionApiError";
 
 import { SignatureRestrictionCard } from "../components/SignatureRestrictionCard";
 import {
@@ -40,9 +42,17 @@ export function SignatureOverviewPage() {
         if (!cancelled) {
           setReport(data);
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setError("Could not load signature overview.");
+          const status = (error as RestrictionApiError).status;
+
+          if (status === 401) {
+            setError("Your session has expired. Please log in again.");
+          } else if (status === 403) {
+            setError("You do not have permission to view signature overview.");
+          } else {
+            setError("Could not load signature overview.");
+          }
         }
       } finally {
         if (!cancelled) {
@@ -111,19 +121,15 @@ export function SignatureOverviewPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 bg-white px-4 py-6 sm:px-6 lg:px-8">
-      <header className="space-y-1">
-        <h1 className="font-['Instrument_Sans',sans-serif] text-2xl font-bold text-black">
-          Signature Overview
-        </h1>
-
-        <p className="font-['Instrument_Sans',sans-serif] text-base font-bold text-[#6B6B6B]">
-          CCR employee signature status
-        </p>
+      <AppHeader
+        title="Signature overview"
+        subtitle="CCR employee signature status"
+      >
         <p className="flex items-center justify-center gap-1 font-['Inter',sans-serif] text-xs text-[#6B6B6B]">
           <Clock3 className="size-3" aria-hidden />
           Last updated: {new Date(report.computedAt).toLocaleString()}
         </p>
-      </header>
+      </AppHeader>
 
       <div className="grid grid-cols-2 gap-3">
         <Card className="gap-2 border border-[#E0F3FF] bg-[#EFF6FF] py-3 ring-0">
