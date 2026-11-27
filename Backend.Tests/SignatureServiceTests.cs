@@ -137,4 +137,61 @@ public class SignatureServiceTests
         Assert.DoesNotContain(required, x => x.SigneeId == DbSeeder.MikkelId);
         Assert.All(required, x => Assert.Equal(RequiresSignatureStatus.PendingSignature, x.RequiresSignatureStatus));
     }
+
+    [Fact]
+    public void GetRequiredSignaturesByRestrictionIdReturnsOnlyMatchingSignatures()
+    {
+        var restrictionId = Guid.NewGuid();
+        var otherRestrictionId = Guid.NewGuid();
+
+        var expected = _service.CreateRequiredSignatures(restrictionId);
+        _service.CreateRequiredSignatures(otherRestrictionId);
+
+        var result = _service.GetRequiredSignaturesByRestrictionId(restrictionId);
+
+        Assert.Equal(expected.Count, result.Count);
+        Assert.All(result, signature =>
+            Assert.Equal(restrictionId, signature.OperationalRestrictionId));
+    }
+
+    [Fact]
+    public void GetSignatureStatusesReturnsCorrectSignerInformationAndStatus()
+    {
+        var restrictionId = Guid.NewGuid();
+        var required = _service.CreateRequiredSignatures(restrictionId);
+        var signer = required.First();
+
+        _service.Sign(signer.Id, signer.SigneeId);
+
+        var result = _service.GetSignatureStatuses(restrictionId);
+
+        var signedStatus = Assert.Single(result,
+            status => status.RequiresSignatureId == signer.Id);
+
+        var user = _appDbContext.Users.Single(u => u.Id == signer.SigneeId);
+
+        var expectedRoles = _appDbContext.UserRoleAssignments
+            .Where(a => a.UserId == signer.SigneeId)
+            .Join(_appDbContext.Roles,
+                a => a.RoleId,
+                r => r.Id,
+                (a, r) => r.Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        Assert.Equal(signer.SigneeId, signedStatus.SigneeId);
+        Assert.Equal(user.Name, signedStatus.SigneeName);
+        Assert.Equal(string.Join(", ", expectedRoles), signedStatus.SigneeRole);
+        Assert.Equal("CompletedSignature", signedStatus.Status);
+
+        Assert.Contains(result, status => status.Status == "PendingSignature");
+    }
+
+    [Fact]
+    public void GetSignatureStatusesReturnsEmptyWhenNoSignaturesExist()
+    {
+        var result = _service.GetSignatureStatuses(Guid.NewGuid());
+
+        Assert.Empty(result);
+    }
 }

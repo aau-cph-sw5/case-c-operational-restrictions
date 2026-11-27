@@ -1,4 +1,4 @@
-import { ErrorAlert } from "@/components/common/ErrorAlert.tsx";
+﻿import { ErrorAlert } from "@/components/common/ErrorAlert.tsx";
 import { ErrorPage } from "@/components/common/ErrorPage.tsx";
 import { SuccessAlert } from "@/components/common/SuccessAlert.tsx";
 import { TemporaryBackButton } from "@/components/common/TemporaryBackButton.tsx";
@@ -17,7 +17,7 @@ import {
   signForImplementationErrorMessage,
 } from "@/lib/utils/signErrorMessages.ts";
 import { LoaderCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { SignatureSection } from "../components/SignatureSection";
 import {
@@ -26,10 +26,12 @@ import {
 } from "../hooks/useRestrictionPermissions";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { useRestriction } from "../hooks/useRestriction";
+import type { SignatureStatusDto } from "../types/restrictionDto";
 import { restrictionTexts as t } from "../lib/restrictionTexts";
 import type { RestrictionDto } from "../types/restrictionDto";
 import {
   getRestrictionById,
+  getSignatureStatuses,
   approveCancellation,
   approveRestriction,
   requestChanges,
@@ -59,7 +61,32 @@ const cancellationSteps: Record<
 
 export function RestrictionDetailPage() {
   const { id } = useParams<{ id: string }>();
+
   const location = useLocation();
+  const [signatureStatuses, setSignatureStatuses] = useState<
+    SignatureStatusDto[]
+  >([]);
+  useEffect(() => {
+    if (!id) {
+      setSignatureStatuses([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    getSignatureStatuses(id)
+      .then((statuses) => {
+        if (!cancelled) setSignatureStatuses(statuses);
+      })
+      .catch((error) => {
+        console.error("Failed to load signature statuses:", error);
+        if (!cancelled) setSignatureStatuses([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
   const [signing, setSigning] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
   const [signingForImplementation, setSigningForImplementation] =
@@ -276,7 +303,9 @@ export function RestrictionDetailPage() {
 
       <SignatureSection
         signatures={restriction.signatures}
+        signatureStatuses={signatureStatuses}
         knownUsers={knownUsers}
+        isDraft={restriction.status === "Draft"}
       />
       {approveSuccess && (
         <SuccessAlert testId="approve-success">{t.approveSuccess}</SuccessAlert>

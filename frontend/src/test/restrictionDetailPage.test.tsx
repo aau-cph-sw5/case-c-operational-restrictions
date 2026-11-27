@@ -8,6 +8,7 @@ import type { RestrictionDto } from "../types/restrictionDto";
 
 const mocks = vi.hoisted(() => ({
   getRestrictionById: vi.fn(),
+  getSignatureStatuses: vi.fn(),
   signRestriction: vi.fn(),
   signForImplementation: vi.fn(),
   requestChanges: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("../services/restrictionApi", () => ({
   getRestrictionById: mocks.getRestrictionById,
+  getSignatureStatuses: mocks.getSignatureStatuses,
   signRestriction: mocks.signRestriction,
   signForImplementation: mocks.signForImplementation,
   requestChanges: mocks.requestChanges,
@@ -85,6 +87,7 @@ describe("RestrictionDetailPage", () => {
     vi.resetAllMocks();
     mocks.getCurrentUser.mockResolvedValue(originator);
     mocks.getRestrictionById.mockResolvedValue(draft);
+    mocks.getSignatureStatuses.mockResolvedValue([]);
   });
 
   it("fetches only the requested restriction by id", async () => {

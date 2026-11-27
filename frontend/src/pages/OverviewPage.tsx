@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ORNotificationCard } from "@/components/OverviewNotificationCard";
 import { getOverviewRestrictions } from "@/services/overviewApi";
+import { getSignatureStatuses } from "@/services/restrictionApi";
+import type { SignatureStatusDto } from "@/types/restrictionDto";
 import type { DrItem } from "@/types/overviewRestriction";
 import { isRestrictionApiError } from "@/types/restrictionApiError";
 import { clockTimeNow } from "@/lib/dateFormat";
@@ -13,6 +15,9 @@ import { AppHeader } from "../components/AppHeader";
 export function OverviewPage() {
   const navigate = useNavigate();
   const [restrictions, setRestrictions] = useState<DrItem[]>([]);
+  const [signatureStatuses, setSignatureStatuses] = useState<
+    Record<string, SignatureStatusDto[]>
+  >({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "kladde" | "alle" | "aktiv" | "arkiv"
@@ -25,7 +30,27 @@ export function OverviewPage() {
     const controller = new AbortController();
 
     getOverviewRestrictions(controller.signal)
-      .then(setRestrictions)
+      .then(async (data) => {
+        if (controller.signal.aborted) return;
+
+        setRestrictions(data);
+
+        const results = await Promise.allSettled(
+          data.map((restriction) => getSignatureStatuses(restriction.id)),
+        );
+
+        if (controller.signal.aborted) return;
+
+        const statuses: Record<string, SignatureStatusDto[]> = {};
+
+        results.forEach((result, index) => {
+          if (result.status === "fulfilled") {
+            statuses[data[index].id] = result.value;
+          }
+        });
+
+        setSignatureStatuses(statuses);
+      })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
         if (isRestrictionApiError(err) && err.status === 401) {
@@ -166,7 +191,7 @@ export function OverviewPage() {
                 statusKey={item.statusKey}
                 title={item.title}
                 date={item.date}
-                signed={item.signed}
+                signatureStatuses={signatureStatuses[item.id] ?? []}
                 onSeMere={() => navigate(`/restrictions/${item.id}`)}
               />
             ))

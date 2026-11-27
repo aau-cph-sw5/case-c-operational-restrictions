@@ -1,3 +1,4 @@
+using Backend.Authorization;
 using Backend.Exceptions;
 using Backend.Models.DTOs;
 using Backend.Services;
@@ -13,9 +14,14 @@ public class SignatureController : ApiControllerBase
 {
     private readonly SignatureService _signatureService;
 
-    public SignatureController(SignatureService signatureService)
+    private readonly IOperationalRestrictionService _operationalRestrictionService;
+
+    public SignatureController(
+        SignatureService signatureService,
+        IOperationalRestrictionService operationalRestrictionService)
     {
         _signatureService = signatureService;
+        _operationalRestrictionService = operationalRestrictionService;
     }
 
     /// <summary>
@@ -65,4 +71,33 @@ public class SignatureController : ApiControllerBase
             return Conflict(new { error = exception.Message });
         }
     }
+
+
+    /// <summary>
+    /// Gets the signature statuses for an Operational Restriction.
+    /// </summary>
+    /// <response code="200">Returns required signature statuses</response>
+    /// <response code="404">The restriction does not exist</response>
+    [HttpGet("restriction/{restrictionId:guid}/status")]
+    [Authorize]
+    [RequiresPermission(Permissions.OperationalRestrictionRead)]
+    public async Task<ActionResult<List<SignatureStatusDto>>> GetSignatureStatuses(
+        Guid restrictionId)
+    {
+        try
+        {
+            // Check that the restriction exists and the user can access it.
+            await _operationalRestrictionService.GetByIdAsync(
+                restrictionId, CurrentUserId);
+
+            var statuses = _signatureService.GetSignatureStatuses(restrictionId);
+
+            return Ok(statuses);
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+    }
+
 }

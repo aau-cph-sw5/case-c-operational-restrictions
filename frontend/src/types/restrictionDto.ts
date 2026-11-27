@@ -48,3 +48,11 @@ export interface RestrictionDto {
   signatures: SignatureDto[];
   history?: RestrictionHistoryEntry[];
 }
+
+export interface SignatureStatusDto {
+  requiresSignatureId: string;
+  signeeId: string;
+  signeeName: string;
+  signeeRole: string;
+  status: string;
+}

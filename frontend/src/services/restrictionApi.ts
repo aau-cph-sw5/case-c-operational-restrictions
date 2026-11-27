@@ -1,4 +1,4 @@
-// API:
+﻿// API:
 // Raw HTTP calls to the .NET backend's restriction endpoints.
 // Attaches the stored JWT and turns non-2xx responses into errors that carry
 // the HTTP status, so the UI can show a message per status code.
@@ -8,7 +8,11 @@ import type {
   RestrictionDto as CreatedRestrictionDto,
 } from "../types/restriction";
 import type { RestrictionApiError } from "../types/restrictionApiError";
-import type { RestrictionDto, SignatureDto } from "../types/restrictionDto";
+import type {
+  RestrictionDto,
+  SignatureDto,
+  SignatureStatusDto,
+} from "../types/restrictionDto";
 import { getStoredToken } from "./tokenStorage";
 import { getAuthHeaders } from "./authApi";
 
@@ -246,6 +250,24 @@ export async function signForImplementation(id: string): Promise<SignatureDto> {
   }
 
   return toSignature((await response.json()) as Record<string, unknown>);
+}
+
+// GET /api/Signature/restriction/{restrictionId}/status
+export async function getSignatureStatuses(
+  restrictionId: string,
+): Promise<SignatureStatusDto[]> {
+  const response = await fetch(
+    `/api/Signature/restriction/${encodeURIComponent(restrictionId)}/status`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return (await response.json()) as SignatureStatusDto[];
 }
 
 // POST to a cancellation step endpoint. Resolves with the updated
