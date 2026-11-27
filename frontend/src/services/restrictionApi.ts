@@ -247,3 +247,39 @@ export async function signForImplementation(id: string): Promise<SignatureDto> {
 
   return toSignature((await response.json()) as Record<string, unknown>);
 }
+
+// POST to a cancellation step endpoint. Resolves with the updated
+// restriction; the backend state machine refuses out-of-sequence steps with 409.
+async function postRestrictionAction(
+  id: string,
+  action: string,
+): Promise<RestrictionDto> {
+  const response = await fetch(
+    `/api/restrictions/${encodeURIComponent(id)}/${action}`,
+    { method: "POST", headers: getAuthHeaders() },
+  );
+
+  if (!response.ok) {
+    throw createApiError(response.status, `HTTP ${response.status}`);
+  }
+
+  return toRestriction(await response.json());
+}
+
+// POST /api/restrictions/{id}/cancel
+// The originator signs to move an Active restriction to PendingCancellation.
+export async function startCancellation(id: string): Promise<RestrictionDto> {
+  return postRestrictionAction(id, "cancel");
+}
+
+// POST /api/restrictions/{id}/cancel/approve
+// The Duty Operations Manager confirms the cause is resolved and signs.
+export async function approveCancellation(id: string): Promise<RestrictionDto> {
+  return postRestrictionAction(id, "cancel/approve");
+}
+
+// POST /api/restrictions/{id}/cancel/sign
+// The Control Room Supervisor signs to take the restriction out of force.
+export async function signCancellation(id: string): Promise<RestrictionDto> {
+  return postRestrictionAction(id, "cancel/sign");
+}

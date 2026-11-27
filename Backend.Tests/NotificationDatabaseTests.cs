@@ -1,6 +1,7 @@
-using Backend.Data;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+
+using DatabaseLayer.Tests;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -8,16 +9,14 @@ using Xunit;
 
 namespace Backend.Tests;
 
-public class NotificationDatabaseTests
+public class NotificationDatabaseTests(TestDatabaseFixture fixture)
+    : IClassFixture<TestDatabaseFixture>
 {
     [Fact]
     public async Task CanSaveAndRetrieveNotificationWithDelivery()
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
-            .Options;
-
-        await using var db = new AppDbContext(options);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var db = fixture.CreateContext();
 
         var userId = Guid.NewGuid();
         var notificationId = Guid.NewGuid();
@@ -51,13 +50,13 @@ public class NotificationDatabaseTests
             LastError = "Simulated delivery failure"
         });
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
 
         db.ChangeTracker.Clear();
 
         var saved = await db.Notifications
             .Include(n => n.Deliveries)
-            .SingleAsync(n => n.Id == notificationId, cancellationToken: TestContext.Current.CancellationToken);
+            .SingleAsync(n => n.Id == notificationId, cancellationToken);
 
         Assert.Equal(userId, saved.RecipientUserId);
         Assert.Single(saved.Deliveries);

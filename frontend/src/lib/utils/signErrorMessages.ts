@@ -1,3 +1,4 @@
+import type { CancellationStep } from "@/hooks/useRestrictionPermissions.ts";
 import { restrictionTexts as t } from "@/lib/restrictionTexts.ts";
 import { isRestrictionApiError } from "@/types/restrictionApiError.ts";
 
@@ -51,4 +52,41 @@ export function approveErrorMessage(error: unknown): string {
     }
   }
   return t.approveFailed;
+}
+
+const cancellationErrorTexts: Record<
+  CancellationStep,
+  { forbidden: string; conflict: string }
+> = {
+  start: {
+    forbidden: t.startCancellationForbidden,
+    conflict: t.startCancellationConflict,
+  },
+  approve: {
+    forbidden: t.approveCancellationForbidden,
+    conflict: t.approveCancellationConflict,
+  },
+  takeOutOfForce: {
+    forbidden: t.takeOutOfForceForbidden,
+    conflict: t.takeOutOfForceConflict,
+  },
+};
+
+export function cancellationErrorMessage(
+  error: unknown,
+  step: CancellationStep,
+): string {
+  if (isRestrictionApiError(error)) {
+    switch (error.status) {
+      case 401:
+        return t.sessionExpired;
+      case 403:
+        return cancellationErrorTexts[step].forbidden;
+      case 404:
+        return t.notFound;
+      case 409:
+        return cancellationErrorTexts[step].conflict;
+    }
+  }
+  return t.cancellationFailed;
 }

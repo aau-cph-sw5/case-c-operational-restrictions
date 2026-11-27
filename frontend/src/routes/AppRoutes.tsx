@@ -22,6 +22,7 @@ export function AppRoutes() {
 
           <Route element={<AppLayout />}>
             <Route path="/home" element={<App />} />
+            <Route path="/notifications" element={<NotificationPage />} />
             <Route
               path="/restrictions/new"
               element={<CreateRestrictionPage />}

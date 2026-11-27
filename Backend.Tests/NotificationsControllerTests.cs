@@ -26,18 +26,54 @@ public class StubNotificationService : INotificationService
         throw new NotSupportedException();
 
     public Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId)
+    public Guid? ReceivedNotificationId { get; private set; }
+
+    public bool MarkAsReadResult { get; set; } = true;
+
+    public Guid AddNotification(CreateNotificationRequest request) =>
+        throw new NotSupportedException();
+
+    public Task ResolveActionRequiredAsync(
+        Guid operationalRestrictionId,
+        Guid recipientUserId) =>
+        throw new NotSupportedException();
+
+    public Task NotifyRestrictionTransitionAsync(
+        OperationalRestriction newVersion,
+        Guid actorId) =>
+        throw new NotSupportedException();
+
+    public Task<List<Notification>> GetNotificationsForUserAsync(
+        Guid recipientUserId)
     {
         ReceivedRecipientUserId = recipientUserId;
         return Task.FromResult(NotificationsToReturn);
     }
+
+    public Task<bool> MarkAsReadAsync(
+        Guid notificationId,
+        Guid recipientUserId)
+    {
+        ReceivedNotificationId = notificationId;
+        ReceivedRecipientUserId = recipientUserId;
+
+        return Task.FromResult(MarkAsReadResult);
+    }
+
+    public Task UpdateAllNotificationsAsync() =>
+        throw new NotSupportedException();
 }
 
 public class NotificationsControllerTests
 {
-    private static NotificationsController CreateController(INotificationService service, Guid userId)
+    private static NotificationsController CreateController(
+        INotificationService service,
+        Guid userId)
     {
         var principal = new ClaimsPrincipal(
-            new ClaimsIdentity([new Claim(JwtRegisteredClaimNames.Sub, userId.ToString())]));
+            new ClaimsIdentity([
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString())
+            ]));
 
         return new NotificationsController(service)
         {
@@ -107,6 +143,53 @@ public class NotificationsControllerTests
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var dtos = Assert.IsType<List<NotificationDto>>(ok.Value);
+
         Assert.Empty(dtos);
+    }
+
+    [Fact]
+    public async Task MarkAsReadReturnsNoContentWhenSuccessful()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var notificationId = Guid.NewGuid();
+
+        var service = new StubNotificationService
+        {
+            MarkAsReadResult = true
+        };
+
+        var controller = CreateController(service, userId);
+
+        // Act
+        var result = await controller.MarkAsRead(notificationId);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        Assert.Equal(notificationId, service.ReceivedNotificationId);
+        Assert.Equal(userId, service.ReceivedRecipientUserId);
+    }
+
+    [Fact]
+    public async Task MarkAsReadReturnsNotFoundWhenNotificationDoesNotExist()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var notificationId = Guid.NewGuid();
+
+        var service = new StubNotificationService
+        {
+            MarkAsReadResult = false
+        };
+
+        var controller = CreateController(service, userId);
+
+        // Act
+        var result = await controller.MarkAsRead(notificationId);
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(notificationId, service.ReceivedNotificationId);
+        Assert.Equal(userId, service.ReceivedRecipientUserId);
     }
 }
