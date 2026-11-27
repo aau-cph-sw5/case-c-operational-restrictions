@@ -30,15 +30,13 @@ export function AppRoutes() {
               path="/restrictions/:id"
               element={<RestrictionDetailPage />}
             />
-<<<<<<< HEAD
-            <Route path="/overview" element={<OverviewPage />} />
+
+            <Route path="/restrictions" element={<OverviewPage />} />
             <Route
               path="/signatures/overview"
               element={<SignatureOverviewPage />}
             />
-=======
-            <Route path="/restrictions" element={<OverviewPage />} />
->>>>>>> origin/development
+
             <Route path="*" element={<App />} />
           </Route>
         </Route>
