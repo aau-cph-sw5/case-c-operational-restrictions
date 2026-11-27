@@ -262,6 +262,18 @@ public class OperationalRestrictionCreationTests
             x => Assert.Equal(DbSeeder.AnnaId, x.OriginatorUserId));
     }
 
+    [Fact]
+    public async Task GetAllReturnsOnlyTheLatestVersionOfEachRestriction()
+    {
+        var draft = await CreateDraftAsync(DbSeeder.AnnaId);
+        await _service.SignOriginatorAndAdvanceToPendingApprovalAsync(draft.Id, DbSeeder.AnnaId);
+
+        var restrictions = await _service.GetAllAsync(DbSeeder.AnnaId);
+
+        var listed = Assert.Single(restrictions, x => (x.OriginalOperationalRestrictionId ?? x.Id) == draft.Id);
+        Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, listed.State);
+    }
+
     private Task<OperationalRestrictionDto> CreateDraftAsync(Guid createdBy)
     {
         var request = new CreateRestrictionRequest(

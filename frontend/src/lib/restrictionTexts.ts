@@ -74,4 +74,27 @@ export const restrictionTexts = {
   requestChangesConflict:
     "Restriktionen afventer ikke længere godkendelse eller er blevet ændret. Genindlæs siden.",
   requestChangesFailed: "Anmodningen mislykkedes. Prøv igen.",
+  startCancellation: "Annuller restriktion",
+  startingCancellation: "Annullerer...",
+  startCancellationSuccess: "Restriktionen afventer nu annullering.",
+  startCancellationForbidden:
+    "Kun restriktionens originator kan starte en annullering.",
+  startCancellationConflict:
+    "Kun aktive restriktioner kan annulleres. Genindlæs siden.",
+  approveCancellation: "Godkend annullering",
+  approvingCancellation: "Godkender annullering...",
+  approveCancellationSuccess:
+    "Annulleringen er godkendt og afventer kontrolrummet.",
+  approveCancellationForbidden:
+    "Kun en Duty Operations Manager kan godkende en annullering.",
+  approveCancellationConflict:
+    "Restriktionen afventer ikke længere annullering. Genindlæs siden.",
+  takeOutOfForce: "Tag ud af kraft",
+  takingOutOfForce: "Tager ud af kraft...",
+  outOfForceSuccess: "Restriktionen er ikke længere i kraft.",
+  takeOutOfForceForbidden:
+    "Kun en kontrolrumschef kan tage restriktionen ud af kraft.",
+  takeOutOfForceConflict:
+    "Restriktionen afventer ikke længere kontrolrummet. Genindlæs siden.",
+  cancellationFailed: "Annulleringen mislykkedes. Prøv igen.",
 } as const;

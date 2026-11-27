@@ -11,6 +11,7 @@ export type RestrictionStatus =
   | "Archived"
   | "Cancelled"
   | "Closing"
+  | "CancellationApproved"
   | "OutOfForce"
   | "AwaitingOperatorSignatures"
   | "AwaitingOperatorSignOut"

@@ -51,7 +51,8 @@ public static class DbSeeder
         (Permissions.OperationalRestrictionCreate, "Create operational restrictions"),
         (Permissions.OperationalRestrictionSign, "Sign operational restrictions"),
         (Permissions.OperationalRestrictionApprove, "Approve operational restrictions"),
-        (Permissions.OperationalRestrictionRequestChanges, "Request changes to operational restrictions")
+        (Permissions.OperationalRestrictionRequestChanges, "Request changes to operational restrictions"),
+        (Permissions.OperationalRestrictionCancel, "Cancel operational restrictions")
     ];
 
     // Which permissions each role grants. Stored in the database, so this
@@ -70,7 +71,8 @@ public static class DbSeeder
             Permissions.OperationalRestrictionCreate,
             Permissions.OperationalRestrictionSign,
             Permissions.OperationalRestrictionApprove,
-            Permissions.OperationalRestrictionRequestChanges
+            Permissions.OperationalRestrictionRequestChanges,
+            Permissions.OperationalRestrictionCancel
         ],
         [RoleNames.Operator] =
         [
@@ -82,7 +84,8 @@ public static class DbSeeder
         [
             Permissions.OperationalRestrictionRead,
             Permissions.OperationalRestrictionSign,
-            Permissions.OperationalRestrictionApprove
+            Permissions.OperationalRestrictionApprove,
+            Permissions.OperationalRestrictionCancel
         ],
         [RoleNames.Betriebsleiter] =
         [

@@ -72,6 +72,11 @@ public class OperationalRestrictionServiceTests
             _signatures.Add(signature);
             return signature;
         }
+
+        public Signature SignCancellation(Guid operationalRestrictionId, Guid signerUserId, string? requiredRole)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     private static Task<OperationalRestrictionDto> CreateDraftAsync(

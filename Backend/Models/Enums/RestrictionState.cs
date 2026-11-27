@@ -14,5 +14,6 @@ public enum RestrictionState
     OutOfForce,
     AwaitingOperatorSignatures,
     AwaitingOperatorSignOut,
-    Archived
+    Archived,
+    CancellationApproved
 }
