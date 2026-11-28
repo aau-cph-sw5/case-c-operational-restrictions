@@ -1,4 +1,3 @@
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -21,6 +20,12 @@ public class StubNotificationService : INotificationService
 
     public Guid? ReceivedRecipientUserId { get; private set; }
 
+    public Guid AddNotification(CreateNotificationRequest request) => throw new NotSupportedException();
+
+    public Task ResolveActionRequiredAsync(Guid operationalRestrictionId, Guid recipientUserId) =>
+        throw new NotSupportedException();
+
+    public Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId)
     public Guid? ReceivedNotificationId { get; private set; }
 
     public bool MarkAsReadResult { get; set; } = true;
@@ -74,10 +79,7 @@ public class NotificationsControllerTests
         {
             ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = principal
-                }
+                HttpContext = new DefaultHttpContext { User = principal }
             }
         };
     }
@@ -87,9 +89,7 @@ public class NotificationsControllerTests
     {
         var userId = Guid.NewGuid();
         var notificationId = Guid.NewGuid();
-        var createdAt = new DateTime(
-            2026, 10, 1, 0, 0, 0, DateTimeKind.Utc
-        );
+        var createdAt = new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var service = new StubNotificationService
         {
@@ -115,7 +115,6 @@ public class NotificationsControllerTests
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var dtos = Assert.IsType<List<NotificationDto>>(ok.Value);
         var dto = Assert.Single(dtos);
-
         Assert.Equal(notificationId, dto.Id);
         Assert.Equal("Test", dto.Title);
         Assert.Equal(createdAt, dto.CreatedAt);

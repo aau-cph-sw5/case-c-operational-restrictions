@@ -1,21 +1,27 @@
+
 using Backend.Authorization;
 using Backend.Data;
 using Backend.Exceptions;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
 using Backend.Models.Enums;
+using Backend.Models.Requests;
 
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
 public class SignatureService(
-    AppDbContext appDbContext
+    AppDbContext appDbContext,
+    INotificationService notificationService
 ) : ISignatureService
 {
     private readonly AppDbContext _appDbContext = appDbContext;
+    private readonly INotificationService _notificationService = notificationService;
+
     //Midlertidigt mens der ikke er database
     private static readonly List<RequiresSignature> _requiredSignatures = [];
+
     //Midlertidigt mens der ikke er database
     private static readonly List<Signature> _signatures = [];
 
@@ -27,7 +33,6 @@ public class SignatureService(
 
         return _requiredSignatures[Random.Shared.Next(_requiredSignatures.Count)].Id;
     }
-
 
     // The users who must read and sign a restriction when it becomes active:
     // everyone at work or off work at that moment (i.e. not on holiday).
@@ -56,9 +61,20 @@ public class SignatureService(
         //her skal de tilføjes til db i fremtiden
         _requiredSignatures.AddRange(createdSignatures);
 
+        foreach (var requiredSignature in createdSignatures)
+        {
+            _notificationService.AddNotification(
+                new CreateNotificationRequest(
+                    RecipientUserId: requiredSignature.SigneeId,
+                    Type: NotificationType.SignatureRequired,
+                    RequiresAction: true,
+                    OperationalRestrictionId: requiredSignature.OperationalRestrictionId
+                )
+            );
+        }
+
         return createdSignatures;
     }
-
 
     public RequiresSignature GetRequiresSignatureById(Guid requiresSignatureId)
     {
@@ -104,12 +120,12 @@ public class SignatureService(
             SigneeRole = string.Join(", ", GetRoleNames(signerUserId)),
             SignedAt = DateTime.UtcNow
         };
+
         //Dette skal smides i databasen selvfølgelig uden de virtuelle fields
         _signatures.Add(signature);
 
         //dette skal opdateres i databasen
         requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
-
 
         return signature;
     }
@@ -135,6 +151,7 @@ public class SignatureService(
             SigneeId = signerUserId,
             RequiresSignatureStatus = RequiresSignatureStatus.PendingSignature
         };
+
         _requiredSignatures.Add(requiredSignature);
 
         var signature = new Signature
@@ -146,6 +163,7 @@ public class SignatureService(
             SigneeRole = RoleNames.Originator,
             SignedAt = DateTime.UtcNow
         };
+
         _signatures.Add(signature);
         requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.CompletedSignature;
 
@@ -315,8 +333,6 @@ public class SignatureService(
         }
     }
 
-
-
     public void InvalidateRequiredSignatures(Guid operationalRestrictionId)
     {
         //I fremtiden skal den hente alle RequiredSignatures fra OperationalId i db, som skal invalideres
@@ -325,7 +341,6 @@ public class SignatureService(
             requiredSignature.RequiresSignatureStatus = RequiresSignatureStatus.Invalid;
         }
     }
-
 
     public bool IsSignatureValid(Guid signatureId)
     {

@@ -1,3 +1,4 @@
+
 using Backend.Models.Entities;
 
 using Microsoft.EntityFrameworkCore;
@@ -45,10 +46,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RolePermission>(builder =>
         {
             builder.HasKey(rp => new { rp.RoleId, rp.PermissionId });
+
             builder.HasOne(rp => rp.Role)
                 .WithMany(r => r.RolePermissions)
                 .HasForeignKey(rp => rp.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
+
             builder.HasOne(rp => rp.Permission)
                 .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId)
@@ -58,10 +61,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<UserRoleAssignment>(builder =>
         {
             builder.HasKey(ura => new { ura.UserId, ura.RoleId });
+
             builder.HasOne(ura => ura.User)
                 .WithMany()
                 .HasForeignKey(ura => ura.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
             builder.HasOne(ura => ura.Role)
                 .WithMany(r => r.UserRoleAssignments)
                 .HasForeignKey(ura => ura.RoleId)

@@ -52,6 +52,7 @@ export function toNotificationViewModel(dto: NotificationDto): Notification {
 
   return {
     id: dto.id,
+    operationalRestrictionId: dto.operationalRestrictionId,
     category: categoryFor(dto.type),
     title: titleFor(dto),
     message: dto.message ?? "",

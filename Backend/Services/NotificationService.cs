@@ -13,6 +13,10 @@ namespace Backend.Services;
 // service saves them in the same SaveChanges as the restriction's state change, so a state
 // change and its notifications are stored together or not at all.
 public class NotificationService(
+  AppDbContext appDbContext
+) : INotificationService
+{
+    private readonly AppDbContext _appDbContext = appDbContext;
   AppDbContext appDbContext,
   SignatureService signatureService
 ) : INotificationService
@@ -83,6 +87,7 @@ public class NotificationService(
         var now = DateTime.UtcNow;
         foreach (var notification in openNotifications)
         {
+            notification.ResolvedAt = now;
             Resolve(notification, now);
         }
     }
@@ -195,6 +200,9 @@ public class NotificationService(
 
     /// <summary>
     /// Returns all notifications for a recipient, newest first, for the in-app inbox.
+    /// </summary>
+    public async Task<List<Notification>> GetNotificationsForUserAsync(Guid recipientUserId)
+    {
     /// First resolves any open action-required notifications whose underlying action is now
     /// complete, so the inbox always reflects the current state on load.
     /// </summary>

@@ -430,7 +430,7 @@ namespace Backend.Migrations
                     b.Navigation("OperationalRestriction");
                 });
 
-            modelBuilder.Entity("Backend.Models.Entities.NotificationAuditEntry", b =>
+              modelBuilder.Entity("Backend.Models.Entities.NotificationAuditEntry", b =>
                 {
                     b.HasOne("Backend.Models.Entities.Notification", null)
                         .WithMany()

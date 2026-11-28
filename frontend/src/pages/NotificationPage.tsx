@@ -97,6 +97,15 @@ export function NotificationPage() {
   }
 
   return (
+    <main className="box-border flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-[#e0f2fe] text-[#111827] [font-family:Arial,sans-serif] min-[700px]:mx-auto min-[700px]:max-w-[760px] min-[700px]:border-x min-[700px]:border-slate-300">
+      <header className="relative shrink-0 border-b-2 border-slate-500 px-4 pt-5 pb-3 text-center min-[700px]:px-5 min-[700px]:pt-6 min-[700px]:pb-4 max-[380px]:px-3 max-[380px]:pt-3.5 max-[380px]:pb-2.5">
+        <h1 className="m-0 max-w-full text-[25px] leading-tight font-bold break-words text-[#111827] max-[380px]:text-[22px]">
+          Notifikationer
+        </h1>
+      </header>
+
+      <section className="shrink-0 border-b border-slate-300 px-4 py-3 min-[700px]:px-5 min-[700px]:py-3.5 max-[380px]:px-3 max-[380px]:py-2.5">
+        <p className="mb-3 text-base font-semibold text-slate-600">
     <main className="notification-page">
       <style>{`
         .notification-page {
@@ -481,6 +490,18 @@ export function NotificationPage() {
         />
       </section>
 
+      <section
+        className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-3 pt-3.5 pb-6 [-webkit-overflow-scrolling:touch] min-[700px]:gap-3 min-[700px]:px-4.5 min-[700px]:pt-5 min-[700px]:pb-7 max-[380px]:gap-2 max-[380px]:px-2 max-[380px]:pt-2.5 max-[380px]:pb-5"
+        aria-label="Notifikationer"
+      >
+        {error !== null ? (
+          <p className="text-sm text-red-700">{error}</p>
+        ) : isLoading ? (
+          <p className="text-sm text-slate-600">Henter notifikationer ...</p>
+        ) : visibleNotifications.length === 0 ? (
+          <p className="text-sm text-slate-600">
+            Ingen notifikationer i denne kategori.
+          </p>
       <section className="notification-list" aria-label="Notifikationer">
         {error !== null ? (
           <p>{error}</p>

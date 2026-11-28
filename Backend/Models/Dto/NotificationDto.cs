@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 using Backend.Models.Entities;
 using Backend.Models.Enums;
 
@@ -10,6 +12,7 @@ public class NotificationDto
 {
     public Guid Id { get; set; }
     public Guid? OperationalRestrictionId { get; set; }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public NotificationType Type { get; set; }
     public string? Title { get; set; }
     public string? Message { get; set; }

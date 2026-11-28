@@ -36,6 +36,7 @@ public partial class NotificationDeliveryProcessor(
         var dueDeliveries = await _appDbContext.NotificationDeliveries
           .Include(x => x.Notification)
           .Where(x => (x.Status == DeliveryStatus.Pending || x.Status == DeliveryStatus.Failed)
+            && x.NextAttemptAt <= now)
             && x.NextAttemptAt <= now
             // A resolved notification's action is done, so it is not pushed any more.
             && x.Notification.ResolvedAt == null)
@@ -91,7 +92,7 @@ public partial class NotificationDeliveryProcessor(
         {
             delivery.Status = DeliveryStatus.Failed;
             delivery.NextAttemptAt = now + GetRetryDelay(delivery.AttemptCount);
-            AddAuditEntry(delivery, NotificationAuditEventType.DeliveryFailed, now);
+           AddAuditEntry(delivery, NotificationAuditEventType.DeliveryFailed, now);
             return;
         }
 

@@ -1,3 +1,4 @@
+
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
@@ -22,7 +23,6 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IExampleService, ExampleService>();
-
 
 // Register Lifecycle services
 builder.Services.AddScoped<RestrictionLifecycleService>();
@@ -54,7 +54,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+
 TinyMapper.Bind<User, UserDto>();
+
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
@@ -64,7 +66,16 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<INotificationDeliveryProcessor, NotificationDeliveryProcessor>();
 builder.Services.AddHostedService<NotificationDeliveryWorker>();
 
+// Register notification services
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.Configure<NotificationDeliveryOptions>(
+    builder.Configuration.GetSection(NotificationDeliveryOptions.SectionName));
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<INotificationDeliveryProcessor, NotificationDeliveryProcessor>();
+builder.Services.AddHostedService<NotificationDeliveryWorker>();
+
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+
 if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
 {
     throw new InvalidOperationException(
@@ -91,6 +102,7 @@ builder.Services
             ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
+
 builder.Services.AddAuthorization();
 
 // Enable CORS with explicit frontend origins for security & cookie/auth header support
@@ -140,6 +152,7 @@ if (!app.Environment.IsEnvironment("Testing") &&
 {
     using var scope = app.Services.CreateScope();
     var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
     if (appDbContext.Database.IsRelational())
     {
         await appDbContext.Database.MigrateAsync();
