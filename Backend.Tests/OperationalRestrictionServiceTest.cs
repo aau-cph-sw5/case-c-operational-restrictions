@@ -1,4 +1,5 @@
 using Backend.Data;
+using Backend.Exceptions;
 using Backend.Lifecycle;
 using Backend.Models.DTOs;
 using Backend.Models.Entities;
@@ -406,7 +407,7 @@ public class OperationalRestrictionServiceTests
         await service.SubmitForApprovalAsync(draft.Id, originator);
 
         // Act - the original draft version is no longer the latest
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+        var exception = await Assert.ThrowsAsync<StaleRestrictionVersionException>(
             () => service.SubmitForApprovalAsync(draft.Id, originator));
 
         // Assert

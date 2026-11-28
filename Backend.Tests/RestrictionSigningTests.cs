@@ -212,18 +212,26 @@ public class RestrictionSigningTests
         Assert.Equal(RestrictionState.PendingDutyOperationsManagerApproval, dto.State);
     }
 
+    // MET-C-026: a retry (e.g. after a lost response) must not sign twice.
+    // It returns the signature that was already committed.
     [Fact]
-    public async Task SigningAlreadySignedRestrictionReturnsConflict()
+    public async Task RetryingSignAfterSuccessReturnsExistingSignatureWithoutSigningTwice()
     {
         var restriction = await AddRestrictionAsync(RestrictionState.Draft);
         var controller = CreateController(restriction.OriginatorUserId);
 
-        var firstSign = await controller.Sign(restriction.RestrictionId);
-        Assert.IsType<OkObjectResult>(firstSign);
+        var firstSign = Assert.IsType<OkObjectResult>(await controller.Sign(restriction.RestrictionId));
+        var firstSignature = Assert.IsType<SignatureDto>(firstSign.Value);
 
-        var secondSign = await controller.Sign(restriction.RestrictionId);
-        var conflict = Assert.IsType<ConflictObjectResult>(secondSign);
-        Assert.Equal(StatusCodes.Status409Conflict, conflict.StatusCode);
+        var secondSign = Assert.IsType<OkObjectResult>(await controller.Sign(restriction.RestrictionId));
+        var secondSignature = Assert.IsType<SignatureDto>(secondSign.Value);
+
+        Assert.Equal(firstSignature.Id, secondSignature.Id);
+        var versionCount = await _dbContext.OperationalRestrictions.CountAsync(
+            r => r.RestrictionId == restriction.RestrictionId
+                || r.OriginalOperationalRestrictionId == restriction.RestrictionId,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(2, versionCount);
     }
 
     private async Task<OperationalRestriction> AddRestrictionAsync(RestrictionState state)

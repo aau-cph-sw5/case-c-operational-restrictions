@@ -30,6 +30,14 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<OperationalRestriction>()
             .HasKey(r => r.RestrictionId);
 
+        // MET-C-026: each version number can exist only once per restriction
+        // chain. If two users act on the same version at the same time, the
+        // database refuses the second new version, so the version check and
+        // the write are atomic.
+        modelBuilder.Entity<OperationalRestriction>()
+            .HasIndex(r => new { r.OriginalOperationalRestrictionId, r.Version })
+            .IsUnique();
+
         modelBuilder.Entity<Permission>(builder =>
         {
             builder.HasKey(p => p.Id);

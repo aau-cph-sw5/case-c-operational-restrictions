@@ -111,10 +111,12 @@ public class RestrictionsController : ApiControllerBase
     /// <response code="409">The operational restriction is not in Draft state</response>
     /// <response code="200">Returns the created immutable signature</response>
     /// <response code="403">The user has no role granting OperationalRestriction:Sign</response>
+    /// <response code="409">The signed version has been replaced by a newer one (code STALE_VERSION)</response>
     [HttpPost("{id:guid}/sign")]
     [RequiresPermission(Permissions.OperationalRestrictionSign)]
     public async Task<IActionResult> Sign(Guid id)
     {
+        // The id is the version the user read. GetByIdAsync resolves it to the latest version.
         OperationalRestrictionDto restriction;
         try
         {
@@ -125,6 +127,21 @@ public class RestrictionsController : ApiControllerBase
             return NotFound(new { error = exception.Message });
         }
 
+        if (restriction.Id != id)
+        {
+            // MET-C-026: a retry after a lost response. The first attempt was
+            // committed, so return that signature instead of signing twice.
+            if (restriction.State != RestrictionState.Draft
+                && restriction.OriginatorSignature is { } existingSignature
+                && existingSignature.SigneeId == CurrentUserId)
+            {
+                return Ok(existingSignature);
+            }
+
+            // MET-C-026: never sign a newer version than the one the user read.
+            return StaleVersionConflict(new StaleRestrictionVersionException(id), restriction.Id);
+        }
+
         var validationResult = ValidateSigningRequirements(restriction);
         if (validationResult is not null)
         {
@@ -132,6 +149,37 @@ public class RestrictionsController : ApiControllerBase
         }
 
         return await SignRestrictionAsync(restriction.Id);
+    }
+
+    /// <summary>
+    /// MET-C-026: reports whether the current user's signature on a restriction
+    /// was committed, so the client can recover after a connection failure
+    /// without signing twice.
+    /// </summary>
+    /// <response code="200">Returns the signing status of the latest version</response>
+    /// <response code="404">The restriction was not found, or it is a draft owned by another user</response>
+    [HttpGet("{id:guid}/signing-status")]
+    [RequiresPermission(Permissions.OperationalRestrictionRead)]
+    public async Task<ActionResult<SigningStatusDto>> GetSigningStatus(Guid id)
+    {
+        try
+        {
+            return Ok(await _operationalRestrictionService.GetSigningStatusAsync(id, CurrentUserId));
+        }
+        catch (OperationalRestrictionNotFoundException exception)
+        {
+            return NotFound(new { error = exception.Message });
+        }
+    }
+
+    private ObjectResult StaleVersionConflict(StaleRestrictionVersionException exception, Guid? latestVersionId = null)
+    {
+        return Conflict(new
+        {
+            error = exception.Message,
+            code = "STALE_VERSION",
+            latestVersionId
+        });
     }
 
     [HttpPost("{id:guid}/request-changes")]
@@ -397,6 +445,10 @@ public class RestrictionsController : ApiControllerBase
         catch (RequiresSignatureNotSignableException exception)
         {
             return Conflict(new { error = exception.Message });
+        }
+        catch (StaleRestrictionVersionException exception)
+        {
+            return StaleVersionConflict(exception);
         }
         catch (InvalidOperationException exception)
         {

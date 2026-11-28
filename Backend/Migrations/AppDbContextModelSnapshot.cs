@@ -239,6 +239,9 @@ namespace Backend.Migrations
 
                     b.HasKey("RestrictionId");
 
+                    b.HasIndex("OriginalOperationalRestrictionId", "Version")
+                        .IsUnique();
+
                     b.ToTable("OperationalRestrictions");
                 });
 

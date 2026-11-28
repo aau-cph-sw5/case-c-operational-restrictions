@@ -16,6 +16,22 @@ public class OperationalRestrictionNotSignableException : Exception
     }
 }
 
+// MET-C-026: the user acted on a version that has since been replaced by a
+// newer one. Derives from InvalidOperationException so endpoints that already
+// map that to 409 Conflict keep doing so.
+public class StaleRestrictionVersionException : InvalidOperationException
+{
+    public Guid RestrictionVersionId { get; }
+
+    public StaleRestrictionVersionException(Guid restrictionVersionId)
+        : base($"Restriction version '{restrictionVersionId}' is outdated. " +
+               "The restriction was changed after you opened it. " +
+               "Reload it and read the current version before signing.")
+    {
+        RestrictionVersionId = restrictionVersionId;
+    }
+}
+
 public class RequiresSignatureNotFoundException : Exception
 {
     public RequiresSignatureNotFoundException(Guid id)

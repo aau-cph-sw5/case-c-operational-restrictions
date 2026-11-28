@@ -7,6 +7,10 @@ using Backend.Models.Entities;
 using Backend.Models.Enums;
 using Backend.Models.Requests;
 
+using Microsoft.EntityFrameworkCore;
+
+using Npgsql;
+
 namespace Backend.Services;
 
 public class OperationalRestrictionService
@@ -516,7 +520,16 @@ public class OperationalRestrictionService
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
 
-        await _repository.AddAsync(newVersion);
+        try
+        {
+            await _repository.AddAsync(newVersion);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            // MET-C-026: someone else created this version number first, so the
+            // version this user acted on is no longer the latest.
+            throw new StaleRestrictionVersionException(restriction.RestrictionId);
+        }
 
         await RecordTransitionAsync(newVersion, action, restriction.State, actorId);
 
@@ -540,11 +553,39 @@ public class OperationalRestrictionService
                 || r.OriginalOperationalRestrictionId == originalId);
 
         if (versions.Any(v => v.Version > restriction.Version))
+            throw new StaleRestrictionVersionException(restriction.RestrictionId);
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
         {
-            throw new InvalidOperationException(
-                $"Restriction version '{restriction.RestrictionId}' is outdated. " +
-                "Only the latest version can be transitioned.");
-        }
+            SqlState: PostgresErrorCodes.UniqueViolation
+        };
+
+    /// <summary>
+    /// MET-C-026: tells the client whether a signing attempt on the given
+    /// version was committed, e.g. after the response was lost to a connection
+    /// failure. Drafts stay private to their originator.
+    /// </summary>
+    public async Task<SigningStatusDto> GetSigningStatusAsync(Guid id, Guid currentUserId)
+    {
+        var latest = await GetLatestRestrictionOrThrowAsync(id);
+
+        if (latest.State == RestrictionState.Draft && latest.OriginatorUserId != currentUserId)
+            throw new OperationalRestrictionNotFoundException(id);
+
+        return new SigningStatusDto
+        {
+            RequestedVersionId = id,
+            IsLatestVersion = latest.RestrictionId == id,
+            LatestVersionId = latest.RestrictionId,
+            LatestVersion = latest.Version,
+            State = latest.State,
+            MySignatures = latest.SignatureSheet
+                .Where(signature => signature.SigneeId == currentUserId)
+                .Select(SignatureDto.FromDalEntity)
+                .ToList()
+        };
     }
 
     private Task RecordTransitionAsync(
